@@ -1,4 +1,5 @@
 
+import type { Timestamp } from 'firebase/firestore';
 
 export type Transaction = {
   id: string;
@@ -9,6 +10,7 @@ export type Transaction = {
   category: string;
   userId: string; // ID of the user who created the transaction
   profileId?: string; // ID of the profile that created the transaction
+  createdAt?: Timestamp; // Firestore timestamp for ordering
 };
 
 export type Debt = {

@@ -17,7 +17,8 @@ export default function TransactionsPage() {
 
   const transactionsQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
-    return query(collection(firestore, 'users', user.uid, 'transactions'), orderBy('date', 'desc'));
+    // Order by date first, then by the creation timestamp to ensure correct order for same-day transactions.
+    return query(collection(firestore, 'users', user.uid, 'transactions'), orderBy('date', 'desc'), orderBy('createdAt', 'desc'));
   }, [firestore, user?.uid]);
   
   const { data: transactions, isLoading: isLoadingTransactions } = useCollection<Transaction>(transactionsQuery);
