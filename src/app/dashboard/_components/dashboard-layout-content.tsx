@@ -5,9 +5,11 @@ import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useProfile } from '@/contexts/profile-context';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLoading } from '@/contexts/loading-context';
 
 export function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const { activeProfile, isLoading: isProfileLoading } = useProfile();
+  const { hideLoading } = useLoading();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -22,6 +24,13 @@ export function DashboardLayoutContent({ children }: { children: ReactNode }) {
       router.push('/select-profile');
     }
   }, [activeProfile, isProfileLoading, router, pathname]);
+
+  // When content is ready to be shown, hide the global loading screen.
+  useEffect(() => {
+    if (!isProfileLoading && activeProfile) {
+      hideLoading();
+    }
+  }, [isProfileLoading, activeProfile, hideLoading]);
 
   // While profile context is loading, show a skeleton UI.
   // This prevents content flashes and provides a better loading experience.
