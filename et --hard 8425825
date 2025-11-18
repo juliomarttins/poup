@@ -1,0 +1,60 @@
+[33m88e72ce[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m eu desisto, voce nao ta corrigindo nda reverta e remova essa opção de pe
+[33m0abdc84[m Try fixing this error: `Runtime Error: Error: Maximum update depth excee
+[33m0396902[m o mesmo erro ocorre resolva isso de vez
+[33ma334032[m Application error: a client-side exception has occurred while loading 60
+[33m8bcfd8c[m Application error: a client-side exception has occurred while loading 60
+[33m9828f8c[m Try fixing this error: `Runtime Error: Error: Maximum update depth excee
+[33mbbbb7e3[m so tem opção de adicionar outro perfil comum? oq tem de errado?
+[33m01422e8[m nao vejo nnehuma mudança
+[33mfaed3d2[m ao adicionar um novo perfil nao vi nada relacionado
+[33mf372f98[m ok, pensei uma nova funcionalidade, ao criar um usuario deveremos ter du
+[33m8425825[m troca de nomes v1
+[33m5bb8efe[m ja nao esta?
+[33m8b82975[m erro
+[33mdef0820[m me de o passo a passo pra hospedar no github e testar
+[33maa2f289[m nao resolveu se esse erro nao tiver relação com a lentidao, vamos tentar
+[33m3177d72[m e se dupplicar o banco de dados pra ter mais de uma rota? pq mesmo apos
+[33mfd06b1c[m ta lento pra crl, da pra usar html e python pra acelerar nao?
+[33mb62a270[m mais de 6 segundos de demora pra abrir a pagina? reformule isso se possi
+[33maaa393a[m LENTIDAO,  JA INICIA EM PAINEL, SE CLICAR EM TRANSAÇÕES OU OUTROS MENUS
+[33m283b7ee[m ELE DEVE PRE CARREGAR TODAS AS PAGINAS NA TELA DE CARREGAMENTO, PRA QUAN
+[33mdd49080[m COLOCAMOS UMA PAGINA DE CARREGAMENTO PRA EVITAR A LENTIDAO NA NAVEGAÇÃO
+[33m85413de[m mesma coisa, fica muito tempo parado em 95% e depois vai pra tela de usu
+[33mca824cf[m ao logar ja pula direto pra essa tela, e nao carrega alem de 95
+[33m99d5716[m o loguim esta muito lento,
+[33m62f6ea4[m Try fixing this error: `Runtime Error: Error: useDashboardData must be u
+[33ma7779fa[m a pagina de loguin ao entrar fica carregando  na barra de links e so fun
+[33mcf1b452[m ao logar, voce clicar em entrar uma vez e ele muda o tema de cor mas nao
+[33m0e4d685[m continua a mesma coisa se estiver em configuração o botao (perfils,apare
+[33m76e254d[m eu sou uma piada? olha o terceiro botao
+[33m53a7601[m no modo claro nenhum nome deve ficar branco, nem mesmo ao apssar o mouse
+[33mbc4b4f8[m nao corrigiu
+[33m2249c67[m ainda com problermas de contraste em cores, olha como no modo claro verd
+[33m9736afb[m ao clicar em sair ele me manda pra essa tela  isso e inaceitavel e muito
+[33mbba84a7[m botao sair precisa ser a jato de rapido
+[33m05271bc[m como eu disse precisa ser inteligente, pra ao definir um modo ou uma cor
+[33md819c42[m modo claro ainda nao troca de cor e o modo neutro deve ser um pouco mais
+[33m7cdac8b[m botao sair ta meio lerdo, ao clicar em sair deve ser instantaneo pra evi
+[33m7221b17[m modo claro nao altera as cores, e em vez de ter modo sistema que tao um
+[33mee09ff2[m modo claro nao ta mudando as core, e todo o site deve ser inteligente pr
+[33mc0d9bcc[m em aparencia, esses modos full estao uma bagunça , se tiver no modo escu
+[33md8616ea[m ok, guarde essa informação, pra nao perder a velocidade em nossas proxim
+[33md3b9af8[m mesmo assim tenho um pequweno delay, ao abrir o painel ja deve ter todas
+[33m588ec55[m a navegação ainda ta lenta ao primeiro uso apos abrir uma vez a navegaçã
+[33m6009abe[m Try fixing this error: `Console Error: Cannot update a component (`Route
+[33m506696c[m bugado valores
+[33meda9513[m minhas transações sumiram
+[33m2adaffc[m Try fixing this error: `Console Error: [2025-11-17T15:54:02.927Z] @fireb
+[33m9230027[m Try fixing this error: `Runtime Error: Error: useDashboardData must be u
+[33md70e6a5[m Try fixing this error: `Runtime Error: Error: useDashboardData must be u
+[33m5eac56e[m The app isn't starting. Please investigate what could be wrong based on
+[33m13e0f2f[m a navegação esta lenta , muito lenta e todas suas correçoes anteriosrtes
+[33ma1600cb[m ficou bom mas essa tela ta uma bagunça, usando os padroes de qualidade e
+[33m0f25fee[m devemos ter um aviso nessa pagina que ao criar um perfil ambos usaram os
+[33m8a651a9[m Corrija o site  remova esse chatbot que nunca funciona e só quebra o sit
+[33mde0ceb4[m Try fixing this error: `Console Error: TypeError: registry.registerSchem
+[33m8c83cb3[m The app isn't starting. Please investigate what could be wrong based on
+[33me228580[m Try fixing this error: `Build Error: Module not found: Can't resolve '@g
+[33m851ef4e[m The app isn't starting. Please investigate what could be wrong based on
+[33mb646a62[m The app isn't starting. Please investigate what could be wrong based on
+[33m1699a0e[m Try fixing this error: `Console Error: TypeError: (0 , _genkit_ai_core__

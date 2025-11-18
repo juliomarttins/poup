@@ -1,0 +1,11 @@
+{
+  "placeholderImages": [
+    {
+      "id": "login-background",
+      "description": "Happy family managing finances on a tablet",
+      "imageUrl": "https://images.unsplash.com/photo-1758523418830-2729d04538a9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxmYW1pbHklMjBmaW5hbmNlfGVufDB8fHx8MTc2MjQ4Mzg0Nnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "family finance"
+    }
+  ],
+  "avatars": []
+}

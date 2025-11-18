@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root, .theme-default {
+    --background: 220 13% 96%;
+    --foreground: 220 13% 10%;
+    --card: 220 13% 100%;
+    --card-foreground: 220 13% 10%;
+    --popover: 220 13% 100%;
+    --popover-foreground: 220 13% 10%;
+    --primary: 48 96% 50%;
+    --primary-foreground: 48 96% 10%;
+    --secondary: 220 13% 92%;
+    --secondary-foreground: 220 13% 10%;
+    --muted: 220 13% 90%;
+    --muted-foreground: 220 13% 45%;
+    --accent: 48 96% 50%;
+    --accent-foreground: 48 96% 10%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 48 96% 50%;
+
+    /* Semantic colors */
+    --positive: 158 79% 37%;
+    --positive-foreground: 0 0% 98%;
+    --negative: 0 84.2% 60.2%;
+    --negative-foreground: 0 0% 98%;
+  }
+
+  .dark {
+    --background: 220 13% 10%;
+    --foreground: 210 40% 98%;
+    --card: 216 14% 14%;
+    --card-foreground: 210 40% 98%;
+    --popover: 216 14% 14%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 48 96% 50%;
+    --primary-foreground: 48 96% 10%;
+    --secondary: 216 14% 22%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 216 14% 22%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 48 96% 50%;
+    --accent-foreground: 48 96% 10%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 216 14% 22%;
+    --input: 216 14% 22%;
+    --ring: 48 96% 50%;
+    
+    /* Semantic colors */
+    --positive: 158 64% 52%;
+    --positive-foreground: 210 40% 98%;
+    --negative: 0 72% 51%;
+    --negative-foreground: 210 40% 98%;
+  }
+
+  .neutral {
+    --background: 220 13% 20%;
+    --foreground: 210 40% 98%;
+    --card: 216 14% 24%;
+    --card-foreground: 210 40% 98%;
+    --popover: 216 14% 24%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 48 96% 50%;
+    --primary-foreground: 48 96% 10%;
+    --secondary: 216 14% 32%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 216 14% 32%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 48 96% 50%;
+    --accent-foreground: 48 96% 10%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 216 14% 32%;
+    --input: 216 14% 32%;
+    --ring: 48 96% 50%;
+    
+    --positive: 158 64% 52%;
+    --positive-foreground: 210 40% 98%;
+    --negative: 0 72% 51%;
+    --negative-foreground: 210 40% 98%;
+  }
+
+  :root.theme-verde {
+    --primary: 142.1 76.2% 36.3%;
+    --primary-foreground: 355.7 100% 97.3%;
+    --accent: 142.1 76.2% 36.3%;
+    --accent-foreground: 355.7 100% 97.3%;
+    --ring: 142.1 76.2% 36.3%;
+  }
+
+  .dark.theme-verde, .neutral.theme-verde {
+    --primary: 142.1 70.6% 45.3%;
+    --primary-foreground: 144.9 80.4% 97.3%;
+    --accent: 142.1 70.6% 45.3%;
+    --accent-foreground: 144.9 80.4% 97.3%;
+    --ring: 142.1 70.6% 45.3%;
+  }
+
+  :root.theme-roxo {
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 210 40% 98%;
+    --accent: 262.1 83.3% 57.8%;
+    --accent-foreground: 210 40% 98%;
+    --ring: 262.1 83.3% 57.8%;
+  }
+  
+  .dark.theme-roxo, .neutral.theme-roxo {
+    --primary: 263.4 95.2% 58.4%;
+    --primary-foreground: 210 40% 98%;
+    --accent: 263.4 95.2% 58.4%;
+    --accent-foreground: 210 40% 98%;
+    --ring: 263.4 95.2% 58.4%;
+  }
+
+  :root.theme-rosa {
+    --primary: 346.8 97.7% 49.8%;
+    --primary-foreground: 210 40% 98%;
+    --accent: 346.8 97.7% 49.8%;
+    --accent-foreground: 210 40% 98%;
+    --ring: 346.8 97.7% 49.8%;
+  }
+
+  .dark.theme-rosa, .neutral.theme-rosa {
+    --primary: 346.8 97.7% 49.8%;
+    --primary-foreground: 210 40% 98%;
+    --accent: 346.8 97.7% 49.8%;
+    --accent-foreground: 210 40% 98%;
+    --ring: 346.8 97.7% 49.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+}
