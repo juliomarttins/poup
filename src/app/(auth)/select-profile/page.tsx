@@ -17,7 +17,7 @@ import { useMemoFirebase } from '@/firebase/firestore/use-memo-firebase';
 export default function SelectProfilePage() {
   const router = useRouter();
   const { setActiveProfile } = useProfile();
-  const { user, isUserLoading } = useUser();
+  const { user, loading: isUserLoading } = useUser();
   const firestore = useFirestore();
 
   const userProfileRef = useMemoFirebase(() => {
@@ -80,11 +80,10 @@ export default function SelectProfilePage() {
                     if (e.key === 'Enter' || e.key === ' ') handleProfileSelect(profile);
                   }}
                 >
-                  <div className="h-40 w-40 overflow-hidden rounded-md border-4 border-transparent bg-muted transition-all group-hover:scale-105 group-hover:border-primary">
+                  <div className="h-40 w-40 overflow-hidden rounded-md border-4 border-transparent bg-muted transition-all group-hover:scale-105 group-hover:border-primary flex items-center justify-center" style={{ backgroundColor: profile.avatarColor || undefined }}>
                     <AvatarIcon
                       iconName={profile.photoURL}
-                      color={profile.avatarColor}
-                      className="h-full w-full p-6"
+                      className="h-2/3 w-2/3 text-white"
                     />
                   </div>
                   <p className="text-xl font-medium transition-colors group-hover:text-foreground">{profile.name}</p>

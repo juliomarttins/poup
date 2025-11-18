@@ -48,7 +48,7 @@ export function AvatarSelector({ selectedAvatar, onSelectAvatar, selectedColor }
                 selectedAvatar === avatar.name ? 'border-primary scale-110' : 'border-transparent'
                 )}
             >
-                <AvatarIcon iconName={avatar.name} className="w-2/3 h-2/3 text-primary" color={selectedColor} />
+                <AvatarIcon iconName={avatar.name} className="w-2/3 h-2/3 text-primary" style={{ color: selectedColor || undefined }} />
             </div>
 
             {selectedAvatar === avatar.name && (

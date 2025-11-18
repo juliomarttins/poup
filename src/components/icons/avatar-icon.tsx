@@ -4,7 +4,7 @@ import { AVATAR_ICON_MAP } from "@/lib/avatars";
 import { UserCircle, type LucideProps } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface AvatarIconProps extends Omit<LucideProps, 'className'> {
+interface AvatarIconProps extends Omit<LucideProps, 'className' | 'color'> {
   iconName: string | null | undefined;
   color?: string | null;
   className?: string;

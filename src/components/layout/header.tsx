@@ -38,7 +38,7 @@ import { useAuth, useFirestore, useUser, useDoc, useMemoFirebase } from "@/fireb
 import { signOut } from "firebase/auth";
 import { Logo } from "@/components/icons";
 import { AvatarIcon } from "../icons/avatar-icon";
-import { Avatar } from "../ui/avatar";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 import { useProfile } from "@/contexts/profile-context";
 import { useLoading } from "@/contexts/loading-context";
 import type { UserProfile } from "@/lib/types";
@@ -205,8 +205,9 @@ function HeaderComponent() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                  <Button variant="secondary" size="icon" className="rounded-full">
-                    <Avatar className="h-10 w-10 flex items-center justify-center">
-                        <AvatarIcon iconName={activeProfile?.photoURL} color={activeProfile?.avatarColor} className="h-7 w-7" />
+                    <Avatar className="h-10 w-10 flex items-center justify-center" style={{ backgroundColor: activeProfile?.avatarColor || undefined }}>
+                        <AvatarIcon iconName={activeProfile?.photoURL} className="h-6 w-6 text-white" />
+                         <AvatarFallback>{activeProfile?.name?.[0]}</AvatarFallback>
                     </Avatar>
                     <span className="sr-only">Alternar menu de usuário</span>
                 </Button>
@@ -216,8 +217,9 @@ function HeaderComponent() {
                 <DropdownMenuSeparator />
                   {userProfile?.profiles && userProfile.profiles.map(profile => (
                     <DropdownMenuItem key={profile.id} onClick={() => handleProfileSwitch(profile.id)}>
-                      <Avatar className="h-6 w-6 mr-2">
-                          <AvatarIcon iconName={profile.photoURL} color={profile.avatarColor} className="h-full w-full" />
+                      <Avatar className="h-6 w-6 mr-2 flex items-center justify-center" style={{backgroundColor: profile.avatarColor || undefined}}>
+                          <AvatarIcon iconName={profile.photoURL} className="h-4 w-4 text-white" />
+                          <AvatarFallback>{profile.name[0]}</AvatarFallback>
                       </Avatar>
                       <span>{profile.name}</span>
                     </DropdownMenuItem>
