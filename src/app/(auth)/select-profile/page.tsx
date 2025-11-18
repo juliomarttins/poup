@@ -84,8 +84,8 @@ export default function SelectProfilePage() {
                 >
                   <Avatar 
                     className={cn(
-                      "h-40 w-40 overflow-hidden rounded-full border-4 border-transparent flex items-center justify-center",
-                      "transition-all group-hover:scale-105 group-hover:border-primary group-hover:shadow-[0_0_0_4px_hsl(var(--primary)/0.2)]"
+                      "h-40 w-40 overflow-hidden rounded-full flex items-center justify-center",
+                      "transition-all group-hover:scale-105 group-hover:shadow-[0_0_0_4px_hsl(var(--primary)/0.2)]"
                     )}
                     style={{ background: profile.avatarBackground || 'hsl(var(--muted))' }}
                   >
