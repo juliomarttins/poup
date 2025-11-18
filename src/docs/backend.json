@@ -84,6 +84,11 @@
           "description": "Date of the transaction.",
           "format": "date-time"
         },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp of when the transaction was created.",
+          "format": "date-time"
+        },
         "amount": {
           "type": "number",
           "description": "Amount of the transaction."

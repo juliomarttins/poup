@@ -27,12 +27,16 @@ async function setUserSubcollectionDoc<T extends { id: string, userId: string }>
     ? doc(firestore, 'users', userId, collectionName, data.id)
     : doc(collection(firestore, 'users', userId, collectionName));
 
-  const finalData = {
+  const finalData: any = {
     ...data,
     id: docRef.id,
     userId: userId, // Ensure userId is correctly set
     updatedAt: serverTimestamp(),
   };
+
+  if (!isUpdate) {
+    finalData.createdAt = serverTimestamp();
+  }
 
   setDoc(docRef, finalData, { merge: true }).catch(async (serverError) => {
     const permissionError = new FirestorePermissionError({
