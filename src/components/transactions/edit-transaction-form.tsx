@@ -30,6 +30,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { ptBR } from 'date-fns/locale';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useUser } from "@/firebase";
+import { useProfile } from "@/contexts/profile-context";
 
 const formSchema = z.object({
   type: z.enum(['income', 'expense'], { required_error: "O tipo é obrigatório."}),
@@ -63,6 +64,7 @@ interface EditTransactionFormProps {
 
 export function EditTransactionForm({ transaction, onSave, onCancel }: EditTransactionFormProps) {
   const { user } = useUser();
+  const { activeProfile } = useProfile();
   const isDefaultCategory = 
     defaultCategories.income.includes(transaction.category) || 
     defaultCategories.expense.includes(transaction.category);
@@ -82,7 +84,7 @@ export function EditTransactionForm({ transaction, onSave, onCancel }: EditTrans
   const selectedCategory = form.watch('category');
 
   function onSubmit(data: FormValues) {
-    if (!user) return;
+    if (!user || !activeProfile) return;
     const amount = data.type === 'expense' ? -Math.abs(data.amount) : Math.abs(data.amount);
     const finalCategory = data.category === 'other' ? data.customCategory! : data.category;
     
@@ -93,6 +95,7 @@ export function EditTransactionForm({ transaction, onSave, onCancel }: EditTrans
         amount,
         category: finalCategory,
         userId: user.uid,
+        profileId: transaction.profileId || activeProfile.id, // Keep original profileId or assign current one
     });
   }
 

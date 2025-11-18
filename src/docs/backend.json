@@ -1,0 +1,243 @@
+
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user account which contains multiple profiles.",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique identifier for the user account (matches Firebase Auth UID)."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the main user."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of the main user's profile picture or avatar identifier."
+        },
+        "profiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/backend/entities/Profile"
+          }
+        }
+      },
+      "required": [
+        "uid",
+        "email"
+      ]
+    },
+    "Profile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Profile",
+      "type": "object",
+      "description": "Represents a single profile within a user account.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the profile."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the profile."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of the profile's picture or avatar identifier."
+        },
+        "avatarColor": {
+          "type": "string",
+          "description": "The selected color for the avatar."
+        }
+      },
+      "required": ["id", "name"]
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Represents a financial transaction (income or expense).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the transaction."
+        },
+        "userId": {
+          "type": "string",
+          "description": "ID of the account holder who created the transaction."
+        },
+        "profileId": {
+            "type": "string",
+            "description": "ID of the profile within the account that created the transaction."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the transaction.",
+          "format": "date-time"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of the transaction."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["income", "expense"],
+          "description": "Type of transaction."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the transaction."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of what the transaction is for."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "date",
+        "amount",
+        "type",
+        "category"
+      ]
+    },
+    "ManagedDebt": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ManagedDebt",
+      "type": "object",
+      "description": "Represents a managed debt with installment tracking.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the debt."
+        },
+        "userId": {
+          "type": "string",
+          "description": "ID of the account holder who owns this debt."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the debt (e.g., Car Loan)."
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "The total amount of the debt."
+        },
+        "paidAmount": {
+          "type": "number",
+          "description": "The amount of the debt already paid."
+        },
+        "totalInstallments": {
+          "type": "integer",
+          "description": "Total number of installments."
+        },
+        "paidInstallments": {
+          "type": "integer",
+          "description": "Number of installments already paid."
+        },
+        "installmentAmount": {
+          "type": "number",
+          "description": "The value of each installment."
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "The first due date of the debt.",
+          "format": "date"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the debt (e.g., Vehicle, Real Estate)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "totalAmount",
+        "paidAmount",
+        "totalInstallments",
+        "paidInstallments",
+        "installmentAmount",
+        "dueDate",
+        "category"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "google.com"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user account information, including sub-profiles. The User ID is the Firebase Auth UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier (auth UID) for the user account."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Stores all transaction data for a user account.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user account."
+            },
+            {
+              "name": "transactionId",
+              "description": "The unique identifier for the transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/debts/{debtId}",
+        "definition": {
+          "entityName": "ManagedDebt",
+          "schema": {
+            "$ref": "#/backend/entities/ManagedDebt"
+          },
+          "description": "Stores all managed debt data for a user account.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user account."
+            },
+            {
+              "name": "debtId",
+              "description": "The unique identifier for the debt."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed for a single account with multiple profiles. All data is nested under the `/users/{userId}` path, where `userId` is the Firebase Auth UID for the main account. This ensures strong data ownership and simplifies security rules, as all profiles under that account share access to the same transactions and debts."
+  }
+}

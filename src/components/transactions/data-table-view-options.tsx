@@ -1,3 +1,4 @@
+
 "use client"
 
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu"
@@ -19,6 +20,7 @@ interface DataTableViewOptionsProps<TData> {
 
 const columnLabels: Record<string, string> = {
     date: "Data",
+    profileId: "Perfil",
     description: "Descrição",
     category: "Categoria",
     type: "Tipo",

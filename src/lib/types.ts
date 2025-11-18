@@ -8,6 +8,7 @@ export type Transaction = {
   type: 'income' | 'expense';
   category: string;
   userId: string; // ID of the user who created the transaction
+  profileId?: string; // ID of the profile that created the transaction
 };
 
 export type Debt = {

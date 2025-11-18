@@ -32,6 +32,7 @@ import { ptBR } from 'date-fns/locale';
 import { useFirestore, useUser } from "@/firebase";
 import { doc, collection } from "firebase/firestore";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useProfile } from "@/contexts/profile-context";
 
 const formSchema = z.object({
   type: z.enum(['income', 'expense'], { required_error: "O tipo é obrigatório."}),
@@ -66,6 +67,7 @@ interface AddTransactionFormProps {
 export function AddTransactionForm({ onSave, onCancel }: AddTransactionFormProps) {
   const firestore = useFirestore();
   const { user } = useUser();
+  const { activeProfile } = useProfile();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -80,7 +82,7 @@ export function AddTransactionForm({ onSave, onCancel }: AddTransactionFormProps
   const selectedCategory = form.watch('category');
 
   function onSubmit(data: FormValues) {
-    if (!firestore || !user) return;
+    if (!firestore || !user || !activeProfile) return;
     const amount = data.type === 'expense' ? -Math.abs(data.amount) : Math.abs(data.amount);
     const newDocRef = doc(collection(firestore, '_')); // Fake ref to get a new ID
 
@@ -94,6 +96,7 @@ export function AddTransactionForm({ onSave, onCancel }: AddTransactionFormProps
         date: format(data.date, "yyyy-MM-dd"),
         category: finalCategory,
         userId: user.uid,
+        profileId: activeProfile.id,
     };
     onSave(newTransaction);
   }

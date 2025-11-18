@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react";
@@ -25,7 +26,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { Transaction } from "@/lib/types"
+import type { Transaction, UserProfile, Profile } from "@/lib/types"
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { doc } from 'firebase/firestore';
+import { AvatarIcon } from '../icons/avatar-icon';
+import { Avatar } from '../ui/avatar';
+import { Skeleton } from "../ui/skeleton";
+
 
 interface ActionsCellProps {
   transaction: Transaction;
@@ -82,6 +89,69 @@ const ActionsCell = ({ transaction, onEdit, onDelete }: ActionsCellProps) => {
   );
 };
 
+
+const ProfileCell = ({ profileId }: { profileId?: string }) => {
+    const { user } = useUser();
+    const firestore = useFirestore();
+
+    const userProfileRef = useMemoFirebase(() => {
+        if (!firestore || !user?.uid) return null;
+        return doc(firestore, 'users', user.uid);
+    }, [firestore, user?.uid]);
+
+    const { data: userProfile, isLoading } = useDoc<UserProfile>(userProfileRef);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center space-x-2">
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <Skeleton className="h-4 w-20" />
+            </div>
+        );
+    }
+
+    const profile = userProfile?.profiles?.find(p => p.id === profileId);
+    
+    // Fallback for old transactions without a profileId
+    if (!profile) {
+        const mainProfile = userProfile?.profiles?.[0] || { name: 'Conta' };
+        return (
+            <div className="flex items-center gap-2">
+                 <Avatar 
+                    className="h-6 w-6 flex items-center justify-center"
+                    style={{ background: mainProfile.avatarBackground || 'hsl(var(--muted))' }}
+                >
+                    <AvatarIcon
+                        iconName={mainProfile.photoURL}
+                        fallbackName={mainProfile.name}
+                        className="h-4 w-4"
+                        style={{ color: mainProfile.avatarColor || 'hsl(var(--foreground))' }}
+                    />
+                </Avatar>
+                <span className="truncate">{mainProfile.name}</span>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="flex items-center gap-2">
+            <Avatar 
+                className="h-6 w-6 flex items-center justify-center"
+                style={{ background: profile.avatarBackground || 'hsl(var(--muted))' }}
+            >
+                <AvatarIcon
+                    iconName={profile.photoURL}
+                    fallbackName={profile.name}
+                    className="h-4 w-4"
+                    style={{ color: profile.avatarColor || 'hsl(var(--foreground))' }}
+                />
+            </Avatar>
+            <span className="truncate">{profile.name}</span>
+        </div>
+    );
+};
+
+
 type GetColumnsParams = {
   onEdit: (transaction: Transaction) => void;
   onDelete: (transactionId: string) => void;
@@ -130,6 +200,13 @@ export const columns = ({ onEdit, onDelete }: GetColumnsParams): ColumnDef<Trans
       const date = new Date(Date.UTC(year, month - 1, day));
       const formatted = date.toLocaleDateString("pt-BR", { timeZone: 'UTC' });
       return <div className="pl-4">{formatted}</div>
+    }
+  },
+  {
+    accessorKey: "profileId",
+    header: "Perfil",
+    cell: ({ row }) => {
+      return <ProfileCell profileId={row.getValue("profileId")} />;
     }
   },
   {
