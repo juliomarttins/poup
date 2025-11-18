@@ -193,7 +193,7 @@ function ProfileEditForm({
 
 export function ProfileForm({ userProfile }: { userProfile: UserProfile | null }) {
   const { user } = useUser();
-  const { setActiveProfile } = useProfile();
+  const { activeProfile, setActiveProfile } = useProfile();
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
@@ -237,11 +237,13 @@ export function ProfileForm({ userProfile }: { userProfile: UserProfile | null }
         title: toastTitle,
         description: `As informações do perfil "${updatedProfile.name}" foram salvas.`,
       });
-      setEditingProfile(null);
+
       // If the currently active profile is the one being edited, update it in the context
-      if(editingProfile.id === updatedProfile.id) {
+      if(activeProfile?.id === updatedProfile.id) {
         setActiveProfile(updatedProfile);
       }
+
+      setEditingProfile(null);
       router.refresh();
 
     } catch(error: any) {
@@ -281,10 +283,11 @@ export function ProfileForm({ userProfile }: { userProfile: UserProfile | null }
         title: "Perfil removido!",
         description: "O perfil foi removido com sucesso.",
       });
-       if(editingProfile?.id === profileId) {
-        setEditingProfile(null);
+       if(activeProfile?.id === profileId) {
+        // If the deleted profile was the active one, switch to the first available one.
         setActiveProfile(updatedProfiles[0]);
       }
+      setEditingProfile(null); // Close the dialog if the edited profile was deleted
       router.refresh();
     } catch(error: any) {
          toast({
