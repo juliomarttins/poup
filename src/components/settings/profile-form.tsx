@@ -83,6 +83,7 @@ function ProfileEditForm({
     const selectedColor = form.watch("avatarColor");
     const selectedIcon = form.watch("photoURL");
     const selectedBackground = form.watch("avatarBackground");
+    const currentName = form.watch("name");
 
     const handleSubmit = (data: ProfileFormValues) => {
         onSave(data);
@@ -92,16 +93,16 @@ function ProfileEditForm({
         <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
                  <div className="flex justify-center">
-                    <Avatar 
-                        className="h-40 w-40 rounded-full flex items-center justify-center transition-all"
+                    <Avatar
+                        className="h-40 w-40 rounded-full"
                         style={{ background: selectedBackground || 'hsl(var(--muted))' }}
                     >
                         <AvatarIcon
                             iconName={selectedIcon}
+                            fallbackName={currentName}
                             className="w-2/3 h-2/3"
                             style={{ color: selectedColor || 'hsl(var(--primary-foreground))' }}
                         />
-                         <AvatarFallback className="text-4xl">{profile.name?.[0]}</AvatarFallback>
                     </Avatar>
                 </div>
 
@@ -322,15 +323,15 @@ export function ProfileForm({ userProfile }: { userProfile: UserProfile | null }
                          <div key={profile.id} onClick={() => setEditingProfile(profile)} className="group flex cursor-pointer flex-col items-center gap-3 text-muted-foreground transition-all hover:scale-105 hover:text-foreground w-24 sm:w-32" role="button" tabIndex={0}>
                             <div className="relative">
                                 <Avatar
-                                    className="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-2 border-transparent flex items-center justify-center transition-all"
+                                    className="h-24 w-24 sm:h-32 sm:w-32 rounded-full"
                                     style={{ background: profile.avatarBackground || 'hsl(var(--muted))' }}
                                 >
                                     <AvatarIcon
                                         iconName={profile.photoURL}
+                                        fallbackName={profile.name}
                                         className="h-12 w-12 sm:h-16 sm:w-16"
                                         style={{ color: profile.avatarColor || 'hsl(var(--primary-foreground))' }}
                                     />
-                                    <AvatarFallback className="text-3xl sm:text-4xl">{profile.name?.[0]}</AvatarFallback>
                                 </Avatar>
                                 <Button 
                                     size="icon" 

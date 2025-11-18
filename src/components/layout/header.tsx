@@ -205,16 +205,16 @@ function HeaderComponent() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                  <Button variant="secondary" size="icon" className="rounded-full">
-                    <Avatar 
-                      className="h-10 w-10 flex items-center justify-center"
-                      style={{ background: activeProfile?.avatarBackground || 'hsl(var(--muted))' }}
+                    <Avatar
+                        className="h-10 w-10"
+                        style={{ background: activeProfile?.avatarBackground || 'hsl(var(--muted))' }}
                     >
-                        <AvatarIcon 
-                          iconName={activeProfile?.photoURL} 
-                          className="h-6 w-6"
-                          style={{ color: activeProfile?.avatarColor || 'hsl(var(--primary-foreground))' }}
+                        <AvatarIcon
+                            iconName={activeProfile?.photoURL}
+                            fallbackName={activeProfile?.name}
+                            className="h-6 w-6"
+                            style={{ color: activeProfile?.avatarColor || 'hsl(var(--primary-foreground))' }}
                         />
-                         <AvatarFallback>{activeProfile?.name?.[0]}</AvatarFallback>
                     </Avatar>
                     <span className="sr-only">Alternar menu de usuário</span>
                 </Button>
@@ -224,16 +224,16 @@ function HeaderComponent() {
                 <DropdownMenuSeparator />
                   {userProfile?.profiles && userProfile.profiles.map((profile: Profile) => (
                     <DropdownMenuItem key={profile.id} onClick={() => handleProfileSwitch(profile.id)}>
-                      <Avatar 
-                        className="h-6 w-6 mr-2 flex items-center justify-center" 
-                        style={{background: profile.avatarBackground || 'hsl(var(--muted))'}}
+                      <Avatar
+                          className="h-6 w-6 mr-2"
+                          style={{background: profile.avatarBackground || 'hsl(var(--muted))'}}
                       >
-                          <AvatarIcon 
-                            iconName={profile.photoURL} 
-                            className="h-4 w-4"
-                            style={{ color: profile.avatarColor || 'hsl(var(--primary-foreground))' }}
+                          <AvatarIcon
+                              iconName={profile.photoURL}
+                              fallbackName={profile.name}
+                              className="h-4 w-4"
+                              style={{ color: profile.avatarColor || 'hsl(var(--primary-foreground))' }}
                           />
-                          <AvatarFallback className="text-xs">{profile.name?.[0]}</AvatarFallback>
                       </Avatar>
                       <span>{profile.name}</span>
                     </DropdownMenuItem>

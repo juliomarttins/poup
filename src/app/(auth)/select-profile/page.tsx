@@ -88,10 +88,10 @@ export default function SelectProfilePage() {
                   >
                     <AvatarIcon
                       iconName={profile.photoURL}
+                      fallbackName={profile.name}
                       className="h-2/3 w-2/3"
                       style={{ color: profile.avatarColor || 'hsl(var(--primary-foreground))' }}
                     />
-                    <AvatarFallback className="text-4xl">{profile.name?.[0]}</AvatarFallback>
                   </Avatar>
                   <p className="text-xl font-medium transition-colors group-hover:text-foreground">{profile.name}</p>
                 </div>
