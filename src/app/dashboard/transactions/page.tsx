@@ -1,4 +1,3 @@
-
 'use client'
 
 import { collection, query, orderBy } from 'firebase/firestore';
@@ -19,8 +18,10 @@ export default function TransactionsPage() {
     if (!firestore || !user?.uid) return null;
     return query(
       collection(firestore, 'users', user.uid, 'transactions'), 
-      orderBy('date', 'desc'),
-      orderBy('createdAt', 'desc')
+      orderBy('date', 'desc')
+// ----- [INICIO_COMENTARIO] ----- PARTE 1 - REMOVER LINHA (transactions/page.tsx) ----- [FIM_COMENTARIO] -----
+      // orderBy('createdAt', 'desc') // <-- REMOVA OU COMENTE ESTA LINHA
+// ----- [INICIO_COMENTARIO] ----- PARTE 2 - FIM (transactions/page.tsx) ----- [FIM_COMENTARIO] -----
     );
   }, [firestore, user?.uid]);
   
