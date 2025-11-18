@@ -12,20 +12,32 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // Rules for the users collection
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      // Users can only read, update, or delete their own user document.
+      allow get, update, delete: if isOwner(userId);
+      // Anyone can create a user document, but it must match their own UID.
+      allow create: if isOwner(userId) && request.resource.data.uid == userId;
+      // Disallow listing all users for security.
+      allow list: if false;
 
+      // Rules for the transactions subcollection
       match /transactions/{transactionId} {
-        allow get, write, delete: if isOwner(userId);
+        // Only the owner can read, write, or delete a specific transaction.
+        allow get, update, delete: if isOwner(userId);
       }
       match /transactions {
-        allow list, create: if isOwner(userId);
+          // Only the owner can list and create transactions.
+          allow list, create: if isOwner(userId);
       }
       
+      // Rules for the debts subcollection
       match /debts/{debtId} {
-        allow get, write, delete: if isOwner(userId);
+        // Only the owner can read, write, or delete a specific debt.
+        allow get, update, delete: if isOwner(userId);
       }
       match /debts {
+        // Only the owner can list and create debts.
          allow list, create: if isOwner(userId);
       }
     }
