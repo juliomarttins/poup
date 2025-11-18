@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from 'react';
@@ -40,7 +41,8 @@ export function LoginForm() {
                 id: user.uid,
                 name: user.displayName || generateUsername(user.email),
                 photoURL: 'Bot',
-                avatarColor: 'hsl(var(--primary))'
+                avatarColor: 'hsl(0 0% 100%)',
+                avatarBackground: 'hsl(var(--primary))'
             }
 
             const userProfileData = {

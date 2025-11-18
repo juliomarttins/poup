@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -80,10 +81,14 @@ export default function SelectProfilePage() {
                     if (e.key === 'Enter' || e.key === ' ') handleProfileSelect(profile);
                   }}
                 >
-                  <div className="h-40 w-40 overflow-hidden rounded-md border-4 border-transparent bg-muted transition-all group-hover:scale-105 group-hover:border-primary flex items-center justify-center" style={{ backgroundColor: profile.avatarColor || undefined }}>
+                  <div 
+                    className="h-40 w-40 overflow-hidden rounded-md border-4 border-transparent transition-all group-hover:scale-105 group-hover:border-primary flex items-center justify-center" 
+                    style={{ background: profile.avatarBackground || 'hsl(var(--muted))' }}
+                  >
                     <AvatarIcon
                       iconName={profile.photoURL}
-                      className="h-2/3 w-2/3 text-white"
+                      className="h-2/3 w-2/3"
+                      style={{ color: profile.avatarColor || 'hsl(var(--primary-foreground))' }}
                     />
                   </div>
                   <p className="text-xl font-medium transition-colors group-hover:text-foreground">{profile.name}</p>

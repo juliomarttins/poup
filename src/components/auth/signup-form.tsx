@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from 'react';
@@ -62,7 +63,8 @@ export function SignupForm() {
                 id: user.uid,
                 name: name || user.displayName || generateUsername(user.email),
                 photoURL: 'Bot',
-                avatarColor: 'hsl(var(--primary))'
+                avatarColor: 'hsl(0 0% 100%)',
+                avatarBackground: 'hsl(var(--primary))'
             }
 
             const userProfileData = {

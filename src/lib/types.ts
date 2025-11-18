@@ -54,4 +54,5 @@ export type Profile = {
   name: string;
   photoURL: string | null;
   avatarColor: string | null;
+  avatarBackground: string | null;
 }

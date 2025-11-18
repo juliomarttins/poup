@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,9 +30,10 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { useAuth, useUser, useFirestore } from "@/firebase";
 import { Separator } from "@/components/ui/separator";
-import { doc, setDoc, collection } from "firebase/firestore";
+import { doc, setDoc, collection, arrayUnion } from "firebase/firestore";
 import { AvatarSelector } from "./avatar-selector";
 import { AvatarColorSelector } from "./avatar-color-selector";
+import { AvatarBackgroundSelector } from "./avatar-background-selector";
 import { Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { AvatarIcon } from "../icons/avatar-icon";
@@ -52,6 +54,7 @@ const profileFormSchema = z.object({
     }),
   photoURL: z.string().nullable(),
   avatarColor: z.string().nullable(),
+  avatarBackground: z.string().nullable(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -71,11 +74,14 @@ function ProfileEditForm({
             name: profile.name || "",
             photoURL: profile.photoURL || null,
             avatarColor: profile.avatarColor || null,
+            avatarBackground: profile.avatarBackground || null,
         },
         mode: "onChange",
     });
 
     const selectedColor = form.watch("avatarColor");
+    const selectedIcon = form.watch("photoURL");
+    const selectedBackground = form.watch("avatarBackground");
 
     const handleSubmit = (data: ProfileFormValues) => {
         onSave(data);
@@ -84,21 +90,53 @@ function ProfileEditForm({
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+                 <div className="flex justify-center">
+                    <div 
+                        className="h-40 w-40 rounded-full flex items-center justify-center transition-all"
+                        style={{ background: selectedBackground || 'hsl(var(--muted))' }}
+                    >
+                        <AvatarIcon
+                            iconName={selectedIcon}
+                            className="w-2/3 h-2/3"
+                            style={{ color: selectedColor || 'hsl(var(--primary-foreground))' }}
+                        />
+                    </div>
+                </div>
+
+                <FormField
+                    control={form.control}
+                    name="avatarBackground"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Fundo do Avatar</FormLabel>
+                            <FormControl>
+                                <AvatarBackgroundSelector
+                                    selectedBackground={field.value}
+                                    onSelectBackground={field.onChange}
+                                />
+                            </FormControl>
+                             <FormDescription>
+                                Escolha uma cor ou padrão para o fundo.
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
                 <FormField
                     control={form.control}
                     name="photoURL"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Avatar</FormLabel>
+                            <FormLabel>Ícone do Avatar</FormLabel>
                             <FormControl>
                                 <AvatarSelector
                                     selectedAvatar={field.value}
                                     onSelectAvatar={field.onChange}
-                                    selectedColor={selectedColor}
                                 />
                             </FormControl>
                             <FormDescription>
-                                Escolha um avatar para o perfil.
+                                Escolha um ícone para o perfil.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
@@ -110,7 +148,7 @@ function ProfileEditForm({
                     name="avatarColor"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Cor do Avatar</FormLabel>
+                            <FormLabel>Cor do Ícone</FormLabel>
                             <FormControl>
                                 <AvatarColorSelector
                                     selectedColor={field.value}
@@ -118,7 +156,7 @@ function ProfileEditForm({
                                 />
                             </FormControl>
                              <FormDescription>
-                                Escolha uma cor para o avatar.
+                                Escolha uma cor para o ícone do avatar.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
@@ -164,17 +202,24 @@ export function ProfileForm({ userProfile }: { userProfile: UserProfile | null }
     try {
         const userRef = doc(firestore, "users", user.uid);
         const currentProfiles = userProfile?.profiles || [];
-        let updatedProfiles = [...currentProfiles];
-        const profileIndex = updatedProfiles.findIndex(p => p.id === editingProfile.id);
+        
+        const isNewProfile = !currentProfiles.some(p => p.id === editingProfile.id);
+        
         const updatedProfile = { ...editingProfile, ...data };
 
-        if (profileIndex > -1) {
-            updatedProfiles[profileIndex] = updatedProfile;
+        let payload: { profiles: Profile[] | any; name?: string } = { profiles: [] };
+        let toastTitle = "";
+
+        if (isNewProfile) {
+            payload = { profiles: arrayUnion(updatedProfile) };
+            toastTitle = "Perfil adicionado!";
         } else {
-            updatedProfiles.push(updatedProfile);
+            const updatedProfiles = currentProfiles.map(p => 
+                p.id === editingProfile.id ? updatedProfile : p
+            );
+            payload = { profiles: updatedProfiles };
+            toastTitle = "Perfil atualizado!";
         }
-        
-        const payload: { profiles: Profile[]; name?: string } = { profiles: updatedProfiles };
 
         if (editingProfile.id === user.uid) {
             if (user.displayName !== data.name) {
@@ -186,8 +231,8 @@ export function ProfileForm({ userProfile }: { userProfile: UserProfile | null }
         await setDoc(userRef, payload, { merge: true });
 
       toast({
-        title: "Perfil atualizado!",
-        description: "As informações do perfil foram salvas.",
+        title: toastTitle,
+        description: `As informações do perfil "${updatedProfile.name}" foram salvas.`,
       });
       setEditingProfile(null);
       // If the currently active profile is the one being edited, update it in the context
@@ -250,11 +295,12 @@ export function ProfileForm({ userProfile }: { userProfile: UserProfile | null }
   const handleAddNewProfile = () => {
     if (!firestore) return;
     const newId = doc(collection(firestore, '_')).id;
-    const newProfile = {
+    const newProfile: Profile = {
         id: newId,
         name: "Novo Perfil",
         photoURL: 'Bot',
-        avatarColor: 'hsl(var(--primary))'
+        avatarColor: 'hsl(0 0% 100%)', // Default icon color to white
+        avatarBackground: 'hsl(var(--primary))', // Default background to primary
     };
     setEditingProfile(newProfile);
   }
@@ -273,11 +319,14 @@ export function ProfileForm({ userProfile }: { userProfile: UserProfile | null }
                     {userProfile?.profiles?.map(profile => (
                          <div key={profile.id} onClick={() => setEditingProfile(profile)} className="group flex cursor-pointer flex-col items-center gap-3 text-muted-foreground transition-all hover:scale-105 hover:text-foreground w-24 sm:w-32" role="button" tabIndex={0}>
                             <div className="relative">
-                                <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-2 border-transparent bg-muted flex items-center justify-center">
+                                <div 
+                                    className="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-2 border-transparent flex items-center justify-center transition-all"
+                                    style={{ background: profile.avatarBackground || 'hsl(var(--muted))' }}
+                                >
                                     <AvatarIcon
                                         iconName={profile.photoURL}
-                                        color={profile.avatarColor}
                                         className="h-12 w-12 sm:h-16 sm:w-16"
+                                        style={{ color: profile.avatarColor || 'hsl(var(--primary-foreground))' }}
                                     />
                                 </div>
                                 <Button 

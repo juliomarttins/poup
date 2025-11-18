@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState } from 'react';
@@ -12,12 +13,11 @@ import { Button } from '../ui/button';
 interface AvatarSelectorProps {
   selectedAvatar: string | null;
   onSelectAvatar: (avatarName: string) => void;
-  selectedColor: string | null | undefined;
 }
 
 const MOBILE_AVATAR_LIMIT = 12;
 
-export function AvatarSelector({ selectedAvatar, onSelectAvatar, selectedColor }: AvatarSelectorProps) {
+export function AvatarSelector({ selectedAvatar, onSelectAvatar }: AvatarSelectorProps) {
   const isMobile = useIsMobile();
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -48,7 +48,7 @@ export function AvatarSelector({ selectedAvatar, onSelectAvatar, selectedColor }
                 selectedAvatar === avatar.name ? 'border-primary scale-110' : 'border-transparent'
                 )}
             >
-                <AvatarIcon iconName={avatar.name} className="w-2/3 h-2/3 text-primary" style={{ color: selectedColor || undefined }} />
+                <AvatarIcon iconName={avatar.name} className="w-2/3 h-2/3 text-primary" />
             </div>
 
             {selectedAvatar === avatar.name && (

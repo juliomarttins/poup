@@ -1,4 +1,5 @@
 
+
 import { Bot, Cat, Dog, Rabbit, Bird, Bug, Ghost, Crown, Rocket, Heart, Carrot, Cherry, Gamepad2, Pizza, Plane, Skull, Fish, Apple, Bone, Brain, Cookie, Diamond, Cloud, Moon, Sun, Star, Mountain, Flame, Leaf, IceCream, Ship, Shield, type LucideIcon } from "lucide-react";
 
 export const AVATAR_ICONS = [
@@ -42,6 +43,8 @@ export const AVATAR_ICON_MAP: Record<string, LucideIcon> = AVATAR_ICONS.reduce((
 }, {} as Record<string, LucideIcon>);
 
 export const AVATAR_COLORS = [
+  { name: 'Branco', value: 'hsl(0 0% 100%)' },
+  { name: 'Preto', value: 'hsl(0 0% 10%)' },
   { name: 'Padrão', value: 'hsl(var(--primary))' },
   { name: 'Vermelho', value: 'hsl(0 84.2% 60.2%)' },
   { name: 'Laranja', value: 'hsl(24.6 95% 53.1%)' },
@@ -50,4 +53,17 @@ export const AVATAR_COLORS = [
   { name: 'Azul', value: 'hsl(221.2 83.2% 53.3%)' },
   { name: 'Roxo', value: 'hsl(262.1 83.3% 57.8%)' },
   { name: 'Rosa', value: 'hsl(346.8 97.7% 49.8%)' },
+];
+
+export const AVATAR_BACKGROUNDS = [
+    { name: 'Muted', value: 'hsl(var(--muted))' },
+    { name: 'Padrão', value: 'hsl(var(--primary))' },
+    { name: 'Galáxia', value: 'linear-gradient(140deg, #1e0033, #36004a, #6c006c, #a5008a)' },
+    { name: 'Pôr do Sol', value: 'linear-gradient(to right, #ff7e5f, #feb47b)' },
+    { name: 'Oceano', value: 'linear-gradient(to right, #00c6ff, #0072ff)' },
+    { name: 'Floresta', value: 'linear-gradient(to right, #22c1c3, #fdbb2d)' },
+    { name: 'Neon', value: 'linear-gradient(to right, #cc2b5e, #753a88)' },
+    { name: 'Lava', value: 'linear-gradient(to right, #f85032, #e73827)' },
+    { name: 'Verde Água', value: 'linear-gradient(to right, #13f1fc, #0470dc)' },
+    { name: 'Dourado', value: 'linear-gradient(to right, #fccb0b, #f9a909)'},
 ];
