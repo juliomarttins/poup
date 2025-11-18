@@ -3,82 +3,43 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Manages access to user-specific data.
-     * @path /users/{userId}
-     * @allow (get, delete) Only the authenticated user can access or modify their own user document.
-     * @allow (create) Any authenticated user can create their own user document, ensuring the document ID matches their UID.
-     * @allow (update) User can update their own data, or update their familyId if they are joining a family.
-     * @deny (list) Listing all users is disallowed for privacy.
-     * @principle Enforces strict data ownership for all user-related information.
-     */
-    match /users/{userId} {
-      allow get, delete: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.uid == userId;
-      // Allow user to update their own document.
-      // They can change their 'familyId' but not other people's.
-      allow update: if isOwner(userId) && onlyChangingAllowedFields(['familyId', 'name', 'photoURL', 'avatarColor']);
-      allow list: if false; // Disallow listing all users
-
-      /**
-       * @description Manages access to a user's transactions.
-       * @path /users/{userId}/transactions/{transactionId}
-       * @allow (read, write) Only a user belonging to the same family can access transactions.
-       * @principle Inherits ownership from the parent user document, ensuring data isolation.
-       */
-      match /transactions/{transactionId} {
-        allow read, write: if partOfSameFamily(userId);
-      }
-      
-      /**
-       * @description Manages access to a user's managed debts.
-       * @path /users/{userId}/debts/{debtId}
-       * @allow (read, write) Only a user belonging to the same family can access debts.
-       * @principle Inherits ownership from the parent user document.
-       */
-      match /debts/{debtId} {
-        allow read, write: if partOfSameFamily(userId);
-      }
-    }
-
-    // ---- Helper functions ----
-
-    /**
-     * @description Checks if the user is signed in.
-     * @return True if the user is signed in, false otherwise.
-     */
+    // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * @description Checks if the authenticated user is the owner of the resource.
-     * @param userId The user ID to compare with the authenticated user's ID.
-     * @return True if the user is the owner, false otherwise.
-     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Checks if the user making the request belongs to the same family as the resource's owner.
-     * @param resourceUserId The user ID of the resource owner.
-     * @return True if they are in the same family, false otherwise.
-     */
-    function partOfSameFamily(resourceUserId) {
-      let requestUserFamilyId = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId;
-      let resourceUserFamilyId = get(/databases/$(database)/documents/users/$(resourceUserId)).data.familyId;
-      return isSignedIn() && requestUserFamilyId == resourceUserFamilyId;
-    }
+    // Rules for the users collection
+    match /users/{userId} {
+      // Users can only read, update, or delete their own user document.
+      allow get, update, delete: if isOwner(userId);
+      // Anyone can create a user document, but it must match their own UID.
+      allow create: if isOwner(userId) && request.resource.data.uid == userId;
+      // Disallow listing all users for security.
+      allow list: if false;
 
-     /**
-     * @description Restricts updates to a specific list of fields.
-     * @param allowedFields A list of strings with the field names that are allowed to be changed.
-     * @return True if only allowed fields are being modified, false otherwise.
-     */
-    function onlyChangingAllowedFields(allowedFields) {
-      let changedKeys = request.resource.data.keys().diff(resource.data.keys());
-      return changedKeys.size() == 0 || changedKeys.hasOnly(allowedFields);
+      // Rules for the transactions subcollection
+      match /transactions/{transactionId} {
+        // Only the owner can read, write, or delete a specific transaction.
+        allow get, update, delete: if isOwner(userId);
+      }
+      match /transactions {
+          // Only the owner can list and create transactions.
+          allow list, create: if isOwner(userId);
+      }
+      
+      // Rules for the debts subcollection
+      match /debts/{debtId} {
+        // Only the owner can read, write, or delete a specific debt.
+        allow get, update, delete: if isOwner(userId);
+      }
+      match /debts {
+        // Only the owner can list and create debts.
+         allow list, create: if isOwner(userId);
+      }
     }
   }
 }
