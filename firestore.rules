@@ -12,7 +12,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Rules for the users collection and all its subcollections
+    // Grant broad access to a user's own documents and subcollections.
+    // This is a secure rule because of the `isOwner(userId)` check,
+    // ensuring a user can only access their own data tree.
+    // The `{document=**}` wildcard recursively matches all documents
+    // and subcollections under the user's path, which is necessary
+    // for complex queries (like multi-field orderBy) to be allowed.
     match /users/{userId}/{document=**} {
       allow read, write: if isOwner(userId);
     }
