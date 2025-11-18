@@ -41,6 +41,7 @@ import type { Profile, UserProfile } from "@/lib/types";
 import { Label } from "../ui/label";
 import { useProfile } from "@/contexts/profile-context";
 import { ScrollArea } from "../ui/scroll-area";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 
 
 const profileFormSchema = z.object({
@@ -91,7 +92,7 @@ function ProfileEditForm({
         <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
                  <div className="flex justify-center">
-                    <div 
+                    <Avatar 
                         className="h-40 w-40 rounded-full flex items-center justify-center transition-all"
                         style={{ background: selectedBackground || 'hsl(var(--muted))' }}
                     >
@@ -100,7 +101,8 @@ function ProfileEditForm({
                             className="w-2/3 h-2/3"
                             style={{ color: selectedColor || 'hsl(var(--primary-foreground))' }}
                         />
-                    </div>
+                         <AvatarFallback className="text-4xl">{profile.name?.[0]}</AvatarFallback>
+                    </Avatar>
                 </div>
 
                 <FormField
@@ -319,7 +321,7 @@ export function ProfileForm({ userProfile }: { userProfile: UserProfile | null }
                     {userProfile?.profiles?.map(profile => (
                          <div key={profile.id} onClick={() => setEditingProfile(profile)} className="group flex cursor-pointer flex-col items-center gap-3 text-muted-foreground transition-all hover:scale-105 hover:text-foreground w-24 sm:w-32" role="button" tabIndex={0}>
                             <div className="relative">
-                                <div 
+                                <Avatar
                                     className="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-2 border-transparent flex items-center justify-center transition-all"
                                     style={{ background: profile.avatarBackground || 'hsl(var(--muted))' }}
                                 >
@@ -328,7 +330,8 @@ export function ProfileForm({ userProfile }: { userProfile: UserProfile | null }
                                         className="h-12 w-12 sm:h-16 sm:w-16"
                                         style={{ color: profile.avatarColor || 'hsl(var(--primary-foreground))' }}
                                     />
-                                </div>
+                                    <AvatarFallback className="text-3xl sm:text-4xl">{profile.name?.[0]}</AvatarFallback>
+                                </Avatar>
                                 <Button 
                                     size="icon" 
                                     variant="destructive" 

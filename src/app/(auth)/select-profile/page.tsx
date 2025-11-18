@@ -14,6 +14,7 @@ import { useDoc } from '@/firebase/firestore/use-doc';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useMemoFirebase } from '@/firebase/firestore/use-memo-firebase';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export default function SelectProfilePage() {
   const router = useRouter();
@@ -81,7 +82,7 @@ export default function SelectProfilePage() {
                     if (e.key === 'Enter' || e.key === ' ') handleProfileSelect(profile);
                   }}
                 >
-                  <div 
+                  <Avatar 
                     className="h-40 w-40 overflow-hidden rounded-md border-4 border-transparent transition-all group-hover:scale-105 group-hover:border-primary flex items-center justify-center" 
                     style={{ background: profile.avatarBackground || 'hsl(var(--muted))' }}
                   >
@@ -90,7 +91,8 @@ export default function SelectProfilePage() {
                       className="h-2/3 w-2/3"
                       style={{ color: profile.avatarColor || 'hsl(var(--primary-foreground))' }}
                     />
-                  </div>
+                    <AvatarFallback className="text-4xl">{profile.name?.[0]}</AvatarFallback>
+                  </Avatar>
                   <p className="text-xl font-medium transition-colors group-hover:text-foreground">{profile.name}</p>
                 </div>
               ))}
