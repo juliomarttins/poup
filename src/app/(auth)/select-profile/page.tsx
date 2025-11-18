@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -42,7 +40,7 @@ export default function SelectProfilePage() {
 
   const ProfileSkeleton = () => (
     <div className="flex flex-col items-center gap-4 w-40">
-      <Skeleton className="h-40 w-40 rounded-md" />
+      <Skeleton className="h-40 w-40 rounded-full" />
       <Skeleton className="h-6 w-24" />
     </div>
   );
@@ -57,9 +55,9 @@ export default function SelectProfilePage() {
           Quem está acessando?
         </h1>
         
-        <div className="mt-4 mb-10 flex items-center justify-center gap-2 rounded-lg border bg-muted p-3 text-sm text-muted-foreground max-w-md mx-auto">
+        <div className="mt-4 mb-10 flex items-center justify-center gap-2 rounded-full bg-muted/60 px-4 py-2 text-sm text-muted-foreground max-w-md mx-auto">
             <Info className="h-5 w-5 flex-shrink-0" />
-            <p className="text-center">Todos os perfis compartilham as mesmas transações, dívidas e orçamentos.</p>
+            <p className="text-center">Todos os perfis compartilham as mesmas finanças.</p>
         </div>
 
         <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
@@ -83,7 +81,7 @@ export default function SelectProfilePage() {
                   }}
                 >
                   <Avatar 
-                    className="h-40 w-40 overflow-hidden rounded-md border-4 border-transparent transition-all group-hover:scale-105 group-hover:border-primary flex items-center justify-center" 
+                    className="h-40 w-40 overflow-hidden rounded-full border-4 border-transparent transition-all group-hover:scale-105 group-hover:border-primary flex items-center justify-center ring-4 ring-transparent group-hover:ring-primary/20" 
                     style={{ background: profile.avatarBackground || 'hsl(var(--muted))' }}
                   >
                     <AvatarIcon
@@ -98,7 +96,7 @@ export default function SelectProfilePage() {
               ))}
               
               <div onClick={handleManageProfilesClick} className="group flex w-40 cursor-pointer flex-col items-center gap-3 text-muted-foreground transition-all" role="button" tabIndex={0}>
-                  <div className="flex h-40 w-40 items-center justify-center rounded-md border-4 border-transparent bg-muted/50 transition-all group-hover:scale-105 group-hover:border-primary group-hover:bg-muted">
+                  <div className="flex h-40 w-40 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/30 bg-muted/50 transition-all group-hover:scale-105 group-hover:border-primary group-hover:bg-muted group-hover:ring-4 group-hover:ring-primary/20">
                       <Plus className="h-16 w-16 text-muted-foreground/50 transition-colors group-hover:text-primary" />
                   </div>
                   <p className="text-xl font-medium transition-colors group-hover:text-foreground">Adicionar Perfil</p>
