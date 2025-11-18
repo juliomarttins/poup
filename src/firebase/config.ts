@@ -1,10 +1,11 @@
+// src/firebase/config.ts
 
 export const firebaseConfig = {
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  apiKey: "AIzaSyB8DOOSfIZV6Bh5oDorYIGLGuDpVNaModg",
+  authDomain: "studio-5059883647-300c7.firebaseapp.com",
+  projectId: "studio-5059883647-300c7",
+  storageBucket: "studio-5059883647-300c7.firebasestorage.app",
+  messagingSenderId: "596586151819",
+  appId: "1:596586151819:web:77d517ec551c24854bb98e",
+  measurementId: "G-MEASUREMENT_ID", // Se tiver, coloque aqui, senão deixe assim ou vazio
 };

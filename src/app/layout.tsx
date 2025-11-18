@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { LoadingProvider } from '@/contexts/loading-context';
 import { ThemeProvider } from '@/components/theme-provider';
+import { UserProvider } from '@/firebase/auth/use-user';
 
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -33,9 +34,11 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable}`}>
         <FirebaseClientProvider>
-          <LoadingProvider>
-              {children}
-          </LoadingProvider>
+          <UserProvider>
+            <LoadingProvider>
+                {children}
+            </LoadingProvider>
+          </UserProvider>
           <Toaster />
         </FirebaseClientProvider>
       </body>
