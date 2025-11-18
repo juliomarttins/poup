@@ -16,7 +16,7 @@ import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, up
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { generateUsername } from '@/lib/utils';
+import { generateUsername, generateFamilyCode } from '@/lib/utils';
 
 
 const formSchema = z.object({
@@ -72,7 +72,9 @@ export function SignupForm() {
                 name: name || user.displayName,
                 email: user.email,
                 createdAt: serverTimestamp(),
-                profiles: [mainProfile]
+                profiles: [mainProfile],
+                familyId: user.uid, // O pai da família é ele mesmo
+                familyCode: generateFamilyCode() // Gera o código
             };
             await setDoc(userDocRef, userProfileData);
         }

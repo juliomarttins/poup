@@ -13,7 +13,7 @@ import { useAuth, useFirestore } from '@/firebase';
 import { signInWithEmailAndPassword, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup, type User, type AuthError } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
-import { generateUsername } from '@/lib/utils';
+import { generateUsername, generateFamilyCode } from '@/lib/utils';
 
 
 type View = 'login' | 'forgot-password';
@@ -50,7 +50,9 @@ export function LoginForm() {
                 name: user.displayName,
                 email: user.email,
                 createdAt: serverTimestamp(),
-                profiles: [mainProfile]
+                profiles: [mainProfile],
+                familyId: user.uid, // O pai da família é ele mesmo
+                familyCode: generateFamilyCode() // Gera o código
             };
             await setDoc(userDocRef, userProfileData);
         }
