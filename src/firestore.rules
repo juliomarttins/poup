@@ -1,25 +1,29 @@
-
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // ----- FUNÇÕES HELPER -----
     function isSignedIn() {
       return request.auth != null;
     }
-
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Grant broad access to a user's own documents and subcollections.
-    // This is a secure rule because of the `isOwner(userId)` check,
-    // ensuring a user can only access their own data tree.
-    // The `{document=**}` wildcard recursively matches all documents
-    // and subcollections under the user's path, which is necessary
-    // for complex queries (like multi-field orderBy) to be allowed.
-    match /users/{userId}/{document=**} {
+    // ----- REGRAS -----
+
+    // Regra 1: Permite ao dono ler/escrever seu próprio doc de usuário
+    // (Ex: /users/ID_DO_USUARIO)
+    match /users/{userId} {
       allow read, write: if isOwner(userId);
+    }
+    
+    // Regra 2: Permite ao dono ler/escrever em QUALQUER subcoleção
+    // (Ex: /users/ID_DO_USUARIO/transactions/ID_DA_TRANSACAO)
+    // Esta é a regra correta.
+    match /users/{userId}/{collection}/{docId=**} {
+       allow read, write: if isOwner(userId);
     }
   }
 }
