@@ -41,7 +41,7 @@ import type { Profile, UserProfile } from "@/lib/types";
 import { Label } from "../ui/label";
 import { useProfile } from "@/contexts/profile-context";
 import { ScrollArea } from "../ui/scroll-area";
-import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Avatar } from "../ui/avatar";
 
 
 const profileFormSchema = z.object({
@@ -94,7 +94,7 @@ function ProfileEditForm({
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
                  <div className="flex justify-center">
                     <Avatar
-                        className="h-40 w-40 rounded-full"
+                        className="h-40 w-40 rounded-full flex items-center justify-center"
                         style={{ background: selectedBackground || 'hsl(var(--muted))' }}
                     >
                         <AvatarIcon
@@ -323,7 +323,7 @@ export function ProfileForm({ userProfile }: { userProfile: UserProfile | null }
                          <div key={profile.id} onClick={() => setEditingProfile(profile)} className="group flex cursor-pointer flex-col items-center gap-3 text-muted-foreground transition-all hover:scale-105 hover:text-foreground w-24 sm:w-32" role="button" tabIndex={0}>
                             <div className="relative">
                                 <Avatar
-                                    className="h-24 w-24 sm:h-32 sm:w-32 rounded-full"
+                                    className="h-24 w-24 sm:h-32 sm:w-32 rounded-full flex items-center justify-center"
                                     style={{ background: profile.avatarBackground || 'hsl(var(--muted))' }}
                                 >
                                     <AvatarIcon

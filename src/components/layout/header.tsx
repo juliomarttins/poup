@@ -38,7 +38,7 @@ import { useAuth, useFirestore, useUser, useDoc, useMemoFirebase } from "@/fireb
 import { signOut } from "firebase/auth";
 import { Logo } from "@/components/icons";
 import { AvatarIcon } from "../icons/avatar-icon";
-import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Avatar } from "../ui/avatar";
 import { useProfile } from "@/contexts/profile-context";
 import { useLoading } from "@/contexts/loading-context";
 import type { UserProfile, Profile } from "@/lib/types";
@@ -206,7 +206,7 @@ function HeaderComponent() {
               <DropdownMenuTrigger asChild>
                  <Button variant="secondary" size="icon" className="rounded-full">
                     <Avatar
-                        className="h-10 w-10"
+                        className="h-10 w-10 flex items-center justify-center"
                         style={{ background: activeProfile?.avatarBackground || 'hsl(var(--muted))' }}
                     >
                         <AvatarIcon
@@ -225,7 +225,7 @@ function HeaderComponent() {
                   {userProfile?.profiles && userProfile.profiles.map((profile: Profile) => (
                     <DropdownMenuItem key={profile.id} onClick={() => handleProfileSwitch(profile.id)}>
                       <Avatar
-                          className="h-6 w-6 mr-2"
+                          className="h-6 w-6 mr-2 flex items-center justify-center"
                           style={{background: profile.avatarBackground || 'hsl(var(--muted))'}}
                       >
                           <AvatarIcon
