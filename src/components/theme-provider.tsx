@@ -12,6 +12,7 @@ type ThemeProviderProps = {
   defaultColor?: ColorTheme
   storageKey?: string
   colorStorageKey?: string
+  enableSystem?: boolean
 }
 
 type ThemeProviderState = {
@@ -36,6 +37,7 @@ export function ThemeProvider({
   defaultColor = "default",
   storageKey = "vite-ui-theme",
   colorStorageKey = "vite-ui-color-theme",
+  enableSystem = true,
   ...props
 }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(() =>
@@ -54,7 +56,7 @@ export function ThemeProvider({
 
         root.classList.remove("light", "dark", "neutral")
 
-        if (theme === "system") {
+        if (theme === "system" && enableSystem) {
         const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
             .matches
             ? "dark"
@@ -65,7 +67,7 @@ export function ThemeProvider({
         }
 
         root.classList.add(theme)
-    }, [theme])
+    }, [theme, enableSystem])
 
 
   useEffect(() => {

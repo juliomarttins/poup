@@ -12,7 +12,9 @@ import { useDoc } from '@/firebase/firestore/use-doc';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useMemoFirebase } from '@/firebase/firestore/use-memo-firebase';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+
 
 export default function SelectProfilePage() {
   const router = useRouter();
@@ -81,7 +83,10 @@ export default function SelectProfilePage() {
                   }}
                 >
                   <Avatar 
-                    className="h-40 w-40 overflow-hidden rounded-full border-4 border-transparent transition-all group-hover:scale-105 group-hover:border-primary flex items-center justify-center ring-4 ring-transparent group-hover:ring-primary/20" 
+                    className={cn(
+                      "h-40 w-40 overflow-hidden rounded-full border-4 border-transparent flex items-center justify-center",
+                      "transition-all group-hover:scale-105 group-hover:border-primary group-hover:shadow-[0_0_0_4px_hsl(var(--primary)/0.2)]"
+                    )}
                     style={{ background: profile.avatarBackground || 'hsl(var(--muted))' }}
                   >
                     <AvatarIcon
@@ -96,7 +101,10 @@ export default function SelectProfilePage() {
               ))}
               
               <div onClick={handleManageProfilesClick} className="group flex w-40 cursor-pointer flex-col items-center gap-3 text-muted-foreground transition-all" role="button" tabIndex={0}>
-                  <div className="flex h-40 w-40 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/30 bg-muted/50 transition-all group-hover:scale-105 group-hover:border-primary group-hover:bg-muted group-hover:ring-4 group-hover:ring-primary/20">
+                  <div className={cn(
+                    "flex h-40 w-40 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/30 bg-muted/50",
+                    "transition-all group-hover:scale-105 group-hover:border-primary group-hover:bg-muted group-hover:shadow-[0_0_0_4px_hsl(var(--primary)/0.2)]"
+                  )}>
                       <Plus className="h-16 w-16 text-muted-foreground/50 transition-colors group-hover:text-primary" />
                   </div>
                   <p className="text-xl font-medium transition-colors group-hover:text-foreground">Adicionar Perfil</p>
