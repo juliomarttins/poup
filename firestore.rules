@@ -24,7 +24,7 @@ service cloud.firestore {
       // Rules for the transactions subcollection
       match /transactions/{transactionId} {
         // Only the owner can read, write, or delete a specific transaction.
-        allow get, update, delete: if isOwner(userId);
+        allow read, write: if isOwner(userId);
       }
       match /transactions {
           // Only the owner can list and create transactions.
@@ -34,7 +34,7 @@ service cloud.firestore {
       // Rules for the debts subcollection
       match /debts/{debtId} {
         // Only the owner can read, write, or delete a specific debt.
-        allow get, update, delete: if isOwner(userId);
+        allow read, write: if isOwner(userId);
       }
       match /debts {
         // Only the owner can list and create debts.
