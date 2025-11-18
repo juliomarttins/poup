@@ -32,7 +32,6 @@ async function setUserSubcollectionDoc<T extends { id: string, userId: string }>
     id: docRef.id,
     userId: userId, // Ensure userId is correctly set
     updatedAt: serverTimestamp(),
-    ...(!isUpdate && { createdAt: serverTimestamp() }),
   };
 
   setDoc(docRef, finalData, { merge: true }).catch(async (serverError) => {

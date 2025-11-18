@@ -10,7 +10,6 @@ export type Transaction = {
   category: string;
   userId: string; // ID of the user who created the transaction
   profileId?: string; // ID of the profile that created the transaction
-  createdAt?: Timestamp; // Firestore timestamp for ordering
 };
 
 export type Debt = {
