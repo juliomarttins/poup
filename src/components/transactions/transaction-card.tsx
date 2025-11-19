@@ -68,7 +68,7 @@ export function TransactionCard({ transaction, onEdit, onDelete }: TransactionCa
       <Card>
         <CardContent className="p-4 flex items-start gap-4">
             <Avatar 
-                className="h-10 w-10 flex-shrink-0 flex items-center justify-center"
+                className="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-full"
                 style={{ background: displayProfile.avatarBackground }}
             >
                 <AvatarIcon

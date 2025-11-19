@@ -118,7 +118,7 @@ const ProfileCell = ({ profileId }: { profileId?: string }) => {
         return (
             <div className="flex items-center gap-2">
                  <Avatar 
-                    className="h-6 w-6 flex items-center justify-center"
+                    className="h-6 w-6 flex items-center justify-center rounded-full"
                     style={{ background: mainProfile.avatarBackground || 'hsl(var(--muted))' }}
                 >
                     <AvatarIcon
@@ -136,7 +136,7 @@ const ProfileCell = ({ profileId }: { profileId?: string }) => {
     return (
         <div className="flex items-center gap-2">
             <Avatar 
-                className="h-6 w-6 flex items-center justify-center"
+                className="h-6 w-6 flex items-center justify-center rounded-full"
                 style={{ background: profile.avatarBackground || 'hsl(var(--muted))' }}
             >
                 <AvatarIcon

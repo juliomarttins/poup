@@ -59,7 +59,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
             return (
               <div key={transaction.id} className="flex items-center gap-4">
                 <Avatar 
-                    className="h-9 w-9 flex items-center justify-center"
+                    className="h-9 w-9 flex items-center justify-center rounded-full"
                     style={{ background: displayProfile.avatarBackground }}
                 >
                     <AvatarIcon
