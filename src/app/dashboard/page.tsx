@@ -11,13 +11,18 @@ import { getDashboardStats } from './_actions/data';
 import { DashboardClientPage } from './_components/dashboard-client-page';
 import { WelcomeEmptyState } from '@/components/dashboard/welcome-empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useProfile } from '@/firebase';
 import type { Transaction, ManagedDebt } from '@/lib/types';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 
 export default function DashboardPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { activeProfile, isLoading: isProfileLoading } = useProfile();
+  const router = useRouter();
+
 
   // Fetch all Transactions for the user
   const transactionsQuery = useMemoFirebase(() => {
@@ -33,10 +38,17 @@ export default function DashboardPage() {
   }, [firestore, user?.uid]);
   const { data: debts, isLoading: isLoadingDebts } = useCollection<ManagedDebt>(debtsQuery);
   
-  const isDataLoading = isLoadingTransactions || isLoadingDebts;
+  useEffect(() => {
+    if (!isProfileLoading && !activeProfile) {
+      router.push('/select-profile');
+    }
+  }, [isProfileLoading, activeProfile, router]);
+
+
+  const isDataLoading = isLoadingTransactions || isLoadingDebts || isProfileLoading;
   const isDataEmpty = !isDataLoading && !transactions?.length && !debts?.length;
 
-  if (isDataLoading) {
+  if (isDataLoading || !activeProfile) {
     return (
       <div className="flex flex-1 flex-col gap-6">
         <Skeleton className="h-48 w-full" />

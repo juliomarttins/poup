@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useProfile } from '@/contexts/profile-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLoading } from '@/contexts/loading-context';
@@ -11,27 +11,15 @@ import { useLoading } from '@/contexts/loading-context';
 export function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const { activeProfile, isLoading: isProfileLoading } = useProfile();
   const { hideLoading } = useLoading();
-  const router = useRouter();
   const pathname = usePathname();
 
+  // Hide the global loading screen once the profile state is resolved.
   useEffect(() => {
-    // Don't redirect on settings page
-    if (pathname.startsWith('/dashboard/settings')) {
-      return;
-    }
-    
-    // Only redirect if profile context has finished loading and there's no active profile
-    if (!isProfileLoading && !activeProfile) {
-      router.push('/select-profile');
-    }
-  }, [activeProfile, isProfileLoading, router, pathname]);
-
-  // When content is ready to be shown, hide the global loading screen.
-  useEffect(() => {
-    if (!isProfileLoading && activeProfile) {
+    if (!isProfileLoading) {
       hideLoading();
     }
-  }, [isProfileLoading, activeProfile, hideLoading]);
+  }, [isProfileLoading, hideLoading]);
+
 
   // While profile context is loading, show a skeleton UI.
   // This prevents content flashes and provides a better loading experience.
@@ -52,11 +40,9 @@ export function DashboardLayoutContent({ children }: { children: ReactNode }) {
       )
   }
 
-  // If there's no active profile (but loading is finished), we are likely about to redirect.
-  // Render nothing to avoid a flash of content. The settings page has its own profile loading.
-  if (!activeProfile && !pathname.startsWith('/dashboard/settings')) {
-    return null;
-  }
-  
+  // If loading is finished, render the children.
+  // The logic to redirect to /select-profile if no profile is active
+  // should be handled by the page itself, or a higher-level component
+  // that understands the page's requirements.
   return <>{children}</>;
 }
