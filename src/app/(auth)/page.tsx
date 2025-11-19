@@ -1,4 +1,5 @@
 
+
 import Image from 'next/image';
 import { LoginForm } from '@/components/auth/login-form';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -6,6 +7,7 @@ import { Logo } from '@/components/icons';
 
 export default function LoginPage() {
   const loginBg = PlaceHolderImages.find(img => img.id === 'login-background');
+  const appVersion = "v.1.0.4";
 
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
@@ -23,6 +25,9 @@ export default function LoginPage() {
             </p>
           </div>
           <LoginForm />
+          <div className="pt-4 text-center text-xs text-muted-foreground">
+            {appVersion}
+          </div>
         </div>
       </div>
       <div className="hidden bg-muted lg:block relative">

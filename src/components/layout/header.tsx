@@ -71,6 +71,7 @@ function HeaderComponent() {
   const { showLoading } = useLoading();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { activeProfile, setActiveProfile } = useProfile();
+  const appVersion = "v.1.0.4"; // Versão da aplicação
   
   const userProfileRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
@@ -156,6 +157,9 @@ function HeaderComponent() {
                 Configurações
               </Button>
           </nav>
+          <div className="mt-auto p-4 text-center text-xs text-muted-foreground">
+            {appVersion}
+          </div>
         </SheetContent>
       </Sheet>
 
