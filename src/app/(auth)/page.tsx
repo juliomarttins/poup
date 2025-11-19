@@ -7,7 +7,7 @@ import { Logo } from '@/components/icons';
 
 export default function LoginPage() {
   const loginBg = PlaceHolderImages.find(img => img.id === 'login-background');
-  const appVersion = "v.1.0.6";
+  const appVersion = "v.1.0.7";
 
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">

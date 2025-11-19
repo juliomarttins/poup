@@ -12,8 +12,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     <ProfileProvider>
       <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           defaultColor="default"
+          enableSystem={false}
       >
           <DashboardSettingsProvider>
               <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
