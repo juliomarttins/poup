@@ -95,7 +95,7 @@ function ProfileEditForm({
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
                 <div className="flex justify-center mb-4">
                     <div className={cn(
-                        "h-32 w-32 rounded-full border-4 border-background shadow-lg flex items-center justify-center transition-all duration-500"
+                        "h-32 w-32 rounded-full border-4 border-background shadow-lg flex items-center justify-center transition-all duration-500 overflow-hidden"
                     )} style={{background: selectedBackground || 'hsl(var(--muted))'}}>
                          <AvatarIcon
                             iconName={selectedAvatar}
@@ -308,7 +308,7 @@ export function ProfileForm({ userProfile }: { userProfile: UserProfile | null }
                          <div key={profile.id} onClick={() => setEditingProfile(profile)} className="group flex cursor-pointer flex-col items-center gap-3 text-muted-foreground transition-all hover:scale-105 hover:text-foreground w-24 sm:w-32" role="button" tabIndex={0}>
                             <div className="relative">
                                 <div
-                                    className={cn("h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-transparent flex items-center justify-center transition-all shadow-sm group-hover:shadow-md")}
+                                    className={cn("h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-transparent flex items-center justify-center transition-all shadow-sm group-hover:shadow-md overflow-hidden")}
                                     style={{ background: profile.avatarBackground || 'hsl(var(--muted))' }}
                                 >
                                     <AvatarIcon
