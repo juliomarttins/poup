@@ -81,6 +81,8 @@ export function AddTransactionForm({ onSave, onCancel }: AddTransactionFormProps
   const transactionType = form.watch('type');
   const selectedCategory = form.watch('category');
 
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+
   function onSubmit(data: FormValues) {
     if (!firestore || !user || !activeProfile) return;
     const amount = data.type === 'expense' ? -Math.abs(data.amount) : Math.abs(data.amount);
@@ -90,11 +92,11 @@ export function AddTransactionForm({ onSave, onCancel }: AddTransactionFormProps
 
     const newTransaction: Transaction = {
         id: newDocRef.id,
-        description: data.description,
+        description: capitalize(data.description),
         amount,
         type: data.type,
         date: format(data.date, "yyyy-MM-dd"),
-        category: finalCategory,
+        category: capitalize(finalCategory),
         userId: user.uid,
         profileId: activeProfile.id,
     };

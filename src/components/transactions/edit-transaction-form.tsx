@@ -83,6 +83,8 @@ export function EditTransactionForm({ transaction, onSave, onCancel }: EditTrans
   const transactionType = form.watch('type');
   const selectedCategory = form.watch('category');
 
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+
   function onSubmit(data: FormValues) {
     if (!user || !activeProfile) return;
     const amount = data.type === 'expense' ? -Math.abs(data.amount) : Math.abs(data.amount);
@@ -92,8 +94,9 @@ export function EditTransactionForm({ transaction, onSave, onCancel }: EditTrans
         ...transaction, 
         ...data,
         date: format(data.date, "yyyy-MM-dd"),
+        description: capitalize(data.description),
         amount,
-        category: finalCategory,
+        category: capitalize(finalCategory),
         userId: user.uid,
         profileId: transaction.profileId || activeProfile.id, // Keep original profileId or assign current one
     });

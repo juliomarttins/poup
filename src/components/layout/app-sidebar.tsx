@@ -36,7 +36,7 @@ const navItems = [
 
 function SidebarComponent() {
   const pathname = usePathname();
-  const appVersion = "v.1.0.1"; // Versão da aplicação
+  const appVersion = "v.1.0.2"; // Versão da aplicação
 
   return (
     <div className="hidden border-r bg-background md:block">
