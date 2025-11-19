@@ -36,6 +36,7 @@ const navItems = [
 
 function SidebarComponent() {
   const pathname = usePathname();
+  const appVersion = "v.1.0.0"; // Versão da aplicação
 
   return (
     <div className="hidden border-r bg-background md:block">
@@ -77,6 +78,9 @@ function SidebarComponent() {
                   </Button>
                 </CardContent>
               </Card>
+        </div>
+         <div className="p-4 pt-0 text-center text-xs text-muted-foreground">
+            {appVersion}
         </div>
       </div>
     </div>
