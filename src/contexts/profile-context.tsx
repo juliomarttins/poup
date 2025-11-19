@@ -32,24 +32,26 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       console.error('Failed to parse active profile from localStorage', error);
       localStorage.removeItem(PROFILE_STORAGE_KEY);
     }
-    // We set loading to false after the initial load attempt,
-    // but the final loading state will be determined by user loading status below.
   }, []);
 
-  // This effect handles user session changes
+  // This effect handles user session changes and determines the final loading state
   useEffect(() => {
-    // If the user is definitely logged out, clear everything.
-    if (!userLoading && !user) {
+    if (userLoading) {
+      // If user is still loading, we are definitely loading.
+      setIsLoading(true);
+      return;
+    }
+
+    if (!user) {
+      // User is logged out, clear everything and stop loading.
       localStorage.removeItem(PROFILE_STORAGE_KEY);
       setActiveProfileState(null);
       setIsLoading(false);
-    } else if (!userLoading && user) {
-      // User is loaded. If there's an active profile, ensure it's still valid.
-      // For now, we trust the stored profile. The loading is done.
-      setIsLoading(false);
     } else {
-      // User is still loading, so the profile context is also loading.
-      setIsLoading(true);
+      // User is loaded and logged in.
+      // At this point, the initial localStorage load attempt has already run.
+      // We can now confidently say loading is finished.
+      setIsLoading(false);
     }
   }, [user, userLoading]);
 
