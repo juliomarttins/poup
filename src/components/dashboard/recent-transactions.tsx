@@ -66,7 +66,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                         iconName={displayProfile.photoURL}
                         fallbackName={displayProfile.name}
                         className="h-5 w-5"
-                        style={{ color: displayProfile.avatarColor }}
+                        style={{ color: displayProfile.avatarColor || 'hsl(var(--primary-foreground))' }}
                     />
                 </Avatar>
                 <div className="grid gap-1">

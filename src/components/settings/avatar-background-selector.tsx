@@ -7,26 +7,35 @@ import { Check } from 'lucide-react';
 import { AVATAR_BACKGROUNDS } from '@/lib/avatars';
 
 interface AvatarBackgroundSelectorProps {
-  selectedBackground: string | null;
+  selectedBackground: string | null | undefined;
   onSelectBackground: (backgroundValue: string) => void;
 }
 
 export function AvatarBackgroundSelector({ selectedBackground, onSelectBackground }: AvatarBackgroundSelectorProps) {
+  const current = selectedBackground || 'hsl(var(--muted))';
+  
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
       {AVATAR_BACKGROUNDS.map((bg) => (
         <button
           key={bg.name}
           type="button"
-          className={cn(
-            'w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all',
-            selectedBackground === bg.value ? 'border-ring scale-110' : 'border-transparent'
-          )}
-          style={{ background: bg.value }}
           onClick={() => onSelectBackground(bg.value)}
-          aria-label={`Select ${bg.name}`}
+          className={cn("cursor-pointer rounded-lg border-2 p-1 transition-all hover:scale-105",
+             current === bg.value ? "border-primary" : "border-transparent"
+          )}
         >
-          {selectedBackground === bg.value && <Check className="w-6 h-6 text-white mix-blend-difference" />}
+          <div 
+            className="h-16 w-full rounded-md flex items-center justify-center shadow-sm"
+            style={{background: bg.value}}
+          >
+             {current === bg.value && (
+              <div className="bg-background/80 rounded-full p-1">
+                 <Check className="w-4 h-4 text-primary" />
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-center mt-1 font-medium text-muted-foreground">{bg.name}</p>
         </button>
       ))}
     </div>

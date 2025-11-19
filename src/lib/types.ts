@@ -50,6 +50,8 @@ export type UserProfile = {
   photoURL?: string | null;
   avatarColor?: string | null;
   profiles?: Profile[];
+  familyId?: string;
+  familyCode?: string;
 };
 
 export type Profile = {
@@ -57,6 +59,6 @@ export type Profile = {
   name: string;
   photoURL: string | null;
   avatarColor: string | null;
-  backgroundId?: string | null; // <--- ADICIONE SÓ ESSA LINHA AQUI
+  avatarBackground?: string | null;
 }
-}
+

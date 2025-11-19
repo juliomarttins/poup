@@ -75,7 +75,7 @@ export function TransactionCard({ transaction, onEdit, onDelete }: TransactionCa
                     iconName={displayProfile.photoURL}
                     fallbackName={displayProfile.name}
                     className="h-6 w-6"
-                    style={{ color: displayProfile.avatarColor }}
+                    style={{ color: displayProfile.avatarColor || 'hsl(var(--primary-foreground))' }}
                 />
             </Avatar>
             <div className="flex-1 grid gap-1">
