@@ -16,20 +16,12 @@ const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 const PROFILE_STORAGE_KEY = 'poup-active-profile';
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const [activeProfile, setActiveProfileState] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // This effect runs once on mount to load the profile from localStorage
   useEffect(() => {
-    // If the user logs out, clear the profile from state and storage.
-    if (!user) {
-      localStorage.removeItem(PROFILE_STORAGE_KEY);
-      setActiveProfileState(null);
-      setIsLoading(false);
-      return;
-    }
-
-    // If the user is logged in, try to load the profile from storage.
     try {
       const storedProfileJson = localStorage.getItem(PROFILE_STORAGE_KEY);
       if (storedProfileJson) {
@@ -39,10 +31,28 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to parse active profile from localStorage', error);
       localStorage.removeItem(PROFILE_STORAGE_KEY);
-    } finally {
-      setIsLoading(false);
     }
-  }, [user]);
+    // We set loading to false after the initial load attempt,
+    // but the final loading state will be determined by user loading status below.
+  }, []);
+
+  // This effect handles user session changes
+  useEffect(() => {
+    // If the user is definitely logged out, clear everything.
+    if (!userLoading && !user) {
+      localStorage.removeItem(PROFILE_STORAGE_KEY);
+      setActiveProfileState(null);
+      setIsLoading(false);
+    } else if (!userLoading && user) {
+      // User is loaded. If there's an active profile, ensure it's still valid.
+      // For now, we trust the stored profile. The loading is done.
+      setIsLoading(false);
+    } else {
+      // User is still loading, so the profile context is also loading.
+      setIsLoading(true);
+    }
+  }, [user, userLoading]);
+
 
   const setActiveProfile = (profile: Profile | null) => {
     setActiveProfileState(profile);
