@@ -297,7 +297,7 @@ export default function LandingPage() {
               </Button>
             ) : (
               <>
-                <Button variant="ghost" asChild className="hidden sm:inline-flex"><Link href="/auth">Entrar</Link></Button>
+                <Button variant="ghost" asChild className="hidden sm:inline-flex"><Link href="/login">Entrar</Link</Button>
                 <Button asChild className="rounded-full font-bold shadow-lg shadow-primary/20"><Link href="/signup">Testar Grátis</Link></Button>
               </>
             )}
