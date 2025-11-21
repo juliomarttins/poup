@@ -7,7 +7,7 @@ import {
   TrendingUp, ShieldCheck, Users, CreditCard, TrendingDown, Download, 
   Palette, PiggyBank, Check, Laptop, Bell, X, AlertTriangle, RefreshCw, 
   Server, Zap, Coffee, ShoppingCart, Car, Home, Plane, Music, 
-  Shield, Gift // <--- CORREÇÃO: Adicionei o Gift que estava quebrando o build
+  Shield, Gift // <--- CORREÇÃO: Adicionado Gift e Shield
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ const FirebaseLogo = () => (
   <svg viewBox="0 0 24 24" className="w-6 h-6" aria-hidden="true"><path fill="#FFCA28" d="M13.9 2.2l-1.9 10.4 7.5-3.2-5.6-7.2z"/><path fill="#FFA000" d="M2.5 18.7l9.5-5.2-1.9-10.4-7.6 15.6z"/><path fill="#F57F17" d="M12 13.5l-9.5 5.2 9.5 5.4 9.5-5.4-9.5-5.2z"/><path fill="#FFCA28" d="M19.5 9.4l-7.5 3.2 7.5 4.2 2-11.5-2 4.1z"/></svg>
 );
 
-// --- MOCKUPS (VISUAL DENSO) ---
+// --- MOCKUPS ---
 
 const DashboardMockupHero = () => (
   <div className="relative w-full h-full bg-[#09090B] rounded-xl border border-white/10 overflow-hidden flex shadow-2xl text-zinc-100 font-sans">
@@ -310,6 +310,8 @@ export default function LandingPage() {
         {/* HERO SECTION */}
         <section className="relative pt-20 pb-24 md:pt-32 lg:pt-40 overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-primary/5 blur-[100px] rounded-full -z-10 pointer-events-none" />
+          <div className="absolute inset-0 -z-20 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+
           <div className="container px-4 mx-auto">
             <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
                 {/* Copy */}
@@ -319,7 +321,7 @@ export default function LandingPage() {
                       Troque o desespero pela <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-500">tranquilidade.</span>
                     </h1>
                     <p className="text-lg md:text-xl text-muted-foreground max-w-[600px] mx-auto lg:mx-0 leading-relaxed">
-                      Chega de viver no limite. O Poupp usa Inteligência Artificial para organizar seu dinheiro e te tirar do vermelho.
+                      Chega de viver no limite. O Poupp usa Inteligência Artificial para organizar seu dinheiro, planejar seus sonhos e te tirar do vermelho.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
                       <Button size="lg" className="h-14 px-8 text-lg rounded-full shadow-xl shadow-primary/25 hover:scale-105 transition-transform" asChild><Link href="/signup">Começar Teste Grátis</Link></Button>
@@ -345,132 +347,291 @@ export default function LandingPage() {
             <div className="container px-4 mx-auto">
                 <div className="text-center max-w-3xl mx-auto mb-16">
                     <h2 className="text-3xl md:text-4xl font-bold mb-4">Design que funciona</h2>
-                    <p className="text-muted-foreground text-lg">Ferramentas poderosas desenhadas para quem quer resultado rápido.</p>
+                    <p className="text-muted-foreground text-lg">
+                        Uma experiência fluida, seja no computador do escritório ou no celular na fila do mercado.
+                    </p>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
                     
-                    {/* Mobile & Desktop */}
+                    {/* Feature 1: Mobile & Desktop */}
                     <div className="md:col-span-1 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col hover:shadow-xl transition-all duration-500">
                         <div className="space-y-2 relative z-10 mb-6">
-                            <div className="flex gap-2"><div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500"><Smartphone size={16} /></div><div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500"><Laptop size={16} /></div></div>
+                            <div className="flex gap-2">
+                                <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500"><Smartphone size={16} /></div>
+                                <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500"><Laptop size={16} /></div>
+                            </div>
                             <h3 className="text-lg font-bold">Multiplataforma Real</h3>
-                            <p className="text-xs text-muted-foreground">Design responsivo que se adapta perfeitamente a qualquer tamanho de tela.</p>
+                            <p className="text-xs text-muted-foreground">Design responsivo que se adapta perfeitamente a qualquer tamanho de tela. Seus dados sempre sincronizados.</p>
                         </div>
-                        <div className="mt-auto relative h-48 w-full overflow-hidden flex items-end justify-center"><CrossPlatformMockup /></div>
+                        <div className="mt-auto relative h-48 w-full overflow-hidden flex items-end justify-center">
+                            <CrossPlatformMockup />
+                        </div>
                     </div>
 
-                    {/* Caixinhas */}
+                    {/* Feature 2: Caixinhas & Metas (RICH MOCKUP) */}
                     <div className="md:col-span-1 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-500">
-                        <div className="space-y-2 relative z-10"><div className="h-8 w-8 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-500"><PiggyBank size={16} /></div><h3 className="text-lg font-bold">Metas Reais</h3><p className="text-xs text-muted-foreground">Veja quanto falta para realizar seus sonhos.</p></div>
-                        <div className="mt-4 flex-1"><GoalsMockup /></div>
+                        <div className="space-y-2 relative z-10">
+                            <div className="h-8 w-8 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-500"><PiggyBank size={16} /></div>
+                            <h3 className="text-lg font-bold">Metas Reais</h3>
+                            <p className="text-xs text-muted-foreground">Veja quanto falta para realizar seus sonhos.</p>
+                        </div>
+                        <div className="mt-4 flex-1">
+                            <GoalsMockup />
+                        </div>
                     </div>
 
-                    {/* Personalização */}
+                    {/* Feature 3: Personalização (RICH MOCKUP) */}
                     <div className="md:col-span-1 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col hover:shadow-xl transition-all duration-500">
-                        <div className="space-y-2 relative z-10 mb-4"><div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><Palette size={16} /></div><h3 className="text-lg font-bold">Seu Estilo</h3><p className="text-xs text-muted-foreground">Avatares e temas para deixar do seu jeito.</p></div>
-                        <div className="mt-auto flex flex-col gap-2"><PersonalizationMockup /></div>
+                        <div className="space-y-2 relative z-10 mb-4">
+                            <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><Palette size={16} /></div>
+                            <h3 className="text-lg font-bold">Seu Estilo</h3>
+                            <p className="text-xs text-muted-foreground">Avatares e temas para deixar do seu jeito.</p>
+                        </div>
+                        <div className="mt-auto flex flex-col gap-2">
+                            <PersonalizationMockup />
+                        </div>
                     </div>
 
-                    {/* Exportação */}
+                    {/* Feature 4: Exportação */}
                     <div className="md:col-span-1 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-500">
-                        <div className="space-y-2 relative z-10"><div className="h-8 w-8 rounded-lg bg-yellow-500/10 flex items-center justify-center text-yellow-600"><Download size={16} /></div><h3 className="text-lg font-bold">Exportação PDF</h3><p className="text-xs text-muted-foreground">Relatórios profissionais com um clique.</p></div>
-                        <div className="mt-4 relative flex items-center justify-center h-40"><PDFReportMockup /></div>
+                        <div className="space-y-2 relative z-10">
+                            <div className="h-8 w-8 rounded-lg bg-yellow-500/10 flex items-center justify-center text-yellow-600"><Download size={16} /></div>
+                            <h3 className="text-lg font-bold">Exportação PDF</h3>
+                            <p className="text-xs text-muted-foreground">Relatórios profissionais com um clique. Ideal para controle arquivado ou contabilidade.</p>
+                        </div>
+                        <div className="mt-4 relative flex items-center justify-center h-40">
+                             <PDFReportMockup />
+                        </div>
                     </div>
 
-                    {/* Debt & AI */}
+                    {/* Feature 5: Debt Management & AI (UNIFICADO) */}
                     <div className="md:col-span-2 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col hover:shadow-xl transition-all duration-500">
                         <div className="space-y-4 relative z-10 mb-6">
-                            <div className="flex gap-2"><div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500"><ShieldCheck size={16} /></div><div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><Bot size={16} /></div></div>
+                            <div className="flex gap-2">
+                                <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500"><ShieldCheck size={16} /></div>
+                                <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><Bot size={16} /></div>
+                            </div>
                             <h3 className="text-lg font-bold">IA Contra as Dívidas</h3>
-                            <p className="text-xs text-muted-foreground">O Poupp analisa juros e cria estratégias de amortização automaticamente.</p>
+                            <p className="text-xs text-muted-foreground">
+                                O Poupp analisa juros, cria estratégias de amortização e conversa com você sobre como economizar no dia a dia.
+                            </p>
                         </div>
-                        <div className="flex-1 w-full flex items-center justify-center"><IntegratedDebtAI /></div>
+                        <div className="flex-1 w-full flex items-center justify-center">
+                            <IntegratedDebtAI />
+                        </div>
                     </div>
+
                 </div>
             </div>
         </section>
 
-        {/* PRICING */}
+        {/* --- PRICING SECTION --- */}
         <section id="pricing" className="py-24 bg-gradient-to-b from-background to-muted/30">
             <div className="container px-4 mx-auto">
                 <div className="text-center max-w-3xl mx-auto mb-16">
                     <h2 className="text-3xl md:text-4xl font-bold mb-4">Quanto custa a sua liberdade?</h2>
-                    <p className="text-muted-foreground text-lg">Invista centavos para ganhar paz de espírito.</p>
+                    <p className="text-muted-foreground text-lg">
+                        Invista centavos para ganhar paz de espírito.
+                    </p>
                 </div>
-                <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                    <Card className="border-red-200 bg-red-50/50 dark:bg-red-900/10">
-                        <CardHeader><CardTitle className="text-red-600">O Preço do Caos</CardTitle><CardDescription>Continuar sem controle</CardDescription></CardHeader>
-                        <CardContent className="text-center space-y-4">
-                            <div className="text-4xl font-black text-zinc-400 line-through opacity-50">Incalculável</div>
-                            <ul className="text-sm text-left space-y-2 text-muted-foreground">
-                                <li className="flex gap-2"><X className="text-red-500" size={16}/> Juros abusivos</li>
-                                <li className="flex gap-2"><X className="text-red-500" size={16}/> Ansiedade constante</li>
-                                <li className="flex gap-2"><X className="text-red-500" size={16}/> Sem futuro garantido</li>
-                            </ul>
+
+                <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
+                    
+                    {/* Card 1: O Preço do Caos */}
+                    <Card className="border-2 border-red-500/30 bg-gradient-to-b from-red-50/50 to-transparent dark:from-red-950/10 dark:to-transparent flex flex-col relative overflow-hidden hover:border-red-500/50 transition-all group">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-red-500" />
+                        <CardHeader className="text-center pb-2 pt-8">
+                            <div className="mx-auto mb-4 h-12 w-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <AlertTriangle size={24} />
+                            </div>
+                            <CardTitle className="text-2xl font-bold text-red-600 dark:text-red-400">O Preço do Descontrole</CardTitle>
+                            <CardDescription>O custo oculto de não fazer nada.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="text-center space-y-6 flex-1 flex flex-col justify-center">
+                            <div className="text-4xl font-black text-zinc-400 line-through decoration-red-500 decoration-4 opacity-80">
+                                Incalculável
+                            </div>
+                            <p className="text-sm text-muted-foreground px-4">
+                                O preço de continuar pagando juros abusivos e perdendo noites de sono por falta de organização.
+                            </p>
+                            <div className="space-y-4 text-left max-w-xs mx-auto pt-4 border-t border-red-100 dark:border-red-900/30">
+                                <div className="flex items-center gap-3 text-muted-foreground">
+                                    <X size={18} className="text-red-500 shrink-0" /> Juros de cartão rotativo
+                                </div>
+                                <div className="flex items-center gap-3 text-muted-foreground">
+                                    <X size={18} className="text-red-500 shrink-0" /> Ansiedade constante
+                                </div>
+                                <div className="flex items-center gap-3 text-muted-foreground">
+                                    <X size={18} className="text-red-500 shrink-0" /> Sem previsão de futuro
+                                </div>
+                            </div>
                         </CardContent>
+                        <CardFooter className="pt-4 pb-8">
+                            <Button size="lg" variant="outline" className="w-full h-12 text-lg text-muted-foreground cursor-not-allowed hover:bg-transparent border-dashed" disabled>
+                                Continuar Sofrendo
+                            </Button>
+                        </CardFooter>
                     </Card>
-                    <Card className="border-primary shadow-2xl relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-primary"/>
-                        <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-bold rounded-bl-lg">RECOMENDADO</div>
-                        <CardHeader><CardTitle>Assinatura Poupp</CardTitle><CardDescription>Liberdade total</CardDescription></CardHeader>
-                        <CardContent className="text-center space-y-4">
-                            <div className="text-5xl font-black text-primary">R$ 0,98 <span className="text-sm font-medium text-muted-foreground">/dia</span></div>
-                            <p className="text-xs text-muted-foreground">Cobrado mensalmente (R$ 29,90). Sem fidelidade.</p>
-                            <ul className="text-sm text-left space-y-2 pt-4">
-                                <li className="flex gap-2"><Check className="text-primary" size={16}/> Acesso Ilimitado</li>
-                                <li className="flex gap-2"><Check className="text-primary" size={16}/> Inteligência Artificial</li>
-                                <li className="flex gap-2"><Check className="text-primary" size={16}/> App Mobile + Desktop</li>
-                            </ul>
-                        </CardContent>
-                        <CardFooter><Button className="w-full" size="lg" asChild><Link href="/signup">Testar Grátis Agora</Link></Button></CardFooter>
-                    </Card>
+
+                    {/* Card 2: A Oferta Poupp */}
+                    <div className="relative flex flex-col">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-orange-500 rounded-xl blur opacity-30 animate-pulse"></div>
+                        <Card className="relative border-2 border-primary/50 shadow-2xl bg-background flex-1 flex flex-col overflow-hidden">
+                            <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-4 py-1 rounded-bl-xl text-xs font-bold tracking-wide">
+                                RECOMENDADO
+                            </div>
+                            <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
+                            <CardHeader className="text-center pb-2 pt-8">
+                                <div className="mx-auto mb-4 h-12 w-12 bg-primary/10 text-primary rounded-full flex items-center justify-center">
+                                    <CheckCircle2 size={24} />
+                                </div>
+                                <CardTitle className="text-2xl font-bold">Assinatura Poupp</CardTitle>
+                                <CardDescription>Paz mental garantida.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="text-center space-y-6 flex-1 flex flex-col justify-center">
+                                <div className="flex items-baseline justify-center gap-2">
+                                    <span className="text-sm text-muted-foreground line-through">R$ 49,90</span>
+                                    <span className="text-5xl font-black text-primary">R$ 0,98</span>
+                                    <span className="text-muted-foreground font-medium">/ dia</span>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                    Apenas R$ 29,90/mês. <br/>
+                                    <span className="font-bold text-foreground">Sem fidelidade. Cancele quando quiser.</span>
+                                </p>
+
+                                <div className="space-y-4 text-left max-w-xs mx-auto pt-4 border-t border-primary/10">
+                                    {[
+                                        "Painel Completo + IA",
+                                        "Gestão Inteligente de Dívidas",
+                                        "Exportação de PDF Ilimitada",
+                                        "Contas e Perfis Ilimitados",
+                                        "Suporte Premium"
+                                    ].map((feature, i) => (
+                                        <div key={i} className="flex items-center gap-3">
+                                            <div className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                                                <Check size={12} strokeWidth={3} />
+                                            </div>
+                                            <span className="text-sm font-medium">{feature}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                            <CardFooter className="pt-4 pb-8 flex flex-col gap-6">
+                                <Button size="lg" className="w-full h-14 text-lg shadow-lg shadow-primary/20 font-bold" asChild>
+                                    <Link href="/signup">Começar Teste de 7 Dias Grátis</Link>
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    </div>
                 </div>
+                
+                <p className="text-center text-xs text-muted-foreground mt-12 max-w-md mx-auto">
+                    Ao iniciar seu teste, você terá acesso total. Não cobramos nada hoje. O sistema avisa antes do período de teste acabar.
+                </p>
             </div>
         </section>
 
-        {/* SECURITY */}
-        <section id="security" className="py-20 bg-zinc-950 text-white">
-            <div className="container px-4 mx-auto grid md:grid-cols-2 gap-12 items-center">
-                <div className="space-y-6">
-                    <h2 className="text-3xl font-bold flex items-center gap-3"><Shield size={32} className="text-green-500"/> Segurança de Nível Bancário</h2>
-                    <p className="text-zinc-400">Seus dados são protegidos pela mesma infraestrutura que grandes bancos usam.</p>
-                    <div className="flex flex-col gap-4">
-                        <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
-                            <GoogleLogo />
-                            <div><h4 className="font-bold">Google Cloud</h4><p className="text-xs text-zinc-500">Servidores de alta performance.</p></div>
+        {/* --- SECURITY & UPDATES SECTION (DEDICADA) --- */}
+        <section id="security" className="py-20 bg-zinc-950 text-white border-t border-white/10">
+            <div className="container px-4 mx-auto">
+                <div className="grid md:grid-cols-2 gap-12 items-center">
+                    <div className="space-y-6">
+                        <h2 className="text-3xl font-bold flex items-center gap-3">
+                            <Shield size={32} className="text-green-500" />
+                            Segurança de Nível Bancário
+                        </h2>
+                        <p className="text-zinc-400 text-lg">
+                            Seus dados são sagrados. Utilizamos a mesma infraestrutura que protege os maiores bancos digitais e empresas de tecnologia do mundo.
+                        </p>
+                        <div className="flex flex-col gap-4 pt-4">
+                            <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                                <GoogleLogo />
+                                <div>
+                                    <h4 className="font-bold">Infraestrutura Google Cloud</h4>
+                                    <p className="text-xs text-zinc-500">Servidores de alta performance e criptografia de ponta a ponta.</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                                <FirebaseLogo />
+                                <div>
+                                    <h4 className="font-bold">Protegido pelo Firebase</h4>
+                                    <p className="text-xs text-zinc-500">Autenticação segura e banco de dados em tempo real com backup automático.</p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
-                            <FirebaseLogo />
-                            <div><h4 className="font-bold">Firebase Secured</h4><p className="text-xs text-zinc-500">Criptografia de ponta a ponta.</p></div>
+                    </div>
+                    
+                    <div className="bg-zinc-900/50 p-8 rounded-2xl border border-white/5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-4 opacity-20">
+                            <RefreshCw size={100} className="text-primary" />
+                        </div>
+                        <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                            <Zap className="text-primary" />
+                            Evolução Constante
+                        </h3>
+                        <p className="text-zinc-400 mb-6">
+                            O Poupp não para. Assinando hoje, você garante acesso a todas as futuras atualizações sem custo extra.
+                        </p>
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3 text-sm">
+                                <div className="h-2 w-2 rounded-full bg-green-500" />
+                                <span>Novo Modo Escuro (Dark Mode)</span>
+                                <Badge variant="outline" className="ml-auto border-green-500/50 text-green-500 text-[10px]">NOVO</Badge>
+                            </div>
+                            <div className="flex items-center gap-3 text-sm">
+                                <div className="h-2 w-2 rounded-full bg-green-500" />
+                                <span>Exportação Avançada de PDF</span>
+                                <Badge variant="outline" className="ml-auto border-green-500/50 text-green-500 text-[10px]">NOVO</Badge>
+                            </div>
+                            <div className="flex items-center gap-3 text-sm opacity-60">
+                                <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" />
+                                <span>Integração Bancária Automática</span>
+                                <span className="ml-auto text-[10px] uppercase tracking-widest">Em breve</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div className="bg-zinc-900 p-8 rounded-2xl border border-white/10">
-                     <h3 className="text-2xl font-bold mb-4 flex gap-2"><Zap className="text-yellow-500"/> Atualizações Constantes</h3>
-                     <p className="text-sm text-zinc-400 mb-4">O sistema evolui todo mês sem custo extra para você.</p>
-                     <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm"><CheckCircle2 size={16} className="text-green-500"/> Novo Modo Escuro</div>
-                        <div className="flex items-center gap-2 text-sm"><CheckCircle2 size={16} className="text-green-500"/> Exportação PDF 2.0</div>
-                        <div className="flex items-center gap-2 text-sm opacity-50"><CheckCircle2 size={16}/> Integração Bancária (Em breve)</div>
-                     </div>
-                </div>
             </div>
         </section>
 
-        {/* CTA */}
-        <section className="py-24 text-center">
-            <h2 className="text-4xl font-bold mb-6">Pare de adiar sua tranquilidade.</h2>
-            <Button size="lg" className="h-14 px-10 text-xl rounded-full" asChild><Link href="/signup">Criar Conta Grátis</Link></Button>
-            <p className="text-sm text-muted-foreground mt-4">Teste por 7 dias. Cancele quando quiser.</p>
+        {/* --- CTA FINAL --- */}
+        <section className="py-24 bg-primary text-primary-foreground relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+            
+            <div className="container px-4 flex flex-col items-center text-center space-y-8 relative z-10 mx-auto">
+                <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl max-w-2xl">
+                    Pare de adiar sua tranquilidade.
+                </h2>
+                <p className="max-w-[600px] text-primary-foreground/80 text-xl">
+                    Você não tem nada a perder com o teste grátis, mas tem uma vida inteira de liberdade financeira a ganhar.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
+                    <Button size="lg" variant="secondary" className="h-14 px-10 text-xl rounded-full shadow-2xl text-primary font-bold" asChild>
+                        <Link href="/signup">Quero Testar Agora</Link>
+                    </Button>
+                </div>
+            </div>
         </section>
 
       </main>
 
-      <footer className="py-8 border-t bg-muted/30">
-        <div className="container px-4 mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2"><Logo className="h-5 w-5"/><span className="font-bold">Poupp</span></div>
-            <p className="text-xs text-muted-foreground">© 2025 Poupp Inc.</p>
-            <div className="flex gap-4 text-xs text-muted-foreground"><Link href="#">Termos</Link><Link href="#">Privacidade</Link><Link href="#">Suporte</Link></div>
+      <footer className="py-12 bg-background border-t">
+        <div className="container px-4 mx-auto">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-2">
+                    <Logo className="h-6 w-6 text-primary" />
+                    <span className="font-bold text-lg">Poupp</span>
+                </div>
+                <p className="text-center text-sm text-muted-foreground">
+                    © 2025 Poupp Inc. Construído para organizar a vida.
+                </p>
+                <div className="flex items-center gap-6">
+                    <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Termos</Link>
+                    <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Privacidade</Link>
+                    <Link href="https://wa.me/5562998413382" target="_blank" className="text-sm text-muted-foreground hover:text-primary transition-colors">Suporte</Link>
+                </div>
+            </div>
         </div>
       </footer>
     </div>
