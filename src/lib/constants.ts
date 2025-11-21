@@ -1,4 +1,4 @@
-export const APP_VERSION = "v1.2.0"; // Atualizado para versão com nova Landing Page
+export const APP_VERSION = "v1.2.0"; // Versão atualizada com Landing Page
 
 export const APP_NAME = "Poupp";
 
