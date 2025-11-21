@@ -12,7 +12,7 @@ export default function PouppIAPage() {
           </div>
           <div className="space-y-2">
             <h3 className="text-2xl font-bold tracking-tight text-primary">
-                PouppIA
+                Poupp - IA
             </h3>
             <p className="text-lg font-semibold text-foreground">
                 Sua Inteligência Financeira

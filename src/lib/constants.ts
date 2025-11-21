@@ -1,4 +1,4 @@
-export const APP_VERSION = "v.1.1.0";
+export const APP_VERSION = "v.1.1.1";
 
 export const APP_NAME = "Poupp";
 
