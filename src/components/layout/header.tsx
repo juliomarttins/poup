@@ -15,6 +15,7 @@ import {
   LogOut,
   FileText,
   Users,
+  Bot,
 } from "lucide-react";
 import { doc } from 'firebase/firestore';
 
@@ -47,6 +48,7 @@ const navItems = [
   { href: "/dashboard/transactions", icon: ArrowRightLeft, label: "Transações" },
   { href: "/dashboard/debts", icon: PiggyBank, label: "Minhas Dívidas" },
   { href: "/dashboard/situation", icon: FileText, label: "Minha Situação" },
+  { href: "/dashboard/poupp-ia", icon: Bot, label: "PouppIA" },
 ];
 
 const pageTitles: { [key: string]: string } = {
@@ -54,6 +56,7 @@ const pageTitles: { [key: string]: string } = {
     "/dashboard/transactions": "Transações",
     "/dashboard/debts": "Minhas Dívidas",
     "/dashboard/situation": "Minha Situação",
+    "/dashboard/poupp-ia": "PouppIA",
     "/dashboard/settings": "Configurações",
     "/dashboard/settings/appearance": "Aparência",
     "/dashboard/settings/dashboard": "Painel",

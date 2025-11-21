@@ -9,6 +9,7 @@ import {
   PiggyBank,
   Settings,
   ArrowRightLeft,
+  Bot,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/dashboard/transactions", label: "Transações", icon: ArrowRightLeft },
   { href: "/dashboard/debts", label: "Minhas Dívidas", icon: PiggyBank },
   { href: "/dashboard/situation", label: "Minha Situação", icon: FileText },
+  { href: "/dashboard/poupp-ia", label: "PouppIA", icon: Bot },
   { href: "/dashboard/settings", label: "Configurações", icon: Settings },
 ];
 
