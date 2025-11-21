@@ -1,58 +1,62 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import type { Profile } from '@/lib/types';
 import { useUser } from '@/firebase';
 
+// Tipo de estado do perfil: Profile (selecionado) | null (nenhum selecionado) | undefined (ainda não checado)
+type ActiveProfileState = Profile | null | undefined;
+
 interface ProfileContextType {
-  activeProfile: Profile | null;
+  activeProfile: ActiveProfileState;
   setActiveProfile: (profile: Profile | null) => void;
   isLoading: boolean;
 }
 
+// O estado inicial é 'undefined' para indicar que a leitura do localStorage ainda não ocorreu.
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 
 const PROFILE_STORAGE_KEY = 'poup-active-profile';
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
+  // Começa como undefined.
+  const [activeProfile, setActiveProfileState] = useState<ActiveProfileState>(undefined); 
   const { user, loading: userLoading } = useUser();
-  const [activeProfile, setActiveProfileState] = useState<Profile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  // isLoading é verdadeiro se o Firebase está carregando OU se o perfil ainda é undefined (não resolvido).
+  const isLoading = userLoading || activeProfile === undefined;
 
-  // This effect runs once on mount to load the profile from localStorage
+  // Efeito ÚNICO para lidar com sincronização Firebase + LocalStorage
   useEffect(() => {
+    // 1. Se o status de autenticação do Firebase ainda está pendente, não faça nada.
+    if (userLoading) {
+      return;
+    }
+
+    // 2. Se o usuário estiver deslogado, limpe tudo e defina o estado como null (resolvido -> nenhum perfil).
+    if (!user) {
+      localStorage.removeItem(PROFILE_STORAGE_KEY);
+      setActiveProfileState(null); 
+      return;
+    }
+
+    // 3. Usuário autenticado: Tenta carregar o perfil do localStorage.
     try {
       const storedProfileJson = localStorage.getItem(PROFILE_STORAGE_KEY);
       if (storedProfileJson) {
         const storedProfile = JSON.parse(storedProfileJson);
-        setActiveProfileState(storedProfile);
+        // Atualiza o estado
+        setActiveProfileState(storedProfile); 
+      } else {
+        // Se não houver nada no localStorage, resolve para null.
+        setActiveProfileState(null); 
       }
     } catch (error) {
       console.error('Failed to parse active profile from localStorage', error);
       localStorage.removeItem(PROFILE_STORAGE_KEY);
-    }
-  }, []);
-
-  // This effect handles user session changes and determines the final loading state
-  useEffect(() => {
-    if (userLoading) {
-      // If user is still loading, we are definitely loading.
-      setIsLoading(true);
-      return;
+      setActiveProfileState(null); 
     }
 
-    if (!user) {
-      // User is logged out, clear everything and stop loading.
-      localStorage.removeItem(PROFILE_STORAGE_KEY);
-      setActiveProfileState(null);
-      setIsLoading(false);
-    } else {
-      // User is loaded and logged in.
-      // At this point, the initial localStorage load attempt has already run.
-      // We can now confidently say loading is finished.
-      setIsLoading(false);
-    }
   }, [user, userLoading]);
 
 

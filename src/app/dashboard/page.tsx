@@ -1,4 +1,3 @@
-
 'use client';
 
 import { DollarSign, CreditCard, TrendingUp, TrendingDown } from 'lucide-react';
@@ -39,8 +38,11 @@ export default function DashboardPage() {
   }, [firestore, user?.uid]);
   const { data: debts, isLoading: isLoadingDebts } = useCollection<ManagedDebt>(debtsQuery);
   
+  // Lógica de redirecionamento para seleção de perfil
   useEffect(() => {
-    if (!isProfileLoading && !activeProfile) {
+    // Redireciona APENAS se o carregamento do perfil terminou (isProfileLoading === false)
+    // E se o perfil ativo for explicitamente null (ou seja, o usuário logou, mas precisa escolher um perfil)
+    if (!isProfileLoading && activeProfile === null) { 
       router.push('/select-profile');
     }
   }, [isProfileLoading, activeProfile, router]);
@@ -49,7 +51,7 @@ export default function DashboardPage() {
   const isDataLoading = isLoadingTransactions || isLoadingDebts || isProfileLoading;
   const isDataEmpty = !isDataLoading && !transactions?.length && !debts?.length;
 
-  if (isDataLoading || !activeProfile) {
+  if (isDataLoading || activeProfile === undefined) { // <-- Mantém o estado 'undefined' como loading
     return (
       <div className="flex flex-1 flex-col gap-6">
         <Skeleton className="h-48 w-full" />
