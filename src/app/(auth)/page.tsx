@@ -1,5 +1,3 @@
-
-
 import Image from 'next/image';
 import { LoginForm } from '@/components/auth/login-form';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -7,7 +5,7 @@ import { Logo } from '@/components/icons';
 
 export default function LoginPage() {
   const loginBg = PlaceHolderImages.find(img => img.id === 'login-background');
-  const appVersion = "v.1.0.7";
+  const appVersion = "v.1.0.8";
 
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">

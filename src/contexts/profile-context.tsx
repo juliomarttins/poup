@@ -33,9 +33,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // 2. Se o usuário estiver deslogado, limpe tudo e defina o estado como null (resolvido -> nenhum perfil).
+    // 2. Se o usuário estiver deslogado, apenas defina o estado como null.
+    // [CORREÇÃO] NÃO APAGAR o localStorage aqui. Isso evita que um "flicker" na auth apague seu perfil salvo.
+    // A limpeza real deve ser feita apenas na ação de Logout explícito.
     if (!user) {
-      localStorage.removeItem(PROFILE_STORAGE_KEY);
       setActiveProfileState(null); 
       return;
     }
@@ -53,6 +54,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Failed to parse active profile from localStorage', error);
+      // Em caso de erro de leitura (JSON corrompido), aí sim limpamos para evitar loop de erro.
       localStorage.removeItem(PROFILE_STORAGE_KEY);
       setActiveProfileState(null); 
     }

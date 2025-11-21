@@ -8,14 +8,14 @@ export async function setCookie(idToken: string) {
   // [CORREÇÃO 1] Adicionado 'await', obrigatório no Next.js 15
   const cookieStore = await cookies(); 
   
-  // [CORREÇÃO 2] Ajuste de segurança: 'secure' deve ser false em localhost (dev)
-  // e true em produção. Se for true em http://localhost, o navegador REJEITA o cookie.
+  // [CORREÇÃO 2] Ajuste de segurança dinâmico.
+  // Garante que funcione em localhost (secure: false) e produção (secure: true)
   const isProduction = process.env.NODE_ENV === 'production';
 
   cookieStore.set('__session', idToken, {
     maxAge: expiresIn,
     httpOnly: true,
-    secure: isProduction, // Dinâmico para evitar erros em dev
+    secure: isProduction, 
     path: '/',
     sameSite: 'lax',
   });

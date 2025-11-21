@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import Link from "next/link";
@@ -71,7 +69,7 @@ function HeaderComponent() {
   const { showLoading } = useLoading();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { activeProfile, setActiveProfile } = useProfile();
-  const appVersion = "v.1.0.7"; // Versão da aplicação
+  const appVersion = "v.1.0.8"; // Versão da aplicação
   
   const userProfileRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;

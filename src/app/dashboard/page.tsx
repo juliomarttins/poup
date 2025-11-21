@@ -13,15 +13,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { useProfile } from '@/contexts/profile-context';
 import type { Transaction, ManagedDebt } from '@/lib/types';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 
 export default function DashboardPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { activeProfile, isLoading: isProfileLoading } = useProfile();
-  const router = useRouter();
 
 
   // Fetch all Transactions for the user
@@ -38,20 +35,13 @@ export default function DashboardPage() {
   }, [firestore, user?.uid]);
   const { data: debts, isLoading: isLoadingDebts } = useCollection<ManagedDebt>(debtsQuery);
   
-  // Lógica de redirecionamento para seleção de perfil
-  useEffect(() => {
-    // Redireciona APENAS se o carregamento do perfil terminou (isProfileLoading === false)
-    // E se o perfil ativo for explicitamente null (ou seja, o usuário logou, mas precisa escolher um perfil)
-    if (!isProfileLoading && activeProfile === null) { 
-      router.push('/select-profile');
-    }
-  }, [isProfileLoading, activeProfile, router]);
-
+  // [CORREÇÃO] Removido o useEffect que redirecionava para /select-profile
+  // Isso evita o loop infinito quando o activeProfile pisca como null
 
   const isDataLoading = isLoadingTransactions || isLoadingDebts || isProfileLoading;
   const isDataEmpty = !isDataLoading && !transactions?.length && !debts?.length;
 
-  if (isDataLoading || activeProfile === undefined) { // <-- Mantém o estado 'undefined' como loading
+  if (isDataLoading) {
     return (
       <div className="flex flex-1 flex-col gap-6">
         <Skeleton className="h-48 w-full" />

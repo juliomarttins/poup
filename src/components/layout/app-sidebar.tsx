@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import Link from "next/link";
@@ -36,7 +34,7 @@ const navItems = [
 
 function SidebarComponent() {
   const pathname = usePathname();
-  const appVersion = "v.1.0.7"; // Versão da aplicação
+  const appVersion = "v.1.0.8"; // Versão da aplicação
 
   return (
     <div className="hidden border-r bg-background md:block">
