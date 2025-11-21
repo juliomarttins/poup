@@ -7,7 +7,7 @@ import {
   TrendingUp, ShieldCheck, Users, CreditCard, TrendingDown, Download, 
   Palette, PiggyBank, Check, Laptop, Bell, X, AlertTriangle, RefreshCw, 
   Server, Zap, Coffee, ShoppingCart, Car, Home, Plane, Music, 
-  Shield // <--- ADICIONADO: O ícone que faltava!
+  Shield, Gift // <--- CORREÇÃO: Adicionei o Gift que estava quebrando o build
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -81,6 +81,7 @@ const DashboardMockupHero = () => (
                         { icon: Laptop, name: "Freelance UI", val: "+ R$ 1.500,00", user: "EU", userColor: "bg-blue-600", time: "Ontem, 09:00", income: true },
                         { icon: Coffee, name: "Cafeteria", val: "- R$ 18,90", user: "AM", userColor: "bg-pink-600", time: "20/10, 08:30" },
                         { icon: Music, name: "Spotify", val: "- R$ 21,90", user: "EU", userColor: "bg-blue-600", time: "19/10, 10:00" },
+                        { icon: Gift, name: "Presente", val: "- R$ 150,00", user: "AM", userColor: "bg-pink-600", time: "18/10, 19:00" },
                     ].map((t, i) => (
                         <div key={i} className="p-2.5 flex items-center justify-between hover:bg-zinc-800/50 transition-colors group cursor-default">
                             <div className="flex items-center gap-3">
@@ -156,7 +157,65 @@ const PersonalizationMockup = () => (
     </div>
 );
 
-// 3. CROSS PLATFORM (Mobile fixo + Laptop)
+const GoalsMockup = () => (
+    <div className="flex flex-col gap-4 h-full justify-center p-2">
+        <div className="space-y-1.5 group">
+            <div className="flex justify-between text-xs"><div className="flex items-center gap-2"><Plane size={14} className="text-purple-500"/> <span className="font-medium">Viagem Disney</span></div> <span className="text-muted-foreground font-bold">80%</span></div>
+            <Progress value={80} className="h-2 bg-purple-100" indicatorClassName="bg-purple-500"/>
+        </div>
+        <div className="space-y-1.5 group">
+            <div className="flex justify-between text-xs"><div className="flex items-center gap-2"><ShieldCheck size={14} className="text-green-500"/> <span className="font-medium">Reserva Emergência</span></div> <span className="text-muted-foreground font-bold">45%</span></div>
+            <Progress value={45} className="h-2 bg-green-100" indicatorClassName="bg-green-500"/>
+        </div>
+        <div className="space-y-1.5 group">
+            <div className="flex justify-between text-xs"><div className="flex items-center gap-2"><Car size={14} className="text-blue-500"/> <span className="font-medium">Carro Novo</span></div> <span className="text-muted-foreground font-bold">20%</span></div>
+            <Progress value={20} className="h-2 bg-blue-100" indicatorClassName="bg-blue-500"/>
+        </div>
+        <div className="space-y-1.5 group">
+            <div className="flex justify-between text-xs"><div className="flex items-center gap-2"><Home size={14} className="text-orange-500"/> <span className="font-medium">Entrada Apê</span></div> <span className="text-muted-foreground font-bold">12%</span></div>
+            <Progress value={12} className="h-2 bg-orange-100" indicatorClassName="bg-orange-500"/>
+        </div>
+    </div>
+)
+
+const IntegratedDebtAI = () => {
+    const [step, setStep] = useState(0);
+    useEffect(() => { const i = setInterval(() => setStep(s => (s + 1) % 3), 4000); return () => clearInterval(i); }, []);
+
+    const data = [
+        { title: "Análise", debtTotal: "R$ 15.400", color: "bg-red-500", progress: 10, chat: "Juros altos no Cartão Master. Priorize este pagamento." },
+        { title: "Estratégia", debtTotal: "R$ 14.900", color: "bg-blue-500", progress: 35, chat: "Pague R$ 500 extras aqui para economizar 4 meses de juros." },
+        { title: "Liberdade", debtTotal: "R$ 8.200", color: "bg-green-500", progress: 75, chat: "Parabéns! Nesse ritmo, em outubro você estará livre." }
+    ];
+    const current = data[step];
+
+    return (
+        <div className="w-full h-full bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden flex flex-col md:flex-row">
+            <div className="flex-1 p-4 border-b md:border-b-0 md:border-r border-zinc-800 flex flex-col justify-center">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className={`w-2 h-2 rounded-full ${current.color} animate-pulse`} />
+                    <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">{current.title}</span>
+                </div>
+                <div className="space-y-3">
+                    <div className="flex justify-between items-end">
+                        <span className="text-xs text-zinc-400">Saldo Devedor</span>
+                        <span className="text-xl font-bold text-white transition-all duration-500">{current.debtTotal}</span>
+                    </div>
+                    <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden">
+                        <div className={`h-full ${current.color} transition-all duration-1000 ease-in-out`} style={{ width: `${current.progress}%` }}/>
+                    </div>
+                </div>
+            </div>
+            <div className="flex-1 p-4 bg-zinc-900/50 flex flex-col justify-center gap-3">
+                <div className="flex gap-2 items-start animate-in slide-in-from-bottom-2 fade-in duration-500 key={step}">
+                    <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white shrink-0 mt-1"><Bot size={12} /></div>
+                    <div className="bg-zinc-800 border border-zinc-700 p-2 rounded-2xl rounded-tl-none text-[11px] text-zinc-200 leading-relaxed shadow-sm">{current.chat}</div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const CrossPlatformMockup = () => (
     <div className="relative w-full h-full flex items-end justify-center pb-4 overflow-hidden">
         {/* Laptop - Oculto em telas muito pequenas para não quebrar layout */}
@@ -190,7 +249,6 @@ const CrossPlatformMockup = () => (
     </div>
 );
 
-// 4. PDF MOCKUP (Ajustado)
 const PDFReportMockup = () => (
     <div className="relative w-32 aspect-[210/297] bg-white rounded shadow-xl border border-zinc-200 p-3 flex flex-col gap-2 mx-auto group hover:scale-105 transition-transform duration-500">
         <div className="flex justify-between items-center border-b border-zinc-100 pb-1">
@@ -209,27 +267,6 @@ const PDFReportMockup = () => (
         <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/5 transition-colors rounded"><div className="opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 bg-black text-white rounded-full p-1.5 shadow-xl"><Download size={12} /></div></div>
     </div>
 );
-
-const GoalsMockup = () => (
-    <div className="flex flex-col gap-4 h-full justify-center p-2">
-        <div className="space-y-1.5 group">
-            <div className="flex justify-between text-xs"><div className="flex items-center gap-2"><Plane size={14} className="text-purple-500"/> <span className="font-medium">Viagem Disney</span></div> <span className="text-muted-foreground font-bold">80%</span></div>
-            <Progress value={80} className="h-2 bg-purple-100" indicatorClassName="bg-purple-500"/>
-        </div>
-        <div className="space-y-1.5 group">
-            <div className="flex justify-between text-xs"><div className="flex items-center gap-2"><ShieldCheck size={14} className="text-green-500"/> <span className="font-medium">Reserva Emergência</span></div> <span className="text-muted-foreground font-bold">45%</span></div>
-            <Progress value={45} className="h-2 bg-green-100" indicatorClassName="bg-green-500"/>
-        </div>
-        <div className="space-y-1.5 group">
-            <div className="flex justify-between text-xs"><div className="flex items-center gap-2"><Car size={14} className="text-blue-500"/> <span className="font-medium">Carro Novo</span></div> <span className="text-muted-foreground font-bold">20%</span></div>
-            <Progress value={20} className="h-2 bg-blue-100" indicatorClassName="bg-blue-500"/>
-        </div>
-        <div className="space-y-1.5 group">
-            <div className="flex justify-between text-xs"><div className="flex items-center gap-2"><Home size={14} className="text-orange-500"/> <span className="font-medium">Entrada Apê</span></div> <span className="text-muted-foreground font-bold">12%</span></div>
-            <Progress value={12} className="h-2 bg-orange-100" indicatorClassName="bg-orange-500"/>
-        </div>
-    </div>
-)
 
 // --- SEÇÕES PRINCIPAIS ---
 
