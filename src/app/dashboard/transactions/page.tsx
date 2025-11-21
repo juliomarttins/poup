@@ -1,6 +1,7 @@
 'use client'
 
-import { collection, query, orderBy } from 'firebase/firestore';
+import { useState } from 'react'; // [NOVO] Importar useState
+import { collection, query, orderBy, limit } from 'firebase/firestore'; // [NOVO] Importar limit
 import { TransactionsClientPage } from '../_components/transactions-client-page';
 import { TransactionsEmptyState } from '@/components/transactions/transactions-empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,21 +14,27 @@ import type { Transaction } from '@/lib/types';
 export default function TransactionsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  
+  // [NOVO] Estado para controlar quantos itens exibimos. Começa com 20.
+  const [limitCount, setLimitCount] = useState(20);
 
   const transactionsQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(
       collection(firestore, 'users', user.uid, 'transactions'), 
-      orderBy('date', 'desc')
-// ----- [INICIO_COMENTARIO] ----- PARTE 1 - REMOVER LINHA (transactions/page.tsx) ----- [FIM_COMENTARIO] -----
-      // orderBy('createdAt', 'desc') // <-- REMOVA OU COMENTE ESTA LINHA
-// ----- [INICIO_COMENTARIO] ----- PARTE 2 - FIM (transactions/page.tsx) ----- [FIM_COMENTARIO] -----
+      orderBy('date', 'desc'),
+      limit(limitCount) // [NOVO] Aplica o limite na query
     );
-  }, [firestore, user?.uid]);
+  }, [firestore, user?.uid, limitCount]); // [NOVO] Recarrega se o limite mudar
   
   const { data: transactions, isLoading: isLoadingTransactions } = useCollection<Transaction>(transactionsQuery);
 
-  if (isLoadingTransactions) {
+  // [NOVO] Função para carregar mais itens
+  const handleLoadMore = () => {
+    setLimitCount((prev) => prev + 20);
+  };
+
+  if (isLoadingTransactions && limitCount === 20) { // Carregamento inicial apenas
     return (
         <div className="space-y-4">
             <div className="flex flex-col gap-4">
@@ -59,5 +66,11 @@ export default function TransactionsPage() {
     return <TransactionsEmptyState />;
   }
 
-  return <TransactionsClientPage initialTransactions={transactions} />;
+  return (
+    <TransactionsClientPage 
+      initialTransactions={transactions} 
+      onLoadMore={handleLoadMore} // [NOVO] Passando a função
+      hasMore={transactions.length === limitCount} // [NOVO] Se veio menos que o limite, acabou a lista
+    />
+  );
 }

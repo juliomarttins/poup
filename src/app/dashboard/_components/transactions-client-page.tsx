@@ -13,18 +13,21 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-// [ALTERADO] Importar apenas o novo TransactionForm
 import { TransactionForm } from '@/components/transactions/transaction-form';
 import { setTransaction, deleteTransaction } from '@/firebase/firestore/actions';
 import { useFirestore, useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { MobileTransactionsView } from './mobile-transactions-view';
+import { Button } from '@/components/ui/button'; // [NOVO]
+import { ChevronDown } from 'lucide-react'; // [NOVO]
 
 interface TransactionsClientPageProps {
   initialTransactions: Transaction[];
+  onLoadMore: () => void; // [NOVO]
+  hasMore: boolean; // [NOVO]
 }
 
-export function TransactionsClientPage({ initialTransactions }: TransactionsClientPageProps) {
+export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMore }: TransactionsClientPageProps) {
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -60,7 +63,7 @@ export function TransactionsClientPage({ initialTransactions }: TransactionsClie
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full flex flex-col gap-4">
       {isMobile ? (
         <MobileTransactionsView 
           transactions={initialTransactions}
@@ -77,6 +80,16 @@ export function TransactionsClientPage({ initialTransactions }: TransactionsClie
         />
       )}
 
+      {/* [NOVO] Botão Carregar Mais */}
+      {hasMore && (
+        <div className="flex justify-center pt-4 pb-8">
+          <Button variant="outline" onClick={onLoadMore} className="gap-2">
+            Carregar Mais Antigas
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
       <Dialog open={!!editingTransaction} onOpenChange={(isOpen) => !isOpen && setEditingTransaction(null)}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -86,7 +99,6 @@ export function TransactionsClientPage({ initialTransactions }: TransactionsClie
             </DialogDescription>
           </DialogHeader>
           {editingTransaction && (
-            // [USO] Componente unificado
             <TransactionForm 
               initialData={editingTransaction}
               onSave={handleSave}
@@ -104,7 +116,6 @@ export function TransactionsClientPage({ initialTransactions }: TransactionsClie
                Preencha os detalhes da sua nova transação.
              </DialogDescription>
            </DialogHeader>
-           // [USO] Componente unificado (sem initialData)
            <TransactionForm onSave={handleSave} onCancel={() => setIsAddDialogOpen(false)} />
          </DialogContent>
        </Dialog>
