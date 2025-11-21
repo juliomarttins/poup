@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -12,7 +11,8 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { AddTransactionForm } from "./add-transaction-form";
+// [ALTERADO] Importar o novo TransactionForm
+import { TransactionForm } from "./transaction-form";
 import type { Transaction } from "@/lib/types";
 import { useFirestore, useUser } from "@/firebase";
 import { setTransaction } from "@/firebase/firestore/actions";
@@ -66,7 +66,7 @@ export function TransactionsEmptyState() {
             Preencha os detalhes da sua nova transação.
           </DialogDescription>
         </DialogHeader>
-        <AddTransactionForm
+        <TransactionForm
           onSave={handleSave}
           onCancel={() => setIsAddDialogOpen(false)}
         />

@@ -2,10 +2,10 @@ import Image from 'next/image';
 import { LoginForm } from '@/components/auth/login-form';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Logo } from '@/components/icons';
+import { APP_VERSION, APP_NAME } from '@/lib/constants'; // [NOVO IMPORT]
 
 export default function LoginPage() {
   const loginBg = PlaceHolderImages.find(img => img.id === 'login-background');
-  const appVersion = "v.1.0.8";
 
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
@@ -15,7 +15,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-center gap-2">
               <Logo className="h-10 w-10 text-primary" />
               <h1 className="text-3xl font-bold font-headline">
-                Poupp
+                {APP_NAME}
               </h1>
             </div>
             <p className="text-balance text-muted-foreground">
@@ -24,7 +24,7 @@ export default function LoginPage() {
           </div>
           <LoginForm />
           <div className="pt-4 text-center text-xs text-muted-foreground">
-            {appVersion}
+            {APP_VERSION}
           </div>
         </div>
       </div>

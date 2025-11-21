@@ -40,6 +40,7 @@ import { Avatar } from "../ui/avatar";
 import { useProfile } from "@/contexts/profile-context";
 import { useLoading } from "@/contexts/loading-context";
 import type { UserProfile, Profile } from "@/lib/types";
+import { APP_VERSION, APP_NAME } from "@/lib/constants"; // [NOVO IMPORT]
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Painel" },
@@ -69,7 +70,6 @@ function HeaderComponent() {
   const { showLoading } = useLoading();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { activeProfile, setActiveProfile } = useProfile();
-  const appVersion = "v.1.0.8"; // Versão da aplicação
   
   const userProfileRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
@@ -80,7 +80,6 @@ function HeaderComponent() {
 
 
   let pageTitle = "Painel";
-  // Find the most specific match for the title
   Object.keys(pageTitles).forEach((path) => {
     if (pathname.startsWith(path) && path.length > (Object.keys(pageTitles).find(p => pageTitles[p as keyof typeof pageTitles] === pageTitle)?.length || 0)) {
         pageTitle = pageTitles[path as keyof typeof pageTitles];
@@ -127,7 +126,7 @@ function HeaderComponent() {
               onClick={() => handleMobileNavClick('/dashboard')}
             >
               <Logo className="h-8 w-8 text-primary" />
-              <span >Poupp</span>
+              <span >{APP_NAME}</span>
             </Link>
             {navItems.map(({ href, icon: Icon, label }) => (
               <Button
@@ -156,7 +155,7 @@ function HeaderComponent() {
               </Button>
           </nav>
           <div className="mt-auto p-4 text-center text-xs text-muted-foreground">
-            {appVersion}
+            {APP_VERSION}
           </div>
         </SheetContent>
       </Sheet>

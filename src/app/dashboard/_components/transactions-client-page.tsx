@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -12,10 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EditTransactionForm } from '@/components/transactions/edit-transaction-form';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { AddTransactionForm } from '@/components/transactions/add-transaction-form';
+// [ALTERADO] Importar apenas o novo TransactionForm
+import { TransactionForm } from '@/components/transactions/transaction-form';
 import { setTransaction, deleteTransaction } from '@/firebase/firestore/actions';
 import { useFirestore, useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
@@ -74,7 +73,7 @@ export function TransactionsClientPage({ initialTransactions }: TransactionsClie
           columns={columns({ onEdit: handleEdit, onDelete: handleDelete })} 
           data={initialTransactions}
           onAdd={() => setIsAddDialogOpen(true)}
-          isLoading={false} // Data is pre-loaded on server
+          isLoading={false} 
         />
       )}
 
@@ -87,8 +86,9 @@ export function TransactionsClientPage({ initialTransactions }: TransactionsClie
             </DialogDescription>
           </DialogHeader>
           {editingTransaction && (
-            <EditTransactionForm 
-              transaction={editingTransaction}
+            // [USO] Componente unificado
+            <TransactionForm 
+              initialData={editingTransaction}
               onSave={handleSave}
               onCancel={() => setEditingTransaction(null)}
             />
@@ -104,7 +104,8 @@ export function TransactionsClientPage({ initialTransactions }: TransactionsClie
                Preencha os detalhes da sua nova transação.
              </DialogDescription>
            </DialogHeader>
-           <AddTransactionForm onSave={handleSave} onCancel={() => setIsAddDialogOpen(false)} />
+           // [USO] Componente unificado (sem initialData)
+           <TransactionForm onSave={handleSave} onCancel={() => setIsAddDialogOpen(false)} />
          </DialogContent>
        </Dialog>
     </div>

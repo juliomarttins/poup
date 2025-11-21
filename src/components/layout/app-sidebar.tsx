@@ -9,7 +9,6 @@ import {
   PiggyBank,
   Settings,
   ArrowRightLeft,
-  Bot,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/icons";
+import { APP_VERSION, APP_NAME } from "@/lib/constants"; // [NOVO IMPORT]
 
 
 const navItems = [
@@ -34,7 +34,6 @@ const navItems = [
 
 function SidebarComponent() {
   const pathname = usePathname();
-  const appVersion = "v.1.0.8"; // Versão da aplicação
 
   return (
     <div className="hidden border-r bg-background md:block">
@@ -42,7 +41,7 @@ function SidebarComponent() {
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
             <Logo className="h-8 w-8 text-primary" />
-            <span className="">Poupp</span>
+            <span className="">{APP_NAME}</span>
           </Link>
         </div>
         <div className="flex-1">
@@ -78,7 +77,7 @@ function SidebarComponent() {
               </Card>
         </div>
          <div className="p-4 pt-0 text-center text-xs text-muted-foreground">
-            {appVersion}
+            {APP_VERSION}
         </div>
       </div>
     </div>
