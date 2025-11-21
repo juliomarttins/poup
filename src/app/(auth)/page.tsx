@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { LoginForm } from '@/components/auth/login-form';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Logo } from '@/components/icons';
-import { APP_VERSION, APP_NAME } from '@/lib/constants'; // [NOVO IMPORT]
+import { APP_VERSION, APP_NAME } from '@/lib/constants';
 
 export default function LoginPage() {
   const loginBg = PlaceHolderImages.find(img => img.id === 'login-background');
