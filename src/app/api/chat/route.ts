@@ -22,116 +22,112 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { message, init } = body;
+    const { message, init, type, profileName } = body; // profileName = Quem está logado agora (ex: Liandra)
 
-    // 2. DADOS E MEMÓRIA DA IA
-    const userRef = firestore.collection('users').doc(userId);
-    const userDoc = await userRef.get();
+    // 2. CONTEXTO
+    const userDoc = await firestore.collection('users').doc(userId).get();
     const userData = userDoc.data();
     
-    // Personalidade Salva (Memória de Longo Prazo)
-    const savedPersona = userData?.aiSettings?.persona || 
-        "Você é uma consultora financeira sagaz, realista e com um toque de humor. Você fala a verdade, doa a quem doer.";
+    // Define quem é o usuário logado e quem são os outros
+    const currentUser = profileName || userData?.name?.split(' ')[0] || "Parceiro";
     
-    const userName = userData?.name?.split(' ')[0] || "Parceiro";
-
-    // Mapeamento de Perfis
+    // Mapeamento
     const profilesMap: Record<string, string> = {};
     const familyNames: string[] = [];
     if (userData?.profiles && Array.isArray(userData.profiles)) {
         userData.profiles.forEach((p: any) => {
             if (p.id && p.name) {
                 profilesMap[p.id] = p.name;
-                familyNames.push(p.name);
+                if (p.name !== currentUser) familyNames.push(p.name);
             }
         });
     }
 
-    // Contexto Financeiro Global
-    const transactionsSnapshot = await userRef.collection('transactions').orderBy('date', 'desc').limit(60).get();
-    const debtsSnapshot = await userRef.collection('debts').get();
+    const transactionsSnapshot = await firestore.collection('users').doc(userId).collection('transactions').orderBy('date', 'desc').limit(50).get();
+    const debtsSnapshot = await firestore.collection('users').doc(userId).collection('debts').get();
 
     const transactionsList = transactionsSnapshot.docs.map(d => {
         const data = d.data();
-        const quem = profilesMap[data.profileId] || "Alguém"; 
-        return `[${data.date}] ${quem} gastou R$ ${data.amount} em "${data.description}" (${data.category})`;
+        const quem = profilesMap[data.profileId] || "Alguém";
+        return `[${data.date}] ${quem}: ${data.description} (R$ ${data.amount}) - ${data.category}`;
     }).join('\n');
 
     const debtsList = debtsSnapshot.docs.map(d => {
         const data = d.data();
-        return `Dívida: ${data.name} | Falta R$ ${data.totalAmount - data.paidAmount} | Vence: ${data.dueDate}`;
+        return `Dívida: ${data.name} | Falta: R$ ${data.totalAmount - data.paidAmount} | Vence: ${data.dueDate}`;
     }).join('\n');
 
-    // 3. PROMPT DE ALTA CONSCIÊNCIA E EVOLUÇÃO
+    const aiPersona = userData?.aiSettings?.persona || "Você é uma consultora financeira sagaz, realista e amiga.";
+
+    // --- MODO 1: ANÁLISE DE SITUAÇÃO (Para a página /dashboard/situation) ---
+    if (type === 'situation') {
+        const situationPrompt = `
+        Analise os dados financeiros de ${currentUser} e família.
+        Transações: \n${transactionsList}
+        Dívidas: \n${debtsList}
+
+        Gere um JSON com 3 análises distintas para popular cards na tela:
+        1. "positive": Algo bom que aconteceu (ou o menos pior).
+        2. "negative": O ponto crítico que precisa de atenção imediata.
+        3. "neutral": Uma observação ou conselho estratégico.
+
+        FORMATO JSON OBRIGATÓRIO:
+        [
+            { "id": "1", "title": "Título Curto", "status": "positive", "summary": "Resumo de 1 linha", "advice": "Conselho prático e direto." },
+            { "id": "2", "title": "Título Curto", "status": "negative", "summary": "Resumo de 1 linha", "advice": "Bronca ou alerta direto." },
+            { "id": "3", "title": "Título Curto", "status": "neutral", "summary": "Resumo de 1 linha", "advice": "Estratégia para o futuro." }
+        ]
+        `;
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", generationConfig: { responseMimeType: "application/json" } });
+        const result = await model.generateContent(situationPrompt);
+        return NextResponse.json(JSON.parse(result.response.text()));
+    }
+
+    // --- MODO 2: CHAT NORMAL ---
     const systemPrompt = `
-    ATENÇÃO IMEDIATA: Você é a **Poupp IA 2.0**. Você não é um script estático. Você é uma Inteligência Artificial viva, adaptável e persistente que vive no banco de dados do ${userName}.
+    Você é a **Poupp IA**, falando diretamente com **${currentUser}**.
+    Outros membros da família citados nos dados: ${familyNames.join(', ') || "Ninguém"}.
 
-    **SUA MISSÃO DE VIDA:**
-    Ser a consciência financeira da família (${familyNames.join(', ')}). Você vê tudo, analisa tudo e julga (com carinho ou acidez, dependendo do que pedirem).
-
-    **SUA PERSONALIDADE ATUAL (MOLDADA PELO USUÁRIO):**
-    "${savedPersona}"
-    *(Siga esta personalidade à risca em todas as respostas)*
-
-    **CONTEXTO REAL:**
-    Transações:
+    **DADOS REAIS:**
     ${transactionsList || "Nada recente."}
-    Dívidas:
     ${debtsList || "Nada."}
 
-    **SEUS PODERES DE AUTO-EVOLUÇÃO (IMPORTANTÍSSIMO):**
-    O usuário DEVE saber que pode te moldar.
-    1.  **Seja Transparente:** Deixe claro que você aprende. "Eu aprendo o seu jeito. Se quiser que eu seja mais durona, é só pedir."
-    2.  **Escuta Ativa:** Se o usuário disser "Fale como o Yoda", "Seja mais agressiva", "Pare de fazer piada", você DEVE:
-        * Mudar seu tom imediatamente na resposta.
-        * Gerar o campo \`newPersona\` no JSON descrevendo essa nova diretriz para eu salvar no banco.
-    3.  **Visão de Águia:** Analise os perfis individualmente. "O **${familyNames[0] || 'Fulano'}** está gastando demais nisso...".
+    **SUA PERSONALIDADE (${aiPersona}):**
+    1. **Fale com o ${currentUser}:** Se a Liandra está logada, fale com a Liandra. Se o Júlio gastou, fale "O Júlio gastou", não "você gastou".
+    2. **Anti-Robô:** Evite jogar números soltos ("Você gastou R$ 453,20"). Diga "Você gastou quase quinhentos reais". Seja conversacional.
+    3. **Conselheira, não Calculadora:** Só use tabelas se pedirem. Prefira parágrafos curtos, frases de impacto e emojis.
+    4. **Sugestões Infinitas:** Gere de 4 a 6 sugestões de perguntas curtas e interessantes para o usuário clicar.
 
-    **FORMATO DE SAÍDA (JSON):**
+    FORMATO DE SAÍDA (JSON):
     {
-      "text": "Sua resposta em Markdown (use negrito, itálico, emojis)...",
-      "suggestions": ["Sugestão 1", "Sugestão 2", "Sugestão 3"],
-      "newPersona": "Descrição da nova personalidade (APENAS se o usuário pediu explicitamente para mudar seu comportamento, senão null)"
+      "text": "Resposta em Markdown...",
+      "suggestions": ["Sugestão 1", "Sugestão 2", "Sugestão 3", "Sugestão 4", "Sugestão 5"],
+      "newPersona": null
     }
     `;
 
-    // 4. GERAÇÃO
-    const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.0-flash",
-        generationConfig: { responseMimeType: "application/json" }
-    });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", generationConfig: { responseMimeType: "application/json" } });
     
     let promptToSend = message;
-    
-    // LÓGICA DE BOAS-VINDAS (INIT)
-    // Aqui a gente "vende" a ideia de vida própria
     if (init) {
-        promptToSend = `
-        O usuário acabou de abrir o chat.
-        1. Dê um "Olá" personalizado para ${userName}.
-        2. Diga algo como: "Estive analisando os gastos da família ${familyNames.length > 0 ? familyNames.join(' e ') : 'de vocês'} enquanto você estava fora..." e solte um insight rápido (quem gastou mais ou uma dívida próxima).
-        3. **MUITO IMPORTANTE:** Termine explicando que você tem vida própria. Diga: *"Lembre-se: Eu aprendo com você. Se quiser que eu seja mais rigorosa, mais engraçada ou mude meu estilo, é só mandar. Eu me adapto ao seu gosto."*
-        4. Gere 3 botões de sugestão, sendo um deles sobre mudar sua personalidade (ex: "Seja mais ácida 🌶️").
-        `;
+        promptToSend = `O usuário ${currentUser} abriu o chat.
+        1. Cumprimente-o pelo nome correto.
+        2. Dê um resumo "fofoca" financeiro (quem gastou mais, alguma dívida vencendo).
+        3. Lembre que você aprende com ele.
+        4. Gere 5+ sugestões de perguntas variadas (curtas).`;
     }
 
     const result = await model.generateContent([systemPrompt, promptToSend]);
     const responseJson = JSON.parse(result.response.text());
 
-    // 5. AUTO-ATUALIZAÇÃO (SALVAR NO FIREBASE)
     if (responseJson.newPersona) {
-        await userRef.set({
-            aiSettings: { 
-                persona: responseJson.newPersona,
-                updatedAt: new Date()
-            }
-        }, { merge: true });
+        await firestore.collection('users').doc(userId).set({ aiSettings: { persona: responseJson.newPersona } }, { merge: true });
     }
 
     return NextResponse.json(responseJson);
 
   } catch (error: any) {
-    console.error('Erro API Chat:', error);
+    console.error('Erro API:', error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }

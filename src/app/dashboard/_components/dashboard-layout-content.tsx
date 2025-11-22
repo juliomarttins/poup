@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar } from '@/components/ui/avatar';
 import { AvatarIcon } from '@/components/icons/avatar-icon';
-import { LogOut, Settings, User as UserIcon } from 'lucide-react';
+import { LogOut, Settings, User as UserIcon, Menu } from 'lucide-react';
 
 export function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const { activeProfile, isLoading: isProfileLoading } = useProfile();
@@ -49,7 +49,6 @@ export function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const displayImage = activeProfile?.photoURL || user?.photoURL || undefined;
   const displayEmail = user?.email;
 
-  // Estilo do avatar baseado no perfil selecionado
   const avatarStyle = activeProfile ? {
       background: activeProfile.avatarBackground || 'hsl(var(--muted))',
       color: activeProfile.avatarColor || 'hsl(var(--foreground))'
@@ -71,15 +70,21 @@ export function DashboardLayoutContent({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex flex-col h-full w-full">
-      {/* CABEÇALHO DO DASHBOARD */}
+      {/* CABEÇALHO */}
       <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 sticky top-0 z-10">
-        {/* Botão para abrir/fechar Sidebar */}
+        
+        {/* Botão Menu Mobile Destacado */}
         <div className="flex items-center gap-2">
-           <SidebarTrigger className="-ml-1" />
-           <Separator orientation="vertical" className="mr-2 h-4" />
+           <div className="relative">
+             <SidebarTrigger className="-ml-1" />
+             {/* Indicador visual extra para mobile */}
+             <div className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full animate-pulse md:hidden pointer-events-none" />
+           </div>
+           <span className="md:hidden text-sm font-bold text-primary ml-1">Menu</span>
+           <Separator orientation="vertical" className="mr-2 h-4 hidden md:block" />
         </div>
         
-        {/* Menu do Usuário (Avatar) na direita */}
+        {/* Avatar e Menu do Usuário */}
         <div className="ml-auto flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
