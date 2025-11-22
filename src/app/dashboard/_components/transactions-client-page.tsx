@@ -92,8 +92,7 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
 
       {/* MODAL DE EDIÇÃO */}
       <Dialog open={!!editingTransaction} onOpenChange={(isOpen) => !isOpen && setEditingTransaction(null)}>
-        {/* CORREÇÃO: Removido max-h-[80vh] no desktop (sm:) para evitar scroll */}
-        <DialogContent className="w-[95vw] max-w-[425px] max-h-[85vh] sm:max-h-none overflow-y-auto sm:overflow-visible rounded-lg">
+        <DialogContent className="w-[95vw] max-w-2xl overflow-visible rounded-lg">
           <DialogHeader>
             <DialogTitle>Editar Transação</DialogTitle>
             <DialogDescription>
@@ -112,8 +111,8 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
 
        {/* MODAL DE ADICIONAR */}
        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-         {/* CORREÇÃO: Removido max-h-[80vh] no desktop (sm:) para evitar scroll */}
-         <DialogContent className="w-[95vw] max-w-md max-h-[85vh] sm:max-h-none overflow-y-auto sm:overflow-visible rounded-lg">
+         {/* AQUI: max-w-2xl para ficar mais largo e SEM max-h para não ter scroll */}
+         <DialogContent className="w-[95vw] max-w-2xl overflow-visible rounded-lg">
            <DialogHeader>
              <DialogTitle>Adicionar Transação</DialogTitle>
              <DialogDescription>

@@ -95,7 +95,7 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
     if (!file || !user) return;
 
     if (file.size > 4.5 * 1024 * 1024) {
-        toast({ variant: "destructive", title: "Erro", description: "Arquivo muito grande (Máx 4.5MB)." });
+        toast({ variant: "destructive", title: "Erro", description: "Arquivo > 4.5MB." });
         e.target.value = "";
         return;
     }
@@ -153,7 +153,7 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
         }
 
         if (fieldsFilled > 0) {
-            toast({ title: "Leitura realizada!", description: "Verifique os dados importados." });
+            toast({ title: "Leitura realizada!", description: "Verifique os campos importados." });
         } else {
             toast({ variant: "warning", title: "Atenção", description: "Não foi possível identificar os dados com clareza." });
         }
@@ -190,117 +190,91 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3"> {/* Espaçamento reduzido de 4 para 3 */}
         
-        {/* ÁREA DE SCAN - DESIGN LIMPO */}
-        <div className="bg-secondary/30 p-4 rounded-lg border border-dashed border-primary/30 flex flex-col gap-3">
-             <div className="flex items-center justify-center gap-2 text-primary font-semibold text-xs uppercase tracking-wide">
-                <ScanLine className="w-4 h-4" /> Importar Boleto / Recibo
+        {/* ÁREA DE SCAN COMPACTA */}
+        <div className="bg-secondary/30 p-3 rounded-lg border border-dashed border-primary/30 flex flex-col gap-2">
+             <div className="flex items-center justify-center gap-2 text-primary font-semibold text-[10px] uppercase tracking-wide">
+                <ScanLine className="w-3 h-3" /> Importar Boleto / Recibo
             </div>
 
-            <div className="grid grid-cols-1 gap-3">
-                {/* MOBILE: CÂMERA + ARQUIVO */}
-                <div className="md:hidden grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-2">
+                <div className="md:hidden grid grid-cols-2 gap-2">
                      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
                      <Button 
                         type="button" variant="outline" 
-                        className="h-12 gap-2 border-primary/20 hover:bg-primary/10 text-primary hover:text-primary font-normal"
+                        className="h-9 gap-2 border-primary/20 hover:bg-primary/10 text-primary hover:text-primary font-normal text-xs"
                         onClick={() => cameraInputRef.current?.click()}
                         disabled={isScanning}
                     >
-                        {isScanning ? <Loader2 className="w-5 h-5 animate-spin" /> : <Camera className="w-5 h-5" />}
+                        {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
                         Câmera
                     </Button>
 
                     <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
                     <Button 
                         type="button" variant="outline" 
-                        className="h-12 gap-2 border-primary/20 hover:bg-primary/10 text-primary hover:text-primary font-normal"
+                        className="h-9 gap-2 border-primary/20 hover:bg-primary/10 text-primary hover:text-primary font-normal text-xs"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isScanning}
                     >
-                        {isScanning ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                        {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                         Arquivo
                     </Button>
                 </div>
 
-                {/* DESKTOP: APENAS ARQUIVO */}
                 <div className="hidden md:block">
                     <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
                     <Button 
                         type="button" variant="outline" 
-                        className="w-full h-12 gap-2 border-primary/20 hover:bg-primary/10 text-primary hover:text-primary font-normal"
+                        className="w-full h-9 gap-2 border-primary/20 hover:bg-primary/10 text-primary hover:text-primary font-normal text-xs"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isScanning}
                     >
-                         {isScanning ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                         {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                          Carregar Imagem ou PDF
                     </Button>
                 </div>
             </div>
         </div>
 
-        <FormField
-          control={form.control}
-          name="type"
-          render={({ field }) => (
-            <FormItem className="space-y-3">
-              <FormLabel>Tipo</FormLabel>
-              <FormControl>
-                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-4">
-                  <FormItem>
-                    <FormControl><RadioGroupItem value="income" className="sr-only" /></FormControl>
-                    <FormLabel className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors", field.value === 'income' && "border-accent")}>
-                      Renda
-                    </FormLabel>
-                  </FormItem>
-                  <FormItem>
-                    <FormControl><RadioGroupItem value="expense" className="sr-only" /></FormControl>
-                    <FormLabel className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-destructive hover:text-destructive-foreground cursor-pointer transition-colors", field.value === 'expense' && "border-destructive")}>
-                      Despesa
-                    </FormLabel>
-                  </FormItem>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Descrição</FormLabel>
-                <FormControl><Input {...field} placeholder="Ex: Mercado" /></FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
-
         <div className="grid grid-cols-2 gap-4">
             <FormField
             control={form.control}
-            name="amount"
+            name="type"
             render={({ field }) => (
-                <FormItem>
-                <FormLabel>Valor</FormLabel>
-                <FormControl><Input type="number" step="0.01" {...field} onFocus={(e) => e.target.select()} /></FormControl>
+                <FormItem className="space-y-1">
+                <FormLabel>Tipo</FormLabel>
+                <FormControl>
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-2">
+                    <FormItem>
+                        <FormControl><RadioGroupItem value="income" className="sr-only" /></FormControl>
+                        <FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 text-xs hover:bg-accent cursor-pointer transition-colors h-9", field.value === 'income' && "border-accent bg-accent/10")}>
+                        Renda
+                        </FormLabel>
+                    </FormItem>
+                    <FormItem>
+                        <FormControl><RadioGroupItem value="expense" className="sr-only" /></FormControl>
+                        <FormLabel className={cn("flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-2 text-xs hover:bg-destructive/10 cursor-pointer transition-colors h-9", field.value === 'expense' && "border-destructive bg-destructive/10")}>
+                        Despesa
+                        </FormLabel>
+                    </FormItem>
+                    </RadioGroup>
+                </FormControl>
                 <FormMessage />
                 </FormItem>
             )}
             />
-            <FormField
+             <FormField
             control={form.control}
             name="date"
             render={({ field }) => (
-                <FormItem className="flex flex-col">
+                <FormItem className="flex flex-col space-y-1">
                 <FormLabel>Data</FormLabel>
                 <Popover>
                     <PopoverTrigger asChild>
                     <FormControl>
-                        <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                        <Button variant={"outline"} className={cn("pl-3 text-left font-normal h-10", !field.value && "text-muted-foreground")}>
                         {field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : <span>Data</span>}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
@@ -315,42 +289,68 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
             )}
             />
         </div>
-
+        
         <FormField
             control={form.control}
-            name="category"
+            name="description"
             render={({ field }) => (
-                <FormItem>
-                <FormLabel>Categoria</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
-                    <SelectContent>
-                        {DEFAULT_CATEGORIES[transactionType].map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
-                        <SelectItem value="Outros">Outra...</SelectItem>
-                    </SelectContent>
-                </Select>
+                <FormItem className="space-y-1">
+                <FormLabel>Descrição</FormLabel>
+                <FormControl><Input {...field} placeholder="Ex: Mercado" className="h-10" /></FormControl>
                 <FormMessage />
                 </FormItem>
             )}
         />
+
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="amount"
+            render={({ field }) => (
+                <FormItem className="space-y-1">
+                <FormLabel>Valor</FormLabel>
+                <FormControl><Input type="number" step="0.01" {...field} onFocus={(e) => e.target.select()} className="h-10" /></FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            
+            <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                    <FormItem className="space-y-1">
+                    <FormLabel>Categoria</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <FormControl><SelectTrigger className="h-10"><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {DEFAULT_CATEGORIES[transactionType].map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                            <SelectItem value="Outros">Outra...</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
 
         {selectedCategory === 'Outros' && (
             <FormField
                 control={form.control}
                 name="customCategory"
                 render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="space-y-1">
                     <FormLabel>Nova Categoria</FormLabel>
-                    <FormControl><Input {...field} placeholder="Nome da categoria"/></FormControl>
+                    <FormControl><Input {...field} placeholder="Nome da categoria" className="h-10" /></FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
             />
         )}
         
-        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 pb-2">
-            <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">Cancelar</Button>
-            <Button type="submit" className="w-full sm:w-auto">{initialData ? "Salvar" : "Adicionar"}</Button>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2 pb-2">
+            <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto h-10">Cancelar</Button>
+            <Button type="submit" className="w-full sm:w-auto h-10">{initialData ? "Salvar" : "Adicionar"}</Button>
         </div>
       </form>
     </Form>
