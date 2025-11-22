@@ -11,6 +11,7 @@ import {
   Settings,
   HelpCircle,
   LogOut,
+  Bot, // [NOVO] Ícone do Robô
 } from 'lucide-react';
 
 import {
@@ -23,10 +24,9 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
-  useSidebar, // Importado para controlar o fechamento no mobile
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/firebase/provider';
 import { signOut } from 'firebase/auth';
 
@@ -52,6 +52,11 @@ const mainNavItems = [
     url: '/dashboard/situation',
     icon: BarChart3,
   },
+  {
+    title: 'Poupp IA', // [NOVO] Item de menu
+    url: '/dashboard/poupp-ia',
+    icon: Bot,
+  },
 ];
 
 const settingsNavItems = [
@@ -70,7 +75,7 @@ const settingsNavItems = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const auth = useAuth();
-  const { isMobile, setOpenMobile } = useSidebar(); // Hook para detectar mobile
+  const { isMobile, setOpenMobile } = useSidebar();
 
   const handleSignOut = async () => {
     if (auth) {
@@ -78,7 +83,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   };
 
-  // Função auxiliar para fechar o menu no mobile ao clicar
   const handleLinkClick = () => {
     if (isMobile) {
         setOpenMobile(false);
@@ -92,7 +96,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard" onClick={handleLinkClick}>
-                {/* LOGO AMARELO AQUI */}
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Logo className="size-8 text-yellow-500" />
                 </div>
