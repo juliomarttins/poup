@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, ArrowRight, Terminal } from 'lucide-react';
+import { Send, Bot, User, Sparkles, ArrowRight, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -68,6 +68,7 @@ export default function PouppIAPage() {
     fetchInitialGreeting();
   }, [user]);
 
+  // Scroll automático inteligente
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -174,36 +175,48 @@ export default function PouppIAPage() {
 
                     <div
                     className={cn(
-                        "flex flex-col gap-1 max-w-[90%] md:max-w-[75%] text-sm",
+                        "flex flex-col gap-1 max-w-[90%] md:max-w-[80%] text-sm", // Aumentei um pouco a largura no mobile
                         message.role === 'user' ? "items-end" : "items-start"
                     )}
                     >
                     <div
                         className={cn(
-                        "rounded-2xl px-4 py-3 shadow-sm overflow-hidden",
+                        "rounded-2xl px-4 py-3 shadow-sm overflow-hidden w-full", // w-full para usar todo espaço disponível
                         message.role === 'user'
                             ? "bg-primary text-primary-foreground rounded-tr-sm"
                             : "bg-card border text-card-foreground rounded-tl-sm"
                         )}
                     >
-                        {/* RENDERIZADOR DE MARKDOWN COM TABELAS */}
+                        {/* RENDERIZADOR DE MARKDOWN COM TABELAS OTIMIZADAS PARA MOBILE */}
                         <ReactMarkdown 
                             remarkPlugins={[remarkGfm]}
-                            className="prose prose-sm dark:prose-invert max-w-none break-words
-                                prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent
-                                prose-table:border-collapse prose-table:w-full prose-table:my-2 prose-table:text-xs
-                                prose-th:border prose-th:border-border prose-th:p-2 prose-th:bg-muted/50 prose-th:text-left
-                                prose-td:border prose-td:border-border prose-td:p-2
-                                "
+                            className={cn(
+                                "prose prose-sm dark:prose-invert max-w-none break-words",
+                                "prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent",
+                                "prose-ul:my-1 prose-li:my-0.5",
+                                message.role === 'user' ? "prose-headings:text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground" : ""
+                            )}
                             components={{
-                                // Componente customizado para links abrirem em nova aba (opcional)
-                                a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline" {...props} />
+                                // Links externos
+                                a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium" {...props} />,
+                                
+                                // Tabela com Container de Rolagem (Correção Mobile)
+                                table: ({node, ...props}) => (
+                                    <div className="my-3 w-full overflow-y-hidden overflow-x-auto rounded-lg border border-border/60 bg-muted/20 shadow-sm">
+                                        <table className="w-full min-w-[300px] text-xs" {...props} />
+                                    </div>
+                                ),
+                                thead: ({node, ...props}) => <thead className="bg-muted/50" {...props} />,
+                                tbody: ({node, ...props}) => <tbody className="divide-y divide-border/50" {...props} />,
+                                tr: ({node, ...props}) => <tr className="transition-colors hover:bg-muted/30" {...props} />,
+                                th: ({node, ...props}) => <th className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap" {...props} />,
+                                td: ({node, ...props}) => <td className="px-3 py-2 align-middle whitespace-nowrap" {...props} />, // whitespace-nowrap mantém a tabela bonita na rolagem
                             }}
                         >
                             {message.content}
                         </ReactMarkdown>
                     </div>
-                    <span className="text-[10px] text-muted-foreground px-1">
+                    <span className="text-[10px] text-muted-foreground px-1 opacity-70">
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                     </div>
@@ -228,7 +241,7 @@ export default function PouppIAPage() {
       </Card>
 
       {/* Sugestões e Input */}
-      <div className="shrink-0 p-4 pt-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
+      <div className="shrink-0 p-3 sm:p-4 pt-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
         
         {/* Sugestões com Identificadores */}
         {suggestions.length > 0 && !isLoading && (
@@ -237,7 +250,7 @@ export default function PouppIAPage() {
                     <button
                         key={idx}
                         onClick={() => sendMessage(sug)}
-                        className="snap-start shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border hover:bg-primary/5 hover:border-primary/40 transition-all text-xs text-left group max-w-[200px]"
+                        className="snap-start shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border hover:bg-primary/5 hover:border-primary/40 transition-all text-xs text-left group max-w-[240px] active:scale-95"
                     >
                         <span className="flex items-center justify-center w-5 h-5 rounded-full bg-background border border-border text-[10px] font-bold text-muted-foreground group-hover:border-primary/50 group-hover:text-primary transition-colors shrink-0 shadow-sm">
                             {idx + 1}
@@ -262,7 +275,7 @@ export default function PouppIAPage() {
                 onClick={() => sendMessage(inputValue)}
                 size="icon" 
                 disabled={isLoading || !inputValue.trim()}
-                className="absolute right-1.5 h-9 w-9 rounded-full transition-all shadow-sm hover:scale-105 active:scale-95"
+                className="absolute right-1.5 h-9 w-9 rounded-full transition-all shadow-sm hover:scale-105 active:scale-95 bg-primary text-primary-foreground hover:bg-primary/90"
             >
                 <ArrowRight className="h-5 w-5" />
                 <span className="sr-only">Enviar</span>
