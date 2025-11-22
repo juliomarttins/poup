@@ -1,3 +1,4 @@
+// ARQUIVO 2/2: src/app/dashboard/reports/page.tsx
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -30,7 +31,7 @@ export default function ReportsPage() {
     return query(
         collection(firestore, 'users', user.uid, 'reports'), 
         orderBy('generatedAt', 'desc'), 
-        limit(10)
+        limit(15) // [EDIT] Aumentado para 15
     );
   }, [firestore, user?.uid]);
   
@@ -39,7 +40,8 @@ export default function ReportsPage() {
   // 2. Buscar Dados (Todas as transações e dívidas para filtrar no cliente)
   const transactionsQuery = useMemoFirebase(() => {
       if (!firestore || !user?.uid) return null;
-      return query(collection(firestore, 'users', user.uid, 'transactions'), orderBy('date', 'desc'));
+      // Buscamos todas as transações para que o filtro local funcione em todos os dados.
+      return query(collection(firestore, 'users', user.uid, 'transactions'), orderBy('date', 'desc')); 
   }, [firestore, user?.uid]);
   const { data: allTransactions } = useCollection<Transaction>(transactionsQuery);
 
@@ -102,7 +104,7 @@ export default function ReportsPage() {
           generateTransactionsPDF(filteredTransactions, filterDesc);
       } else if (type === 'dividas') {
           title = "Relatório de Dívidas";
-          generateDebtsPDF(debts); // Dívidas não aplicamos filtros de transação geralmente
+          generateDebtsPDF(debts);
       }
 
       // Salvar no histórico
@@ -222,7 +224,7 @@ export default function ReportsPage() {
                                 size="sm" 
                                 variant="ghost" 
                                 className="text-primary gap-2 h-8"
-                                onClick={() => handleGenerateReport(item.type)} // Regera com os filtros ATUAIS da tela, não os históricos (padrão UX para não confundir dados velhos com novos)
+                                onClick={() => handleGenerateReport(item.type)} 
                             >
                                 <RefreshCw className="h-3.5 w-3.5" />
                                 Regerar

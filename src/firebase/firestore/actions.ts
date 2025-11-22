@@ -1,3 +1,4 @@
+// ARQUIVO 1/2: src/firebase/firestore/actions.ts
 'use client';
 
 import {
@@ -7,11 +8,18 @@ import {
   type Firestore,
   serverTimestamp,
   collection,
-  addDoc
+  addDoc,
+  query,
+  getDocs,
+  orderBy,
+  limit // [NOVO] Importado para a limpeza
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import type { Transaction, ManagedDebt, Report } from '@/lib/types';
+
+// [NOVO] Constante para o limite de relatórios
+const REPORT_HISTORY_LIMIT = 15;
 
 // Generic function to set a document in a user's subcollection
 async function setUserSubcollectionDoc<T extends { id: string, userId: string }>(
@@ -109,7 +117,7 @@ export const deleteDebt = (
   return deleteUserSubcollectionDoc(firestore, userId, 'debts', debtId);
 };
 
-// [NOVO] Salvar histórico de relatório
+// [EDIÇÃO] Salvar histórico de relatório + Limpeza
 export const saveReportHistory = async (
     firestore: Firestore,
     userId: string,
@@ -119,6 +127,8 @@ export const saveReportHistory = async (
 ) => {
     try {
         const reportsCol = collection(firestore, 'users', userId, 'reports');
+        
+        // 1. Adicionar o novo relatório (sempre)
         await addDoc(reportsCol, {
             userId,
             type,
@@ -126,6 +136,32 @@ export const saveReportHistory = async (
             filterDescription: filterDescription || 'Sem filtros',
             generatedAt: serverTimestamp()
         });
+
+        // 2. Lógica de Limpeza: Manter apenas os 15 mais recentes.
+        // Buscamos 16 ou mais relatórios (limite + 1) ordenados por data ASC
+        // O último item dessa lista é o mais antigo que precisamos considerar para exclusão.
+        const cleanupQuery = query(
+            reportsCol,
+            orderBy('generatedAt', 'desc'), 
+            limit(REPORT_HISTORY_LIMIT + 1) 
+        );
+
+        const snapshot = await getDocs(cleanupQuery);
+        
+        // Se o número de documentos for maior que o limite (15), deletamos os excedentes.
+        if (snapshot.docs.length > REPORT_HISTORY_LIMIT) {
+            
+            // Os documentos a serem deletados são do índice 15 em diante
+            const docsToDelete = snapshot.docs.slice(REPORT_HISTORY_LIMIT); 
+
+            // Deletamos cada documento excedente (são os mais antigos na lista decrescente)
+            for (const docSnapshot of docsToDelete) {
+                // Não usamos await, pois queremos que a deleção ocorra em background e não atrase a UI.
+                deleteDoc(docSnapshot.ref).catch(e => {
+                    console.error(`Falha ao deletar relatório antigo: ${docSnapshot.id}`, e);
+                }); 
+            }
+        }
     } catch (error) {
         console.error("Erro ao salvar histórico de relatório:", error);
     }
