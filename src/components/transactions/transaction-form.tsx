@@ -25,7 +25,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Camera, UploadCloud, Sparkles, ScanLine, FileText, CheckCircle2 } from "lucide-react";
+import { Calendar as CalendarIcon, Camera, UploadCloud, Sparkles, ScanLine, CheckCircle2 } from "lucide-react";
 import { ptBR } from 'date-fns/locale';
 import { useFirestore, useUser } from "@/firebase";
 import { doc, collection } from "firebase/firestore";
@@ -74,18 +74,14 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
   const [uploadProgress, setUploadProgress] = useState(0);
   const [scanStatus, setScanStatus] = useState("Iniciando...");
 
-  const isDefaultCategory = initialData 
-    ? (DEFAULT_CATEGORIES.income.includes(initialData.category) || DEFAULT_CATEGORIES.expense.includes(initialData.category))
-    : true;
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       type: initialData?.type || 'expense',
       description: initialData?.description || "",
       amount: initialData ? Math.abs(initialData.amount) : 0,
-      category: initialData ? (isDefaultCategory ? initialData.category : 'Outros') : "",
-      customCategory: initialData && !isDefaultCategory ? initialData.category : "",
+      category: initialData ? (DEFAULT_CATEGORIES.income.includes(initialData.category) || DEFAULT_CATEGORIES.expense.includes(initialData.category) ? initialData.category : 'Outros') : "",
+      customCategory: initialData && !(DEFAULT_CATEGORIES.income.includes(initialData.category) || DEFAULT_CATEGORIES.expense.includes(initialData.category)) ? initialData.category : "",
       date: initialData ? new Date(initialData.date) : new Date(),
     },
   });
@@ -94,7 +90,7 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
   const selectedCategory = form.watch('category');
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 
-  // Simulação de progresso para UX
+  // Simulação de progresso
   useEffect(() => {
     if (isScanning) {
         setUploadProgress(10);
@@ -159,8 +155,6 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                 form.setValue("category", data.category, { shouldValidate: true });
                 form.setValue("customCategory", ""); 
             } else {
-                 // Se a categoria for "Contas" (vinda da API para energia/agua), verifique se ela existe no array
-                 // Se não existir, joga em Outros.
                  const fallbackCat = DEFAULT_CATEGORIES[transactionType].includes("Contas") ? "Contas" : "Outros";
                  
                  if (fallbackCat === "Outros") {
@@ -237,7 +231,6 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
         
         {/* ÁREA DE SCAN PREMIUM */}
         <div className="relative group overflow-hidden rounded-xl border border-border bg-gradient-to-b from-background/80 to-muted/20 p-0 shadow-sm transition-all hover:shadow-md">
-             
              {isScanning ? (
                 <div className="flex flex-col items-center justify-center py-8 px-4 space-y-3">
                     <div className="w-full max-w-[200px] space-y-1">
@@ -344,6 +337,7 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                     )}
                 />
 
+                {/* CORREÇÃO 2: Grid para Valor e Data Alinhados */}
                 <div className="grid grid-cols-2 gap-4">
                     <FormField
                     control={form.control}
@@ -368,7 +362,7 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                         <Popover>
                             <PopoverTrigger asChild>
                             <FormControl>
-                                <Button variant={"outline"} className={cn("pl-3 text-left font-normal h-11 bg-muted/30 border-input", !field.value && "text-muted-foreground")}>
+                                <Button variant={"outline"} className={cn("pl-3 text-left font-normal h-11 bg-muted/30 border-input w-full", !field.value && "text-muted-foreground")}>
                                 {field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : <span>Selecione</span>}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
@@ -393,13 +387,16 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                         <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                             <FormControl>
                                 <SelectTrigger className="h-11 bg-muted/30">
-                                    {/* CORREÇÃO: O SelectValue renderiza o texto da opção selecionada automaticamente. */}
                                     <SelectValue placeholder="Selecione uma categoria" />
                                 </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
-                                {DEFAULT_CATEGORIES[transactionType].map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
-                                <SelectItem value="Outros">Outra...</SelectItem>
+                            {/* CORREÇÃO 3: Menu Estilizado e Opção Única */}
+                            <SelectContent className="max-h-[200px] rounded-xl border-border/50 bg-popover/95 backdrop-blur-lg shadow-xl">
+                                {DEFAULT_CATEGORIES[transactionType].map(cat => <SelectItem key={cat} value={cat} className="cursor-pointer focus:bg-accent/50 rounded-md my-0.5">{cat}</SelectItem>)}
+                                {/* Opção de Criar Nova */}
+                                <SelectItem value="Outros" className="cursor-pointer font-medium text-primary focus:text-primary focus:bg-primary/10 rounded-md mt-1 border-t border-border/40">
+                                    Adicionar uma nova...
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
