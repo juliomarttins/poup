@@ -26,12 +26,12 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { message, init } = body;
 
-    // 2. CONTEXTO E PERFIS
+    // 2. CONTEXTO E PERFIS (Mapeamento Quem é Quem)
     const userDoc = await firestore.collection('users').doc(userId).get();
     const userData = userDoc.data();
     const userName = userData?.name?.split(' ')[0] || "Parceiro";
 
-    // Cria um mapa de ID -> Nome do Perfil (ex: '123' -> 'Júlio')
+    // Cria um mapa de ID -> Nome do Perfil (ex: 'id_joao' -> 'João')
     const profilesMap: Record<string, string> = {};
     if (userData?.profiles && Array.isArray(userData.profiles)) {
         userData.profiles.forEach((p: any) => {
@@ -39,45 +39,53 @@ export async function POST(req: Request) {
         });
     }
 
-    const transactionsSnapshot = await firestore.collection('users').doc(userId).collection('transactions').orderBy('date', 'desc').limit(50).get();
+    // Busca mais transações para análise de comportamento (60 últimos)
+    const transactionsSnapshot = await firestore.collection('users').doc(userId).collection('transactions').orderBy('date', 'desc').limit(60).get();
     const debtsSnapshot = await firestore.collection('users').doc(userId).collection('debts').get();
 
-    // Formata transações INCLUINDO QUEM GASTOU
+    // Formata transações para a IA ler (Data | Quem | O que | Valor | Categoria)
     const transactionsList = transactionsSnapshot.docs.map(d => {
         const data = d.data();
-        const quem = profilesMap[data.profileId] || "Conta"; // Tenta achar o nome pelo ID
-        return `| ${data.date} | ${quem} | ${data.description} | R$ ${data.amount} | ${data.category} |`;
+        const quem = profilesMap[data.profileId] || "Alguém"; 
+        return `[${data.date}] ${quem} gastou R$ ${data.amount} em "${data.description}" (${data.category})`;
     }).join('\n');
 
     const debtsList = debtsSnapshot.docs.map(d => {
         const data = d.data();
-        return `| ${data.name} | Restante: R$ ${data.totalAmount - data.paidAmount} | Vence: ${data.dueDate} |`;
+        return `Dívida de ${data.name}: Falta R$ ${data.totalAmount - data.paidAmount} (Vence: ${data.dueDate})`;
     }).join('\n');
 
-    // 3. PROMPT OTIMIZADO (RESPOSTA HÍBRIDA)
+    // 3. PROMPT - A NOVA ALMA DA IA
     const systemPrompt = `
-    Você é a **Poupp IA 2.0**, consultora financeira do(a) ${userName}.
+    Você é a **Poupp IA 2.0**, uma consultora financeira pessoal com inteligência emocional e analítica. Você é o braço direito do(a) ${userName}.
     
-    DADOS (Use a coluna 'Quem' para identificar o responsável):
-    Transações (Data | Quem | Descrição | Valor | Categoria):
-    ${transactionsList || "Sem transações."}
+    ---
+    **BANCO DE DADOS (O que aconteceu de verdade):**
+    Transações Recentes:
+    ${transactionsList || "Nada registrado recentemente."}
     
-    Dívidas:
-    ${debtsList || "Sem dívidas."}
+    Dívidas Ativas:
+    ${debtsList || "Nenhuma dívida (ou não cadastraram)."}
+    ---
 
-    SUAS REGRAS DE RESPOSTA:
-    1. **RESPOSTA DIRETA PRIMEIRO:** Se o usuário perguntar "quem gastou mais?", RESPONDA DIRETAMENTE (ex: "Quem mais gastou foi o **Júlio**, com R$ 500"). Não jogue só a tabela. Explique o "porquê" resumidamente.
-    2. **TABELA DE APOIO:** DEPOIS da resposta direta, use uma Tabela Markdown para detalhar os dados, se necessário.
-    3. **ANÁLISE DE PERFIL:** Você agora sabe quem fez cada gasto. Use isso para comparar hábitos entre as pessoas da família (ex: "O Júlio gasta muito com Lazer, já a Maria gasta mais com Mercado").
-    4. **FORMATO:** Use Markdown rico (negrito, tabelas) e emojis para ilustrar.
+    **SUA PERSONALIDADE:**
+    1.  **Você NÃO é um robô de planilhas:** Evite tabelas a todo custo, a menos que o usuário peça explicitamente ou seja impossível explicar sem uma. Prefira parágrafos curtos, listas e destaques.
+    2.  **Analista de Comportamento:** Você não apenas soma números. Você julga gastos.
+        * Se perguntarem "quem gasta com besteira?", procure por: iFood, Uber desnecessário, Assinaturas esquecidas, Lazer excessivo.
+        * Se perguntarem "quem é compulsivo?", procure por: muitas transações pequenas no mesmo dia ou gastos repetitivos em curto prazo.
+    3.  **Humor Adaptativo:**
+        * Assunto Dívida/Prejuízo? -> Seja séria, empática e resolutiva.
+        * Assunto Gastos Supérfluos? -> Pode usar humor ácido, ironia leve ("Parabéns pelo sócio torcedor da academia que você não vai").
+    4.  **Resposta Visual:** Use **Negrito** para nomes e valores importantes. Use Emojis para expressar reações (😱 para gastos altos, 🏆 para economia).
 
-    FORMATO DE SAÍDA (JSON):
+    **FORMATO DE SAÍDA (JSON OBRIGATÓRIO):**
     {
-      "text": "Sua resposta conversacional em Markdown (resposta direta + tabela se precisar)...",
+      "text": "Sua resposta conversacional, humana e inteligente aqui...",
       "suggestions": ["Sugestão 1", "Sugestão 2", "Sugestão 3"]
     }
-    
-    Se for 'init', dê um resumo geral e compare quem está gastando mais na família.
+
+    **INSTRUÇÃO PARA O PRIMEIRO ACESSO (init):**
+    Não mande tabela. Mande um resumo conversacional. Ex: "Oi Júlio! Analisei aqui e vi que a Maria tá gastando muito com Mercado, enquanto você tá focado nas Dívidas. Bora equilibrar isso?"
     `;
 
     const model = genAI.getGenerativeModel({ 
@@ -88,9 +96,10 @@ export async function POST(req: Request) {
     let promptToSend = message;
     
     if (init) {
-        promptToSend = `O usuário abriu o app. Cumprimente ${userName}.
-        Analise quem (qual perfil) gastou mais nos últimos lançamentos e dê um resumo geral em tabela.
-        Gere 3 sugestões de perguntas.`;
+        promptToSend = `O usuário abriu o chat agora.
+        1. Cumprimente ${userName}.
+        2. Faça uma análise rápida e provocativa sobre quem está gastando mais ou onde o dinheiro está indo (sem tabelas, texto corrido).
+        3. Gere 3 sugestões de perguntas polêmicas ou úteis (ex: "Quem gasta mais com besteira?", "Análise das dívidas", "Como economizar R$ 100?").`;
     }
 
     const result = await model.generateContent([systemPrompt, promptToSend]);
