@@ -6,7 +6,7 @@ import { Logo } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/firebase/auth/use-user';
 import { useAuth } from '@/firebase/provider';
-import { useProfile } from '@/contexts/profile-context'; // <--- IMPORTANTE
+import { useProfile } from '@/contexts/profile-context';
 import { signOut } from 'firebase/auth';
 import {
   DropdownMenu,
@@ -21,17 +21,8 @@ import { LogOut, Settings, User as UserIcon, LayoutDashboard } from 'lucide-reac
 
 export function Header() {
   const { user, loading } = useUser();
-  // Tenta pegar o perfil, mas não quebra se estiver fora do Provider (ex: Landing Page deslogada)
-  // Se o seu ProfileProvider estiver apenas no Dashboard, isso pode ser undefined
-  let currentProfile = null;
-  try {
-     // eslint-disable-next-line react-hooks/rules-of-hooks
-     const profileContext = useProfile();
-     currentProfile = profileContext.currentProfile;
-  } catch (e) {
-    // Ignora erro se não tiver provider (ex: página inicial pública)
-  }
-
+  // Agora podemos chamar direto, pois o Provider está no root
+  const { currentProfile } = useProfile(); 
   const auth = useAuth();
   const router = useRouter();
 
@@ -72,6 +63,7 @@ export function Header() {
           {loading ? (
             <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
           ) : user ? (
+            // --- LOGADO ---
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
@@ -117,6 +109,7 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
+            // --- DESLOGADO ---
             <>
               <Button variant="ghost" asChild className="text-sm font-medium">
                 <Link href="/login">Entrar</Link>
