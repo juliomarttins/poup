@@ -22,16 +22,30 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { message, init, type, profileName } = body; // profileName = Quem está logado agora (ex: Liandra)
+    const { message, init, type, profileName } = body;
 
-    // 2. CONTEXTO
+    // 2. CONTEXTO (Compartilhado para todos os modos)
     const userDoc = await firestore.collection('users').doc(userId).get();
     const userData = userDoc.data();
-    
-    // Define quem é o usuário logado e quem são os outros
     const currentUser = profileName || userData?.name?.split(' ')[0] || "Parceiro";
+    const aiPersona = userData?.aiSettings?.persona || "Você é uma consultora financeira sagaz e realista.";
     
-    // Mapeamento
+    // Se for apenas para gerar sugestões, não precisamos carregar tudo
+    if (type === 'suggestions') {
+        const suggestionsPrompt = `
+        Assuma o papel de ${aiPersona}.
+        O usuário ${currentUser} quer mais ideias de perguntas sobre suas finanças.
+        Gere 5 sugestões curtas e criativas (diferentes das óbvias).
+        Exemplos do tom: "Gasto muito com iFood?", "Como investir R$ 100?", "Quem é o gastão da casa?".
+        
+        FORMATO JSON: { "suggestions": ["Sugestão 1", "Sugestão 2", ...] }
+        `;
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", generationConfig: { responseMimeType: "application/json" } });
+        const result = await model.generateContent(suggestionsPrompt);
+        return NextResponse.json(JSON.parse(result.response.text()));
+    }
+
+    // Carrega dados completos para Chat e Situação
     const profilesMap: Record<string, string> = {};
     const familyNames: string[] = [];
     if (userData?.profiles && Array.isArray(userData.profiles)) {
@@ -54,28 +68,23 @@ export async function POST(req: Request) {
 
     const debtsList = debtsSnapshot.docs.map(d => {
         const data = d.data();
-        return `Dívida: ${data.name} | Falta: R$ ${data.totalAmount - data.paidAmount} | Vence: ${data.dueDate}`;
+        return `Dívida: ${data.name} | Falta: R$ ${data.totalAmount - data.paidAmount}`;
     }).join('\n');
 
-    const aiPersona = userData?.aiSettings?.persona || "Você é uma consultora financeira sagaz, realista e amiga.";
-
-    // --- MODO 1: ANÁLISE DE SITUAÇÃO (Para a página /dashboard/situation) ---
+    // --- MODO SITUAÇÃO (3 a 5 cards) ---
     if (type === 'situation') {
         const situationPrompt = `
-        Analise os dados financeiros de ${currentUser} e família.
+        Analise os dados de ${currentUser}:
         Transações: \n${transactionsList}
         Dívidas: \n${debtsList}
 
-        Gere um JSON com 3 análises distintas para popular cards na tela:
-        1. "positive": Algo bom que aconteceu (ou o menos pior).
-        2. "negative": O ponto crítico que precisa de atenção imediata.
-        3. "neutral": Uma observação ou conselho estratégico.
+        Gere um JSON com 3 a 5 análises importantes (Cards).
+        Identifique pontos positivos ("positive"), negativos ("negative") e alertas/conselhos ("neutral").
+        Se não tiver dados suficientes, crie cards com dicas genéricas de educação financeira.
 
-        FORMATO JSON OBRIGATÓRIO:
+        FORMATO JSON (Array):
         [
-            { "id": "1", "title": "Título Curto", "status": "positive", "summary": "Resumo de 1 linha", "advice": "Conselho prático e direto." },
-            { "id": "2", "title": "Título Curto", "status": "negative", "summary": "Resumo de 1 linha", "advice": "Bronca ou alerta direto." },
-            { "id": "3", "title": "Título Curto", "status": "neutral", "summary": "Resumo de 1 linha", "advice": "Estratégia para o futuro." }
+            { "id": "1", "title": "Título Curto", "status": "positive/negative/neutral", "summary": "Resumo", "advice": "Conselho" }
         ]
         `;
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", generationConfig: { responseMimeType: "application/json" } });
@@ -83,39 +92,29 @@ export async function POST(req: Request) {
         return NextResponse.json(JSON.parse(result.response.text()));
     }
 
-    // --- MODO 2: CHAT NORMAL ---
+    // --- MODO CHAT NORMAL ---
     const systemPrompt = `
-    Você é a **Poupp IA**, falando diretamente com **${currentUser}**.
-    Outros membros da família citados nos dados: ${familyNames.join(', ') || "Ninguém"}.
+    Você é a **Poupp IA**, falando com **${currentUser}**.
+    Outros: ${familyNames.join(', ')}.
+    Personalidade: ${aiPersona}
 
-    **DADOS REAIS:**
-    ${transactionsList || "Nada recente."}
-    ${debtsList || "Nada."}
+    DADOS:
+    ${transactionsList}
+    ${debtsList}
 
-    **SUA PERSONALIDADE (${aiPersona}):**
-    1. **Fale com o ${currentUser}:** Se a Liandra está logada, fale com a Liandra. Se o Júlio gastou, fale "O Júlio gastou", não "você gastou".
-    2. **Anti-Robô:** Evite jogar números soltos ("Você gastou R$ 453,20"). Diga "Você gastou quase quinhentos reais". Seja conversacional.
-    3. **Conselheira, não Calculadora:** Só use tabelas se pedirem. Prefira parágrafos curtos, frases de impacto e emojis.
-    4. **Sugestões Infinitas:** Gere de 4 a 6 sugestões de perguntas curtas e interessantes para o usuário clicar.
+    REGRAS:
+    1. Fale com ${currentUser}.
+    2. Sem números crus. Seja conversacional.
+    3. Tabelas só se pedirem.
+    4. Gere sempre 5 sugestões novas de perguntas.
 
-    FORMATO DE SAÍDA (JSON):
-    {
-      "text": "Resposta em Markdown...",
-      "suggestions": ["Sugestão 1", "Sugestão 2", "Sugestão 3", "Sugestão 4", "Sugestão 5"],
-      "newPersona": null
-    }
+    JSON: { "text": "Markdown...", "suggestions": ["S1", "S2", "S3", "S4", "S5"], "newPersona": null }
     `;
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", generationConfig: { responseMimeType: "application/json" } });
     
     let promptToSend = message;
-    if (init) {
-        promptToSend = `O usuário ${currentUser} abriu o chat.
-        1. Cumprimente-o pelo nome correto.
-        2. Dê um resumo "fofoca" financeiro (quem gastou mais, alguma dívida vencendo).
-        3. Lembre que você aprende com ele.
-        4. Gere 5+ sugestões de perguntas variadas (curtas).`;
-    }
+    if (init) promptToSend = `Inicie o chat com ${currentUser}. Resumo rápido e provocativo.`;
 
     const result = await model.generateContent([systemPrompt, promptToSend]);
     const responseJson = JSON.parse(result.response.text());

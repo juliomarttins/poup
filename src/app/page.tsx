@@ -17,13 +17,185 @@ import { Logo } from "@/components/icons";
 import { useUser } from "@/firebase/auth/use-user";
 import { Progress } from "@/components/ui/progress";
 
-// ... (MANTENHA OS COMPONENTES MOCKUP IGUAIS - GoogleLogo, DashboardMockupHero, etc...)
-// Estou omitindo os mockups para economizar espaço, mas eles devem permanecer no arquivo.
-// Vou focar nas mudanças do componente principal abaixo.
-// ---
+// ... (MANTENHA OS MOCKUPS AQUI - GoogleLogo, DashboardMockupHero, etc. O código é longo, vou focar na alteração principal abaixo) ...
+// SEU CÓDIGO DE MOCKUPS CONTINUA IGUAL AQUI EM CIMA.
 
-// ATENÇÃO: COPIE OS MOCKUPS DO ARQUIVO ANTERIOR OU MANTENHA OS QUE JÁ EXISTEM.
-// O código abaixo substitui o "export default function LandingPage..."
+// --- MOCKUPS (Reutilize os componentes visuais do arquivo anterior para economizar espaço na resposta, se necessário, mas garanta que a export function esteja completa) ---
+const GoogleLogo = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6" aria-hidden="true"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" /></svg>
+);
+const FirebaseLogo = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6" aria-hidden="true"><path fill="#FFCA28" d="M13.9 2.2l-1.9 10.4 7.5-3.2-5.6-7.2z"/><path fill="#FFA000" d="M2.5 18.7l9.5-5.2-1.9-10.4-7.6 15.6z"/><path fill="#F57F17" d="M12 13.5l-9.5 5.2 9.5 5.4 9.5-5.4-9.5-5.2z"/><path fill="#FFCA28" d="M19.5 9.4l-7.5 3.2 7.5 4.2 2-11.5-2 4.1z"/></svg>
+);
+
+const DashboardMockupHero = () => (
+  <div className="relative w-full h-full bg-[#09090B] rounded-xl border border-white/10 overflow-hidden flex shadow-2xl text-zinc-100 font-sans">
+    <div className="w-14 border-r border-white/5 flex flex-col items-center py-6 gap-6 bg-zinc-900/50 backdrop-blur-sm">
+        <div className="h-8 w-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20"><Logo className="w-5 h-5"/></div>
+        <div className="flex flex-col gap-4 mt-4">
+            <div className="p-2 rounded-lg bg-white/5 text-white"><LayoutDashboard size={18}/></div>
+            <div className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-colors"><PieChart size={18}/></div>
+            <div className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-colors"><CreditCard size={18}/></div>
+        </div>
+        <div className="mt-auto p-2 rounded-lg text-zinc-500"><Users size={18}/></div>
+    </div>
+    <div className="flex-1 flex flex-col">
+        <div className="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-zinc-900/20">
+            <div className="flex flex-col"><span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">Visão Geral</span><span className="text-sm font-bold">Família Silva</span></div>
+            <div className="flex items-center gap-3"><div className="px-3 py-1 rounded-full bg-zinc-800 border border-white/5 text-[10px] text-zinc-400 flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"/>Sincronizado</div><div className="h-8 w-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center"><Bell size={14} className="text-zinc-400"/></div></div>
+        </div>
+        <div className="p-6 space-y-6 overflow-hidden relative">
+            <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2 p-5 rounded-2xl bg-gradient-to-br from-zinc-900 to-zinc-950 border border-white/5 relative overflow-hidden group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div><p className="text-zinc-500 text-xs font-medium">Saldo Atual</p><h3 className="text-3xl font-bold mt-1 text-white">R$ 12.450,00</h3></div>
+                        <span className="flex items-center text-green-500 text-xs bg-green-500/10 px-2 py-1 rounded-full">+12%</span>
+                    </div>
+                    <div className="relative h-24 w-full -mx-2">
+                        <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                            <defs><linearGradient id="gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" /><stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" /></linearGradient></defs>
+                            <path d="M0,35 Q10,32 20,25 T40,20 T60,15 T80,28 T100,10 V40 H0 Z" fill="url(#gradient)" />
+                            <path d="M0,35 Q10,32 20,25 T40,20 T60,15 T80,28 T100,10" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                    </div>
+                </div>
+                <div className="col-span-1 space-y-3">
+                    <div className="p-3 rounded-xl bg-zinc-900 border border-white/5"><div className="flex items-center gap-2 mb-1 text-zinc-500 text-[10px]"><TrendingDown size={12} className="text-red-500"/> Despesas</div><p className="text-lg font-bold text-white">R$ 4.210</p></div>
+                    <div className="p-3 rounded-xl bg-zinc-900 border border-white/5"><div className="flex items-center gap-2 mb-1 text-zinc-500 text-[10px]"><PiggyBank size={12} className="text-blue-500"/> Meta</div><div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden mt-1"><div className="h-full w-[75%] bg-blue-500 rounded-full"/></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+);
+const PersonalizationMockup = () => (
+    <div className="h-full flex flex-col p-1 gap-3">
+        <div className="flex justify-between items-center mb-4 border-b border-border pb-3">
+             <div className="flex gap-2">
+                 <div className="w-8 h-8 rounded-full bg-blue-100 border-2 border-blue-500 flex items-center justify-center text-[10px] font-bold text-blue-700 shadow-sm">EU</div>
+                 <div className="w-8 h-8 rounded-full bg-pink-100 border-2 border-transparent opacity-50 flex items-center justify-center text-[10px] font-bold text-pink-700">ELA</div>
+                 <div className="w-8 h-8 rounded-full bg-zinc-100 border-2 border-transparent opacity-50 flex items-center justify-center"><Palette size={12} className="text-zinc-400"/></div>
+             </div>
+             <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-offset-1 ring-blue-200"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-purple-500"></div>
+            </div>
+        </div>
+        <div className="flex flex-col gap-2">
+            <div className="bg-card rounded-lg p-2.5 border border-blue-100 shadow-sm flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-blue-600 border border-blue-200">EU</div>
+                    <div><p className="text-xs font-bold">Netflix</p><p className="text-[10px] text-muted-foreground">Via Cartão Nu</p></div>
+                </div>
+                <span className="text-xs font-bold text-red-500">- R$ 55,90</span>
+            </div>
+            <div className="bg-card rounded-lg p-2.5 border border-pink-100 shadow-sm flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-pink-100 flex items-center justify-center text-[9px] font-bold text-pink-600 border border-pink-200">ELA</div>
+                    <div><p className="text-xs font-bold">Uber</p><p className="text-[10px] text-muted-foreground">Via Pix</p></div>
+                </div>
+                <span className="text-xs font-bold text-red-500">- R$ 22,40</span>
+            </div>
+        </div>
+    </div>
+);
+const GoalsMockup = () => (
+    <div className="flex flex-col gap-4 h-full justify-center p-2">
+        <div className="space-y-1.5 group">
+            <div className="flex justify-between text-xs"><div className="flex items-center gap-2"><Plane size={14} className="text-purple-500"/> <span className="font-medium">Viagem Disney</span></div> <span className="text-muted-foreground font-bold">80%</span></div>
+            <Progress value={80} className="h-2 bg-purple-100" indicatorClassName="bg-purple-500"/>
+        </div>
+        <div className="space-y-1.5 group">
+            <div className="flex justify-between text-xs"><div className="flex items-center gap-2"><ShieldCheck size={14} className="text-green-500"/> <span className="font-medium">Reserva Emergência</span></div> <span className="text-muted-foreground font-bold">45%</span></div>
+            <Progress value={45} className="h-2 bg-green-100" indicatorClassName="bg-green-500"/>
+        </div>
+        <div className="space-y-1.5 group">
+            <div className="flex justify-between text-xs"><div className="flex items-center gap-2"><Car size={14} className="text-blue-500"/> <span className="font-medium">Carro Novo</span></div> <span className="text-muted-foreground font-bold">20%</span></div>
+            <Progress value={20} className="h-2 bg-blue-100" indicatorClassName="bg-blue-500"/>
+        </div>
+    </div>
+)
+const IntegratedDebtAI = () => {
+    const [step, setStep] = useState(0);
+    useEffect(() => { const i = setInterval(() => setStep(s => (s + 1) % 3), 4000); return () => clearInterval(i); }, []);
+    const data = [
+        { title: "Evolutiva", debtTotal: "Analiso você", color: "bg-purple-500", progress: 10, chat: "Notei que você prefere ser tratado com ironia. Ajustando minha personalidade para ser mais ácida." },
+        { title: "Adaptável", debtTotal: "Entendo você", color: "bg-blue-500", progress: 50, chat: "Quer que eu seja mais rígida com as contas? Considere feito. A partir de hoje, serei seu sargento financeiro." },
+        { title: "Viva", debtTotal: "Mudo por você", color: "bg-green-500", progress: 90, chat: "Eu tenho memória. Lembro que você odeia gráficos. Vou te mandar apenas resumos em texto direto a partir de agora." }
+    ];
+    const current = data[step];
+    return (
+        <div className="w-full h-full bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden flex flex-col md:flex-row">
+            <div className="flex-1 p-4 border-b md:border-b-0 md:border-r border-zinc-800 flex flex-col justify-center">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className={`w-2 h-2 rounded-full ${current.color} animate-pulse`} />
+                    <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">{current.title}</span>
+                </div>
+                <div className="space-y-3">
+                    <div className="flex justify-between items-end">
+                        <span className="text-xs text-zinc-400">Status da IA</span>
+                        <span className="text-xl font-bold text-white transition-all duration-500">{current.debtTotal}</span>
+                    </div>
+                    <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden">
+                        <div className={`h-full ${current.color} transition-all duration-1000 ease-in-out`} style={{ width: `${current.progress}%` }}/>
+                    </div>
+                </div>
+            </div>
+            <div className="flex-1 p-4 bg-zinc-900/50 flex flex-col justify-center gap-3">
+                <div className="flex gap-2 items-start animate-in slide-in-from-bottom-2 fade-in duration-500 key={step}">
+                    <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white shrink-0 mt-1"><Sparkles size={12} /></div>
+                    <div className="bg-zinc-800 border border-zinc-700 p-2 rounded-2xl rounded-tl-none text-[11px] text-zinc-200 leading-relaxed shadow-sm">{current.chat}</div>
+                </div>
+            </div>
+        </div>
+    );
+};
+const CrossPlatformMockup = () => (
+    <div className="relative w-full h-full flex items-end justify-center pb-4 overflow-hidden">
+        <div className="hidden sm:block w-[80%] sm:w-[70%] aspect-[16/10] bg-zinc-900 rounded-t-lg sm:rounded-lg border border-zinc-800 shadow-2xl relative z-10 transform sm:-translate-x-8 sm:translate-y-4">
+            <div className="h-4 sm:h-5 bg-zinc-950 border-b border-zinc-800 flex items-center px-2 gap-1">
+                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-red-500/50"/><div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-yellow-500/50"/><div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-green-500/50"/>
+            </div>
+            <div className="p-2 sm:p-3 bg-black/50 h-full grid grid-cols-4 gap-2 opacity-50">
+                <div className="bg-zinc-800/50 rounded h-full col-span-1 hidden sm:block"/>
+                <div className="bg-zinc-800/50 rounded h-full col-span-4 sm:col-span-3 flex flex-col gap-2">
+                    <div className="h-1/3 bg-zinc-800/50 rounded w-full"/>
+                    <div className="h-2/3 bg-zinc-800/50 rounded w-full"/>
+                </div>
+            </div>
+        </div>
+        <div className="relative sm:absolute sm:bottom-0 sm:right-1/2 sm:translate-x-0 sm:right-8 w-[100px] sm:w-[120px] h-[200px] sm:h-[240px] bg-black rounded-[1.5rem] border-[4px] border-zinc-800 shadow-2xl z-20 overflow-hidden ring-1 ring-white/10">
+            <div className="w-full h-full bg-zinc-950 flex flex-col pt-6 px-2">
+                <div className="mb-2"><div className="text-[8px] text-zinc-500">Saldo</div><div className="text-sm font-bold text-white">R$ 1.250</div></div>
+                <div className="space-y-1.5 flex-1">
+                    {[{i:"🍔",n:"iFood",v:"-32,90",c:"text-red-500"},{i:"💰",n:"Pix",v:"+150",c:"text-green-500"},{i:"🚗",n:"Uber",v:"-14,20",c:"text-red-500"}].map((t,k)=>(
+                        <div key={k} className="flex items-center justify-between p-1 rounded bg-zinc-900/80 border border-white/5">
+                            <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-white/5 flex items-center justify-center text-[6px]">{t.i}</div><span className="text-[8px] text-white">{t.n}</span></div>
+                            <span className={`text-[6px] sm:text-[8px] font-bold ${t.c}`}>{t.v}</span>
+                        </div>
+                    ))}
+                </div>
+                <div className="mt-auto mb-2 h-0.5 w-8 bg-zinc-700 rounded-full mx-auto"/>
+            </div>
+        </div>
+    </div>
+);
+const PDFReportMockup = () => (
+    <div className="relative w-32 aspect-[210/297] bg-white rounded shadow-xl border border-zinc-200 p-3 flex flex-col gap-2 mx-auto group hover:scale-105 transition-transform duration-500">
+        <div className="flex justify-between items-center border-b border-zinc-100 pb-1">
+            <div><div className="text-[5px] font-black uppercase tracking-widest text-zinc-400">Relatório</div><div className="text-[8px] font-bold text-black">EXTRATO 2025</div></div>
+            <div className="h-4 w-4 bg-black rounded-sm flex items-center justify-center"><Logo className="w-2 h-2 text-white"/></div>
+        </div>
+        <div className="space-y-2 flex-1">
+            <div className="flex gap-1">
+                <div className="h-6 flex-1 bg-green-50 rounded-sm border border-green-100 flex flex-col justify-center px-1"><div className="h-1 w-full bg-green-500 rounded-full mb-0.5"/><div className="h-0.5 w-1/2 bg-green-300 rounded-full"/></div>
+                <div className="h-6 flex-1 bg-red-50 rounded-sm border border-red-100 flex flex-col justify-center px-1"><div className="h-1 w-full bg-red-500 rounded-full mb-0.5"/></div>
+            </div>
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/5 transition-colors rounded"><div className="opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 bg-black text-white rounded-full p-1.5 shadow-xl"><Download size={12} /></div></div>
+    </div>
+);
 
 export default function LandingPage() {
   const { user, loading } = useUser();
@@ -31,7 +203,7 @@ export default function LandingPage() {
   return (
     <div className="dark flex min-h-screen flex-col bg-background text-foreground selection:bg-primary selection:text-primary-foreground overflow-x-hidden">
       
-      {/* HEADER (Mantido igual) */}
+      {/* HEADER */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4 md:px-8 mx-auto">
           <div className="flex items-center gap-2">
@@ -88,22 +260,146 @@ export default function LandingPage() {
                 {/* Mockup Hero */}
                 <div className="flex-1 w-full max-w-[650px] lg:max-w-none perspective-1000 relative hidden md:block">
                     <div className="relative transform lg:rotate-y-[-8deg] lg:rotate-x-[4deg] transition-all duration-1000 hover:rotate-0 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.5)] rounded-2xl border border-white/10 bg-[#09090B]">
-                        {/* RECOLOCAR O COMPONENTE DashboardMockupHero AQUI */}
-                        <div className="h-[400px] bg-zinc-900 rounded-xl flex items-center justify-center text-zinc-500">Visualização do Dashboard</div>
+                        <DashboardMockupHero />
                     </div>
                 </div>
             </div>
           </div>
           
-          {/* SCROLL INDICATOR (NOVO) */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce opacity-70">
+          {/* SCROLL INDICATOR (MODIFICADO: VISUAL E MOBILE ONLY) */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce opacity-70 md:hidden pointer-events-none">
             <span className="text-xs uppercase tracking-widest text-muted-foreground">Descubra Mais</span>
             <ChevronDown className="h-6 w-6 text-primary" />
           </div>
         </section>
 
-        {/* ... (RESTO DAS SEÇÕES - FEATURES, PRICING, SECURITY - MANTENHA IGUAL AO ANTERIOR) ... */}
-        
+        {/* FEATURES GRID */}
+        <section id="features" className="py-24 bg-muted/20">
+            <div className="container px-4 mx-auto">
+                <div className="text-center max-w-3xl mx-auto mb-16">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4">Design que funciona</h2>
+                    <p className="text-muted-foreground text-lg">Ferramentas poderosas desenhadas para quem quer resultado rápido.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                    
+                    {/* Mobile & Desktop */}
+                    <div className="md:col-span-1 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col hover:shadow-xl transition-all duration-500">
+                        <div className="space-y-2 relative z-10 mb-6">
+                            <div className="flex gap-2"><div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500"><Smartphone size={16} /></div><div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500"><Laptop size={16} /></div></div>
+                            <h3 className="text-lg font-bold">Multiplataforma Real</h3>
+                            <p className="text-xs text-muted-foreground">Design responsivo que se adapta perfeitamente a qualquer tamanho de tela.</p>
+                        </div>
+                        <div className="mt-auto relative h-48 w-full overflow-hidden flex items-end justify-center"><CrossPlatformMockup /></div>
+                    </div>
+
+                    {/* Caixinhas */}
+                    <div className="md:col-span-1 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-500">
+                        <div className="space-y-2 relative z-10"><div className="h-8 w-8 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-500"><PiggyBank size={16} /></div><h3 className="text-lg font-bold">Metas Reais</h3><p className="text-xs text-muted-foreground">Veja quanto falta para realizar seus sonhos.</p></div>
+                        <div className="mt-4 flex-1"><GoalsMockup /></div>
+                    </div>
+
+                    {/* Personalização */}
+                    <div className="md:col-span-1 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col hover:shadow-xl transition-all duration-500">
+                        <div className="space-y-2 relative z-10 mb-4"><div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><Palette size={16} /></div><h3 className="text-lg font-bold">Seu Estilo</h3><p className="text-xs text-muted-foreground">Avatares e temas para deixar do seu jeito.</p></div>
+                        <div className="mt-auto flex flex-col gap-2"><PersonalizationMockup /></div>
+                    </div>
+
+                    {/* Exportação */}
+                    <div className="md:col-span-1 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-500">
+                        <div className="space-y-2 relative z-10"><div className="h-8 w-8 rounded-lg bg-yellow-500/10 flex items-center justify-center text-yellow-600"><Download size={16} /></div><h3 className="text-lg font-bold">Exportação PDF</h3><p className="text-xs text-muted-foreground">Relatórios profissionais com um clique.</p></div>
+                        <div className="mt-4 relative flex items-center justify-center h-40"><PDFReportMockup /></div>
+                    </div>
+
+                    {/* Debt & AI */}
+                    <div className="md:col-span-2 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col hover:shadow-xl transition-all duration-500">
+                        <div className="space-y-4 relative z-10 mb-6">
+                            <div className="flex gap-2">
+                                <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><BrainCircuit size={16} /></div>
+                                <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><Sparkles size={16} /></div>
+                            </div>
+                            <h3 className="text-lg font-bold">IA com Personalidade Própria</h3>
+                            <p className="text-xs text-muted-foreground max-w-md">
+                                Esqueça os robôs chatos. A Poupp IA aprende com você. Peça para ela ser ácida, engraçada ou séria, e ela se adaptará. É sua consultora pessoal, do seu jeito.
+                            </p>
+                        </div>
+                        <div className="flex-1 w-full flex items-center justify-center"><IntegratedDebtAI /></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {/* PRICING & SECURITY sections continue below unchanged... */}
+        <section id="pricing" className="py-24 bg-gradient-to-b from-background to-muted/30">
+            <div className="container px-4 mx-auto">
+                <div className="text-center max-w-3xl mx-auto mb-16">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4">Quanto custa a sua liberdade?</h2>
+                    <p className="text-muted-foreground text-lg">Invista centavos para ganhar paz de espírito.</p>
+                </div>
+                <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    <Card className="border-red-200 bg-red-50/50 dark:bg-red-900/10">
+                        <CardHeader><CardTitle className="text-red-600">O Preço do Caos</CardTitle><CardDescription>Continuar sem controle</CardDescription></CardHeader>
+                        <CardContent className="text-center space-y-4">
+                            <div className="text-4xl font-black text-zinc-400 line-through opacity-50">Incalculável</div>
+                            <ul className="text-sm text-left space-y-2 text-muted-foreground">
+                                <li className="flex gap-2"><X className="text-red-500" size={16}/> Juros abusivos</li>
+                                <li className="flex gap-2"><X className="text-red-500" size={16}/> Ansiedade constante</li>
+                                <li className="flex gap-2"><X className="text-red-500" size={16}/> Sem futuro garantido</li>
+                            </ul>
+                        </CardContent>
+                    </Card>
+                    <Card className="border-primary shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-primary"/>
+                        <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-bold rounded-bl-lg">RECOMENDADO</div>
+                        <CardHeader><CardTitle>Assinatura Poupp</CardTitle><CardDescription>Liberdade total</CardDescription></CardHeader>
+                        <CardContent className="text-center space-y-4">
+                            <div className="text-5xl font-black text-primary">R$ 0,98 <span className="text-sm font-medium text-muted-foreground">/dia</span></div>
+                            <p className="text-xs text-muted-foreground">Cobrado mensalmente (R$ 29,90). Sem fidelidade.</p>
+                            <ul className="text-sm text-left space-y-2 pt-4">
+                                <li className="flex gap-2"><Check className="text-primary" size={16}/> Acesso Ilimitado</li>
+                                <li className="flex gap-2"><Check className="text-primary" size={16}/> Inteligência Artificial</li>
+                                <li className="flex gap-2"><Check className="text-primary" size={16}/> App Mobile + Desktop</li>
+                            </ul>
+                        </CardContent>
+                        <CardFooter><Button className="w-full" size="lg" asChild><Link href="/signup">Testar Grátis Agora</Link></Button></CardFooter>
+                    </Card>
+                </div>
+            </div>
+        </section>
+
+        <section id="security" className="py-20 bg-zinc-950 text-white">
+            <div className="container px-4 mx-auto grid md:grid-cols-2 gap-12 items-center">
+                <div className="space-y-6">
+                    <h2 className="text-3xl font-bold flex items-center gap-3"><Shield size={32} className="text-green-500"/> Segurança de Nível Bancário</h2>
+                    <p className="text-zinc-400">Seus dados são protegidos pela mesma infraestrutura que grandes bancos usam.</p>
+                    <div className="flex flex-col gap-4">
+                        <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                            <GoogleLogo />
+                            <div><h4 className="font-bold">Google Cloud</h4><p className="text-xs text-zinc-500">Servidores de alta performance.</p></div>
+                        </div>
+                        <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                            <FirebaseLogo />
+                            <div><h4 className="font-bold">Firebase Secured</h4><p className="text-xs text-zinc-500">Criptografia de ponta a ponta.</p></div>
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-zinc-900 p-8 rounded-2xl border border-white/10">
+                     <h3 className="text-2xl font-bold mb-4 flex gap-2"><Zap className="text-yellow-500"/> Atualizações Constantes</h3>
+                     <p className="text-sm text-zinc-400 mb-4">O sistema evolui todo mês sem custo extra para você.</p>
+                     <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm"><CheckCircle2 size={16} className="text-green-500"/> Novo Modo Escuro</div>
+                        <div className="flex items-center gap-2 text-sm"><CheckCircle2 size={16} className="text-green-500"/> Exportação PDF 2.0</div>
+                        <div className="flex items-center gap-2 text-sm opacity-50"><CheckCircle2 size={16}/> Integração Bancária (Em breve)</div>
+                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section className="py-24 text-center">
+            <h2 className="text-4xl font-bold mb-6">Pare de adiar sua tranquilidade.</h2>
+            <Button size="lg" className="h-14 px-10 text-xl rounded-full" asChild><Link href="/signup">Criar Conta Grátis</Link></Button>
+            <p className="text-sm text-muted-foreground mt-4">Teste por 7 dias. Cancele quando quiser.</p>
+        </section>
+
       </main>
 
       <footer className="py-8 border-t bg-muted/30">

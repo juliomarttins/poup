@@ -5,7 +5,7 @@ import { Send, Bot, User, Sparkles, ArrowRight, ChevronLeft, ChevronRight } from
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase/auth/use-user';
@@ -29,6 +29,7 @@ export default function PouppIAPage() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -65,16 +66,51 @@ export default function PouppIAPage() {
     fetchInitialGreeting();
   }, [user, activeProfile]);
 
-  // Auto-scroll Chat
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  // Scroll Sugestões
-  const scrollSuggestions = (direction: 'left' | 'right') => {
+  // Função para buscar mais sugestões
+  const fetchMoreSuggestions = async () => {
+    if (!user || isLoadingSuggestions) return;
+    setIsLoadingSuggestions(true);
+    try {
+        const token = await user.getIdToken();
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ type: 'suggestions', profileName: activeProfile?.name }),
+        });
+        const data = await res.json();
+        if (data.suggestions) {
+             setSuggestions(prev => [...prev, ...data.suggestions]);
+        }
+    } catch (e) {
+        console.error("Erro ao buscar sugestões", e);
+    } finally {
+        setIsLoadingSuggestions(false);
+    }
+  };
+
+  // Scroll Handler para Mobile (Infinito) e Desktop (Seta)
+  const handleSuggestionsScroll = () => {
+      if (suggestionsRef.current) {
+          const { scrollLeft, scrollWidth, clientWidth } = suggestionsRef.current;
+          // Se chegou perto do fim (margem de 50px), carrega mais
+          if (scrollLeft + clientWidth >= scrollWidth - 50) {
+              fetchMoreSuggestions();
+          }
+      }
+  };
+
+  const scrollSuggestionsBtn = (direction: 'left' | 'right') => {
     if (suggestionsRef.current) {
         const scrollAmount = 200;
         suggestionsRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+        if (direction === 'right') {
+             // No PC, clicar na seta direita também dispara o carregamento
+             setTimeout(handleSuggestionsScroll, 300); 
+        }
     }
   };
 
@@ -111,7 +147,7 @@ export default function PouppIAPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5rem)] md:h-[calc(100vh-6rem)] w-full gap-2">
+    <div className="flex flex-col h-[calc(100vh-5rem)] md:h-[calc(100vh-6rem)] w-full gap-2 overflow-hidden">
       <div className="flex items-center gap-3 px-4 py-2 shrink-0 border-b border-border/40 bg-card/50 backdrop-blur-sm">
         <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-1.5 rounded-lg shadow-sm">
             <Sparkles className="h-4 w-4 text-white" />
@@ -123,7 +159,7 @@ export default function PouppIAPage() {
       </div>
 
       <Card className="flex-1 overflow-hidden bg-background/50 border-none relative flex flex-col shadow-none">
-        <ScrollArea className="flex-1 px-2 sm:px-4 py-2">
+        <ScrollArea className="flex-1 px-2 sm:px-4 py-2 w-full">
             {isInitializing && (
                 <div className="flex gap-3 items-center mt-4">
                     <Skeleton className="h-8 w-8 rounded-full" />
@@ -131,7 +167,7 @@ export default function PouppIAPage() {
                 </div>
             )}
             
-            <div className="flex flex-col gap-6 pb-4 pt-2">
+            <div className="flex flex-col gap-6 pb-4 pt-2 w-full">
                 {messages.map((message) => (
                 <div key={message.id} className={cn("flex w-full gap-3", message.role === 'user' ? "flex-row-reverse" : "flex-row")}>
                     <Avatar className={cn("h-8 w-8 border shrink-0 shadow-sm mt-1 flex items-center justify-center", 
@@ -151,7 +187,8 @@ export default function PouppIAPage() {
                             className={cn("prose prose-sm dark:prose-invert max-w-none break-words prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent prose-ul:my-1 prose-li:my-0.5", message.role === 'user' ? "prose-headings:text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground" : "")}
                             components={{
                                 a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium" {...props} />,
-                                table: ({node, ...props}) => <div className="my-3 w-full overflow-y-hidden overflow-x-auto rounded-lg border border-border/60 bg-muted/20 shadow-sm"><table className="w-full min-w-[350px] text-xs" {...props} /></div>,
+                                // Correção para mobile: Container da tabela com scroll
+                                table: ({node, ...props}) => <div className="my-3 w-full overflow-y-hidden overflow-x-auto rounded-lg border border-border/60 bg-muted/20 shadow-sm"><table className="w-full min-w-[300px] text-xs" {...props} /></div>,
                                 thead: ({node, ...props}) => <thead className="bg-muted/50" {...props} />,
                                 tbody: ({node, ...props}) => <tbody className="divide-y divide-border/50" {...props} />,
                                 tr: ({node, ...props}) => <tr className="transition-colors hover:bg-muted/30" {...props} />,
@@ -181,15 +218,23 @@ export default function PouppIAPage() {
       <div className="shrink-0 p-3 sm:p-4 pt-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
         {suggestions.length > 0 && !isLoading && (
             <div className="relative flex items-center mb-2 group/suggestions">
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full absolute left-0 z-10 bg-background/80 shadow-sm md:opacity-0 group-hover/suggestions:opacity-100 transition-opacity" onClick={() => scrollSuggestions('left')}><ChevronLeft className="h-4 w-4" /></Button>
-                <div ref={suggestionsRef} className="flex gap-2 overflow-x-auto pb-1 no-scrollbar snap-x px-8 scroll-smooth">
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full absolute left-0 z-10 bg-background/80 shadow-sm md:opacity-0 group-hover/suggestions:opacity-100 transition-opacity hidden md:flex" onClick={() => scrollSuggestionsBtn('left')}><ChevronLeft className="h-4 w-4" /></Button>
+                
+                {/* CARROSSEL DE SUGESTÕES INFINITAS */}
+                <div 
+                    ref={suggestionsRef} 
+                    onScroll={handleSuggestionsScroll}
+                    className="flex gap-2 overflow-x-auto pb-1 no-scrollbar snap-x px-1 scroll-smooth w-full"
+                >
                     {suggestions.map((sug, idx) => (
-                        <button key={idx} onClick={() => sendMessage(sug)} className="snap-start shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border hover:bg-primary/5 hover:border-primary/40 transition-all text-xs text-left group max-w-[240px] active:scale-95">
-                            <span className="line-clamp-2 leading-tight">{sug}</span>
+                        <button key={idx} onClick={() => sendMessage(sug)} className="snap-start shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border hover:bg-primary/5 hover:border-primary/40 transition-all text-xs text-left group max-w-[240px] active:scale-95 whitespace-nowrap">
+                            <span className="line-clamp-1">{sug}</span>
                         </button>
                     ))}
+                    {isLoadingSuggestions && <div className="shrink-0 px-2"><span className="loading-dots text-xs text-muted-foreground">...</span></div>}
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full absolute right-0 z-10 bg-background/80 shadow-sm md:opacity-0 group-hover/suggestions:opacity-100 transition-opacity" onClick={() => scrollSuggestions('right')}><ChevronRight className="h-4 w-4" /></Button>
+                
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full absolute right-0 z-10 bg-background/80 shadow-sm md:opacity-0 group-hover/suggestions:opacity-100 transition-opacity hidden md:flex" onClick={() => scrollSuggestionsBtn('right')}><ChevronRight className="h-4 w-4" /></Button>
             </div>
         )}
 
