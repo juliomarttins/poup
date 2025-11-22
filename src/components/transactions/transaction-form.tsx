@@ -25,7 +25,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Camera, UploadCloud, Sparkles, ScanLine, Check, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, Camera, UploadCloud, Sparkles, ScanLine, Plus } from "lucide-react";
 import { ptBR } from 'date-fns/locale';
 import { useFirestore, useUser } from "@/firebase";
 import { doc, collection } from "firebase/firestore";
@@ -72,6 +72,7 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
   
   const [isScanning, setIsScanning] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [scanStatus, setScanStatus] = useState("Iniciando...");
 
   const isDefaultCategory = initialData 
     ? (DEFAULT_CATEGORIES.income.includes(initialData.category) || DEFAULT_CATEGORIES.expense.includes(initialData.category))
@@ -93,13 +94,15 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
   const selectedCategory = form.watch('category');
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 
-  // Animação fake de progresso para UX
   useEffect(() => {
     if (isScanning) {
         setUploadProgress(10);
         const timer = setInterval(() => {
-            setUploadProgress((prev) => prev >= 90 ? 90 : prev + 15);
-        }, 300);
+            setUploadProgress((prev) => {
+                if (prev >= 90) return 90;
+                return prev + Math.random() * 15;
+            });
+        }, 400);
         return () => clearInterval(timer);
     } else {
         setUploadProgress(0);
@@ -117,10 +120,14 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
     }
 
     setIsScanning(true);
+    setScanStatus("Lendo arquivo...");
+    
     const formData = new FormData();
     formData.append('file', file);
 
     try {
+        setTimeout(() => setScanStatus("IA analisando..."), 1500);
+
         const token = await user.getIdToken();
         const res = await fetch('/api/extract-invoice', {
             method: 'POST',
@@ -135,7 +142,8 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
         if (data.totalAmount) form.setValue("amount", Number(data.totalAmount));
         
         if (data.category) {
-            const hasCat = DEFAULT_CATEGORIES[transactionType].includes(data.category);
+            // Filtra 'Outros' aqui também para não selecionar a categoria errada
+            const hasCat = DEFAULT_CATEGORIES[transactionType].filter(c => c !== 'Outros').includes(data.category);
             if (hasCat) {
                 form.setValue("category", data.category);
                 form.setValue("customCategory", ""); 
@@ -195,7 +203,7 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
         
-        {/* SCANNER MODERNO & COMPACTO */}
+        {/* SCANNER */}
         <div className="relative overflow-hidden rounded-lg border border-border bg-muted/30">
              {isScanning && <Progress value={uploadProgress} className="absolute top-0 left-0 right-0 h-1 z-10 rounded-none" />}
              
@@ -205,8 +213,8 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                         {isScanning ? <Sparkles className="w-4 h-4 animate-pulse" /> : <ScanLine className="w-4 h-4" />}
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-xs font-semibold">Preenchimento com IA</span>
-                        <span className="text-[10px] text-muted-foreground hidden sm:inline-block">Carregue um comprovante</span>
+                        <span className="text-xs font-semibold">{isScanning ? scanStatus : "Preenchimento com IA"}</span>
+                        {!isScanning && <span className="text-[10px] text-muted-foreground hidden sm:inline-block">Carregue um comprovante</span>}
                     </div>
                 </div>
                 
@@ -224,7 +232,7 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
              </div>
         </div>
 
-        {/* TIPO (SEGMENTED CONTROL) */}
+        {/* TIPO */}
         <FormField
           control={form.control}
           name="type"
@@ -256,7 +264,7 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
           )}
         />
         
-        {/* GRID PRINCIPAL (ALINHADA) */}
+        {/* GRID */}
         <div className="grid gap-4">
             <FormField
                 control={form.control}
@@ -324,9 +332,9 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                                     <SelectValue placeholder="Selecione" />
                                 </SelectTrigger>
                             </FormControl>
-                            {/* CORREÇÃO DO BUG: SelectContent limpo */}
                             <SelectContent position="popper" sideOffset={5} className="max-h-[180px] w-[var(--radix-select-trigger-width)] rounded-lg border shadow-lg bg-popover">
-                                {DEFAULT_CATEGORIES[transactionType].map(cat => (
+                                {/* Filtra 'Outros' da lista padrão para evitar duplicidade */}
+                                {DEFAULT_CATEGORIES[transactionType].filter(c => c !== 'Outros').map(cat => (
                                     <SelectItem key={cat} value={cat} className="text-sm py-1.5 cursor-pointer focus:bg-accent/50">{cat}</SelectItem>
                                 ))}
                                 <div className="h-px bg-border my-1" />
