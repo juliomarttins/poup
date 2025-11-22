@@ -1,4 +1,3 @@
-
 'use client';
 import { useEffect, useState, createContext, useContext } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -57,13 +56,28 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   }, [auth]);
 
   useEffect(() => {
-    const publicRoutes = ['/', '/signup'];
-    const isPublicRoute = publicRoutes.includes(pathname);
+    // [CORREÇÃO] Adicionei '/login' aqui. Sem isso, o loop infinito acontece.
+    // Adicionei também '/forgot-password' caso você crie essa rota no futuro.
+    const publicRoutes = ['/', '/signup', '/login', '/forgot-password'];
+    
+    // Verifica se a rota atual COMEÇA com alguma das rotas públicas 
+    // (útil se tiver sub-rotas ou query params, mas includes funciona para exatos)
+    const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`));
 
     if (!loading) {
+        // Se NÃO tem usuário E NÃO está numa rota pública -> Chuta pra home
         if (!user && !isPublicRoute) {
             router.push('/');
         }
+        
+        // [SUGESTÃO DE MELHORIA] Opcional: Se o usuário TÁ logado e tenta ir pro login,
+        // joga ele pro dashboard pra não ficar igual bobo na tela de login.
+        // Descomente abaixo se quiser esse comportamento:
+        /*
+        if (user && (pathname === '/login' || pathname === '/signup')) {
+             router.push('/dashboard'); // ou /select-profile
+        }
+        */
     }
   }, [user, loading, pathname, router]);
 
