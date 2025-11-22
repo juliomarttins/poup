@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, Settings, User as UserIcon, LayoutDashboard } from 'lucide-react';
-import { AvatarIcon } from '@/components/icons/avatar-icon'; // Importar para usar o ícone correto
+import { AvatarIcon } from '@/components/icons/avatar-icon'; 
 
 export function Header() {
   const { user, loading } = useUser();
@@ -27,10 +27,11 @@ export function Header() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // [CORREÇÃO CRÍTICA - VISUAL]
-  // Se estiver no Dashboard ou Seleção de Perfil, esconde este Header global.
-  // Isso evita a barra duplicada e a bagunça visual.
-  if (pathname?.startsWith('/dashboard') || pathname === '/select-profile') {
+  // [CORREÇÃO DEFINITIVA]
+  // 1. Se for a Home ('/'), ESCONDE (porque a Home já tem o cabeçalho dela).
+  // 2. Se for Dashboard, ESCONDE (porque o Dashboard tem a Sidebar).
+  // 3. Se for Seleção de Perfil, ESCONDE (pra ficar limpo).
+  if (pathname === '/' || pathname?.startsWith('/dashboard') || pathname === '/select-profile') {
     return null;
   }
 
@@ -52,7 +53,8 @@ export function Header() {
   };
 
   const displayName = activeProfile?.name || user?.displayName || 'Usuário';
-  const displayImage = activeProfile?.photoURL || user?.photoURL || null;
+  // Fallback seguro para evitar erro se photoURL for null/undefined
+  const displayImage = activeProfile?.photoURL || user?.photoURL || undefined;
   const displayInitials = getInitials(displayName);
 
   return (
@@ -73,7 +75,6 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
                   <Avatar className="h-9 w-9">
-                     {/* Usa o componente AvatarIcon para suportar ícones do Lucide ou Imagens */}
                      <div className="flex items-center justify-center w-full h-full bg-muted">
                         <AvatarIcon iconName={displayImage} fallbackName={displayName} className="h-5 w-5" />
                      </div>
