@@ -1,4 +1,3 @@
-// ARQUIVO 3/3: src/lib/generate-pdf.ts
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Transaction } from "@/lib/types";
@@ -8,17 +7,25 @@ import { ptBR } from "date-fns/locale";
 export const generateTransactionsPDF = (transactions: Transaction[], title: string = "Relatório de Transações") => {
   const doc = new jsPDF();
 
-  // Título
-  doc.setFontSize(18);
-  doc.text(title, 14, 22);
+  // --- CABEÇALHO VISUAL ---
+  // Fundo do cabeçalho
+  doc.setFillColor(250, 250, 250);
+  doc.rect(0, 0, 210, 40, "F");
   
-  doc.setFontSize(10);
-  doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`, 14, 30);
+  doc.setFontSize(22);
+  doc.setTextColor(40, 40, 40);
+  doc.text("Poupp", 14, 20);
+  
+  doc.setFontSize(12);
+  doc.setTextColor(100, 100, 100);
+  doc.text(title, 14, 28);
 
-  // Preparar dados para a tabela
+  doc.setFontSize(9);
+  doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`, 200, 20, { align: "right" });
+
+  // --- PREPARAÇÃO DOS DADOS ---
   const tableData = transactions.map((t) => {
     const date = new Date(t.date);
-    // Ajuste para garantir que a data exiba corretamente sem voltar 1 dia devido ao fuso
     const formattedDate = date.toLocaleDateString("pt-BR", { timeZone: 'UTC' });
 
     const amount = new Intl.NumberFormat("pt-BR", {
@@ -35,7 +42,7 @@ export const generateTransactionsPDF = (transactions: Transaction[], title: stri
     ];
   });
 
-  // Calcular totais
+  // --- CÁLCULO DOS TOTAIS ---
   const totalIncome = transactions
     .filter(t => t.type === 'income')
     .reduce((acc, t) => acc + t.amount, 0);
@@ -45,43 +52,69 @@ export const generateTransactionsPDF = (transactions: Transaction[], title: stri
     .reduce((acc, t) => acc + Math.abs(t.amount), 0);
 
   const balance = totalIncome - totalExpense;
-
   const formatMoney = (val: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
-  // Gerar Tabela
+  // --- TABELA COM LINHAS E COLUNAS (GRID) ---
   autoTable(doc, {
-    startY: 35,
+    startY: 45,
     head: [["Data", "Descrição", "Categoria", "Tipo", "Valor"]],
     body: tableData,
-    styles: { fontSize: 9 },
-    headStyles: { fillColor: [40, 40, 40], textColor: 255 }, // Escuro para combinar com o tema padrão
-    alternateRowStyles: { fillColor: [245, 245, 245] },
+    theme: 'grid', // <--- ISSO ADICIONA AS LINHAS E COLUNAS CLARAS
+    styles: { 
+        fontSize: 9,
+        cellPadding: 3,
+        lineColor: [200, 200, 200], // Cor da linha cinza suave
+        lineWidth: 0.1,
+    },
+    headStyles: { 
+        fillColor: [30, 41, 59], // Cor escura moderna (slate-800)
+        textColor: 255,
+        fontStyle: 'bold',
+        halign: 'center'
+    },
     columnStyles: {
-        0: { cellWidth: 25 }, // Data
+        0: { cellWidth: 25, halign: 'center' }, // Data
         1: { cellWidth: 'auto' }, // Descrição
-        2: { cellWidth: 30 }, // Categoria
-        3: { cellWidth: 25 }, // Tipo
+        2: { cellWidth: 30, halign: 'center' }, // Categoria
+        3: { cellWidth: 25, halign: 'center' }, // Tipo
         4: { cellWidth: 35, halign: 'right' }, // Valor
     },
+    alternateRowStyles: {
+        fillColor: [248, 250, 252] // Alternar cor bem suave
+    }
   });
 
-  // Adicionar Resumo Final
+  // --- RESUMO FINANCEIRO (BOX) ---
   const finalY = (doc as any).lastAutoTable.finalY + 10;
   
+  // Desenhar um box de resumo
+  doc.setDrawColor(200, 200, 200);
+  doc.setFillColor(252, 252, 252);
+  doc.roundedRect(14, finalY, 80, 35, 3, 3, "FD");
+
+  doc.setFontSize(11);
+  doc.setTextColor(0, 0, 0);
+  doc.text("Resumo do Relatório", 19, finalY + 8);
+
   doc.setFontSize(10);
-  doc.text(`Total Receitas: ${formatMoney(totalIncome)}`, 14, finalY);
-  doc.text(`Total Despesas: ${formatMoney(totalExpense)}`, 14, finalY + 6);
+  doc.setTextColor(22, 163, 74); // Verde
+  doc.text(`Receitas: ${formatMoney(totalIncome)}`, 19, finalY + 16);
   
-  doc.setFontSize(12);
+  doc.setTextColor(220, 38, 38); // Vermelho
+  doc.text(`Despesas: ${formatMoney(totalExpense)}`, 19, finalY + 22);
+  
+  // Linha separadora
+  doc.setDrawColor(220, 220, 220);
+  doc.line(19, finalY + 25, 89, finalY + 25);
+
   doc.setFont("helvetica", "bold");
-  // Muda a cor do saldo dependendo se é positivo ou negativo
-  if(balance < 0) {
-      doc.setTextColor(220, 38, 38); // Vermelho
-  } else {
+  if (balance >= 0) {
       doc.setTextColor(22, 163, 74); // Verde
+  } else {
+      doc.setTextColor(220, 38, 38); // Vermelho
   }
-  doc.text(`Saldo do Período: ${formatMoney(balance)}`, 14, finalY + 14);
+  doc.text(`Saldo: ${formatMoney(balance)}`, 19, finalY + 31);
 
   // Salvar
-  doc.save("relatorio-transacoes.pdf");
+  doc.save("relatorio-financeiro-poup.pdf");
 };

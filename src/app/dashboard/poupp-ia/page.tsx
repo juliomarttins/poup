@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bot, Sparkles, ArrowRight, AlertTriangle, ChevronRight } from 'lucide-react';
+import { Bot, Sparkles, ArrowRight, AlertTriangle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -26,15 +26,18 @@ export default function PouppIAPage() {
   const { user } = useUser();
   const { activeProfile } = useProfile();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  
+  // Lista completa de sugestões vindas da API
+  const [allSuggestions, setAllSuggestions] = useState<string[]>([]);
+  // Lista das 3 sugestões atualmente visíveis
+  const [visibleSuggestions, setVisibleSuggestions] = useState<string[]>([]);
+
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
   const hasFetchedInit = useRef(false);
 
   useEffect(() => {
@@ -57,7 +60,12 @@ export default function PouppIAPage() {
 
             if (data.text) {
                 setMessages([{ id: 'init', role: 'assistant', content: data.text, timestamp: new Date() }]);
-                setSuggestions(data.suggestions || []);
+                
+                if (data.suggestions && Array.isArray(data.suggestions)) {
+                    setAllSuggestions(data.suggestions);
+                    // Pega apenas as 3 primeiras para mostrar inicialmente
+                    setVisibleSuggestions(data.suggestions.slice(0, 3));
+                }
             }
         } catch (e) {
             console.error(e);
@@ -74,42 +82,22 @@ export default function PouppIAPage() {
     if (scrollRef.current) scrollRef.current.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  const fetchMoreSuggestions = async () => {
-    if (!user || isLoadingSuggestions) return;
-    setIsLoadingSuggestions(true);
-    try {
-        const token = await user.getIdToken();
-        const res = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ type: 'suggestions', profileName: activeProfile?.name }),
-        });
-        const data = await res.json();
-        if (data.suggestions && data.suggestions.length > 0) {
-             setSuggestions(data.suggestions);
-             if (suggestionsRef.current) suggestionsRef.current.scrollLeft = 0;
-        }
-    } catch (e) {
-        console.error(e);
-    } finally {
-        setIsLoadingSuggestions(false);
-    }
+  // Função para embaralhar e pegar 3 novas sugestões
+  const handleShuffleSuggestions = () => {
+      if (allSuggestions.length === 0) return;
+      
+      // Cria uma cópia e embaralha
+      const shuffled = [...allSuggestions].sort(() => 0.5 - Math.random());
+      // Pega as 3 primeiras
+      setVisibleSuggestions(shuffled.slice(0, 3));
   };
-
-  const handleScroll = () => {
-      if (suggestionsRef.current) {
-          const { scrollLeft, scrollWidth, clientWidth } = suggestionsRef.current;
-          if (scrollLeft + clientWidth >= scrollWidth - 10) {
-              fetchMoreSuggestions();
-          }
-      }
-  }
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || !user) return;
 
     setInputValue('');
-    setSuggestions([]); 
+    // Limpa as sugestões ao enviar mensagem para focar na conversa
+    setVisibleSuggestions([]); 
     setIsLoading(true);
     setInitError(false);
 
@@ -130,7 +118,10 @@ export default function PouppIAPage() {
         const assistantMessage: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: data.text, timestamp: new Date() };
         setMessages((prev) => [...prev, assistantMessage]);
         
-        if (data.suggestions) setSuggestions(data.suggestions);
+        if (data.suggestions && Array.isArray(data.suggestions)) {
+            setAllSuggestions(data.suggestions);
+            setVisibleSuggestions(data.suggestions.slice(0, 3));
+        }
 
     } catch (error) {
         setMessages((prev) => [...prev, { id: Date.now().toString(), role: 'error', content: 'Erro de conexão.', timestamp: new Date() }]);
@@ -152,7 +143,6 @@ export default function PouppIAPage() {
       </div>
 
       <Card className="flex-1 overflow-hidden bg-background/50 border-none relative flex flex-col shadow-none">
-        {/* FIX: max-w-[100vw] garante que o scroll container não exceda a largura da tela */}
         <ScrollArea className="flex-1 px-2 sm:px-4 py-2 w-full max-w-[100vw]">
             {isInitializing && (
                 <div className="flex gap-3 items-center mt-4">
@@ -179,28 +169,24 @@ export default function PouppIAPage() {
                          <AvatarIcon iconName={activeProfile?.photoURL} fallbackName={activeProfile?.name} className="h-5 w-5" style={{color: activeProfile?.avatarColor}} />}
                     </Avatar>
 
-                    {/* FIX: min-w-0 permite que o flex item encolha corretamente em telas pequenas */}
-                    <div className={cn("flex flex-col gap-1 max-w-[85%] md:max-w-[75%] text-sm min-w-0", message.role === 'user' ? "items-end" : "items-start")}>
+                    <div className={cn("flex flex-col gap-1 max-w-[85%] sm:max-w-[75%] text-sm min-w-0", message.role === 'user' ? "items-end" : "items-start")}>
                     <div className={cn("rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 shadow-sm overflow-hidden w-full", message.role === 'user' ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-card border text-card-foreground rounded-tl-sm")}>
                         <ReactMarkdown 
                             remarkPlugins={[remarkGfm]}
                             className={cn(
                                 "prose prose-sm dark:prose-invert max-w-none break-words whitespace-pre-wrap leading-relaxed",
-                                "prose-p:m-0 prose-pre:bg-transparent prose-ul:my-1 prose-li:my-0.5",
-                                // FIX: Estilo específico para blocos de código (pre) para evitar overflow
+                                "prose-p:m-0 prose-pre:bg-transparent prose-ul:my-1 prose-li:my-0.5", 
                                 "[&_pre]:overflow-x-auto [&_pre]:max-w-full [&_pre]:bg-muted/50 [&_pre]:p-2 [&_pre]:rounded-md", 
                                 message.role === 'user' ? "prose-headings:text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground" : ""
                             )}
                             components={{
                                 a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium" {...props} />,
-                                // FIX: Wrapper com overflow-x-auto para tabelas
                                 table: ({node, ...props}) => <div className="my-3 w-full overflow-x-auto rounded-lg border border-border/60 bg-muted/20 shadow-sm block"><table className="w-full min-w-[300px] text-xs" {...props} /></div>,
                                 thead: ({node, ...props}) => <thead className="bg-muted/50" {...props} />,
                                 tbody: ({node, ...props}) => <tbody className="divide-y divide-border/50" {...props} />,
                                 tr: ({node, ...props}) => <tr className="transition-colors hover:bg-muted/30" {...props} />,
                                 th: ({node, ...props}) => <th className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap" {...props} />,
                                 td: ({node, ...props}) => <td className="px-3 py-2 align-middle whitespace-nowrap" {...props} />,
-                                // FIX: Componente pre explícito para garantir scroll em códigos
                                 pre: ({node, ...props}) => <div className="w-full overflow-x-auto my-2 rounded-md bg-muted/50"><pre className="p-2 text-xs" {...props} /></div>
                             }}
                         >
@@ -223,34 +209,29 @@ export default function PouppIAPage() {
       </Card>
 
       <div className="shrink-0 p-3 sm:p-4 pt-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
-        {suggestions.length > 0 && !isLoading && (
-            <div className="relative flex items-center mb-2 group/suggestions">
-                <div 
-                    ref={suggestionsRef} 
-                    onScroll={handleScroll}
-                    className="flex gap-2 overflow-x-auto pb-1 no-scrollbar snap-x px-1 scroll-smooth w-full"
-                >
-                    {suggestions.map((sug, idx) => (
-                        <button key={idx} onClick={() => sendMessage(sug)} className="snap-start shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border hover:bg-primary/5 hover:border-primary/40 transition-all text-xs text-left group max-w-[240px] active:scale-95 whitespace-nowrap">
-                            <span className="line-clamp-1">{sug}</span>
+        {/* LOGICA DE SUGESTÕES MODIFICADA: Apenas 3 visíveis + Botão Refresh */}
+        {visibleSuggestions.length > 0 && !isLoading && (
+            <div className="flex items-center gap-2 mb-2">
+                <div className="flex gap-2 overflow-hidden flex-1 flex-wrap sm:flex-nowrap h-full items-stretch">
+                    {visibleSuggestions.map((sug, idx) => (
+                        <button 
+                            key={idx} 
+                            onClick={() => sendMessage(sug)} 
+                            className="flex-1 min-w-[100px] sm:min-w-0 flex items-center justify-center text-center px-3 py-2 rounded-xl bg-muted/40 border border-border hover:bg-primary/5 hover:border-primary/40 transition-all text-xs active:scale-95 h-10"
+                        >
+                            <span className="line-clamp-2 leading-tight">{sug}</span>
                         </button>
                     ))}
-                    {isLoadingSuggestions && (
-                        <div className="shrink-0 px-3 py-2 flex items-center justify-center">
-                           <span className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce"></span>
-                           <span className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce ml-1 [animation-delay:0.2s]"></span>
-                        </div>
-                    )}
                 </div>
                 
                 <Button 
-                    variant="ghost" 
+                    variant="outline" 
                     size="icon" 
-                    className="h-8 w-8 rounded-full absolute right-0 z-10 bg-background/80 shadow-sm md:opacity-0 group-hover/suggestions:opacity-100 transition-opacity hidden md:flex hover:bg-primary hover:text-white" 
-                    onClick={() => fetchMoreSuggestions()}
-                    disabled={isLoadingSuggestions}
+                    className="h-10 w-10 rounded-xl shrink-0 bg-background/80 shadow-sm hover:bg-primary hover:text-white transition-colors" 
+                    onClick={handleShuffleSuggestions}
+                    title="Novas sugestões"
                 >
-                    <ChevronRight className="h-4 w-4" />
+                    <RefreshCcw className="h-4 w-4" />
                 </Button>
             </div>
         )}
