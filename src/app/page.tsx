@@ -268,8 +268,9 @@ const PDFReportMockup = () => (
 export default function LandingPage() {
   const { user, loading } = useUser();
 
+  // Adicionada a classe 'dark' no container principal para forçar o tema escuro
   return (
-    <div className="flex min-h-screen flex-col bg-background selection:bg-primary selection:text-primary-foreground overflow-x-hidden">
+    <div className="dark flex min-h-screen flex-col bg-background text-foreground selection:bg-primary selection:text-primary-foreground overflow-x-hidden">
       
       {/* HEADER */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -292,7 +293,9 @@ export default function LandingPage() {
               </Button>
             ) : (
               <>
+                {/* Link corrigido explicitamente para /login */}
                 <Button variant="ghost" asChild className="hidden sm:inline-flex"><Link href="/login">Entrar</Link></Button>
+                {/* Link explicitamente para /signup */}
                 <Button asChild className="rounded-full font-bold shadow-lg shadow-primary/20"><Link href="/signup">Testar Grátis</Link></Button>
               </>
             )}
