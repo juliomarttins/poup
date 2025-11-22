@@ -4,55 +4,47 @@ import { initializeAdminApp } from '@/firebase/admin';
 
 export async function POST(req: Request) {
   try {
-    // 1. Validação da Chave API (Diagnóstico de erro de servidor)
     const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {
-        return NextResponse.json({ 
-            error: 'Erro no Servidor: A chave GOOGLE_API_KEY não está configurada no arquivo .env ou nas variáveis de ambiente.' 
-        }, { status: 500 });
+        return NextResponse.json({ error: 'Chave API não configurada no servidor.' }, { status: 500 });
     }
 
-    // 2. Autenticação
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Você não está autenticado.' }, { status: 401 });
+      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
     }
 
-    // 3. Validação do Arquivo
     const formData = await req.formData();
     const file = formData.get('file') as File;
 
     if (!file) {
-      return NextResponse.json({ error: 'Nenhum arquivo foi recebido.' }, { status: 400 });
+      return NextResponse.json({ error: 'Nenhum arquivo enviado.' }, { status: 400 });
     }
 
-    // Limite de segurança para evitar timeout/crash (4MB)
-    if (file.size > 4 * 1024 * 1024) {
-        return NextResponse.json({ error: 'Arquivo muito grande (Máx: 4MB). Tente reduzir a foto.' }, { status: 413 });
+    if (file.size > 4.5 * 1024 * 1024) {
+        return NextResponse.json({ error: 'Arquivo muito grande (Máx 4.5MB).' }, { status: 413 });
     }
 
-    // 4. Processamento com IA
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const base64Data = buffer.toString('base64');
     
     const genAI = new GoogleGenerativeAI(apiKey);
+    // [CORREÇÃO] Usando gemini-2.0-flash para compatibilidade com sua chave
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
+        model: "gemini-2.0-flash",
         generationConfig: { responseMimeType: "application/json" }
     });
 
     const prompt = `
-    Analise esta imagem/documento financeiro. Extraia os dados para preenchimento de dívida.
-    Retorne APENAS um JSON com estes campos exatos:
+    Analise este documento financeiro (nota fiscal, recibo, print de app).
+    Extraia dados para uma transação.
+    Retorne APENAS JSON:
     {
-        "name": "Nome da empresa (Ex: Nubank, Energia)",
-        "totalAmount": 0.00 (Valor total numérico),
-        "dueDate": "YYYY-MM-DD" (Data de vencimento. Se não achar, use hoje),
-        "category": "Categoria sugerida (Moradia, Alimentação, Veículo, Cartão, Outros)",
-        "totalInstallments": 1 (Quantidade total de parcelas. Se for à vista, 1),
-        "installmentAmount": 0.00 (Valor da parcela),
-        "paidInstallments": 0 (Quantas já foram pagas. Ex: se é a parcela 3 de 10, pagou 2)
+        "name": "Nome do estabelecimento ou serviço (Curto)",
+        "totalAmount": 0.00 (Valor numérico positivo),
+        "dueDate": "YYYY-MM-DD" (Data da transação),
+        "category": "Categoria sugerida (Mercado, Transporte, Alimentação, Saúde, Lazer, Educação, Outros)"
     }
     `;
 
@@ -61,22 +53,17 @@ export async function POST(req: Request) {
         { inlineData: { data: base64Data, mimeType: file.type } }
     ]);
 
-    const responseText = result.response.text();
-    
-    let json;
+    const text = result.response.text();
     try {
-        json = JSON.parse(responseText);
+        const json = JSON.parse(text);
+        return NextResponse.json(json);
     } catch (e) {
-        console.error("Erro de Parse JSON IA:", responseText);
-        return NextResponse.json({ error: 'A IA leu o arquivo mas não conseguiu estruturar os dados.' }, { status: 500 });
+        console.error("Erro parse:", text);
+        return NextResponse.json({ error: 'Não foi possível ler os dados da imagem.' }, { status: 500 });
     }
 
-    return NextResponse.json(json);
-
   } catch (error: any) {
-    console.error('Erro Fatal na API:', error);
-    return NextResponse.json({ 
-        error: error.message || 'Erro interno ao processar imagem.' 
-    }, { status: 500 });
+    console.error('Erro API:', error);
+    return NextResponse.json({ error: error.message || 'Erro interno.' }, { status: 500 });
   }
 }
