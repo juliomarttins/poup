@@ -32,7 +32,7 @@ export default function RootLayout({
         >
           <FirebaseClientProvider>
             <UserProvider>
-              {/* ProfileProvider no Root garante que o estado persista entre Login e Dashboard */}
+              {/* ProfileProvider CENTRALIZADO: Garante que a escolha do perfil persista em toda a navegação */}
               <ProfileProvider>
                 <div className="relative flex min-h-screen flex-col">
                   <Header />
