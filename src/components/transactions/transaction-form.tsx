@@ -66,7 +66,6 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
   const { activeProfile } = useProfile();
   const { toast } = useToast();
 
-  // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -117,26 +116,47 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
 
         if (!res.ok) throw new Error(data.error || "Erro na leitura.");
 
-        if (data.name) form.setValue("description", data.name);
-        if (data.totalAmount) form.setValue("amount", data.totalAmount);
+        let fieldsFilled = 0;
+
+        if (data.name) {
+            form.setValue("description", data.name, { shouldValidate: true });
+            fieldsFilled++;
+        }
+        
+        // Força conversão para número caso venha string "12.50"
+        const amountVal = Number(data.totalAmount);
+        if (amountVal && amountVal > 0) {
+            form.setValue("amount", amountVal, { shouldValidate: true });
+            fieldsFilled++;
+        }
+
         if (data.category) {
-            // Tenta achar a categoria na lista padrão, se não, joga em Outros
             const hasCat = DEFAULT_CATEGORIES[transactionType].includes(data.category);
-            if (hasCat) form.setValue("category", data.category);
-            else {
+            if (hasCat) {
+                form.setValue("category", data.category, { shouldValidate: true });
+                fieldsFilled++;
+            } else {
                  form.setValue("category", "Outros");
-                 form.setValue("customCategory", data.category);
+                 form.setValue("customCategory", data.category, { shouldValidate: true });
+                 fieldsFilled++;
             }
         }
+        
         if (data.dueDate) {
             const [y, m, d] = data.dueDate.split('-').map(Number);
             const dateObj = new Date(y, m - 1, d);
-            // Ajusta para meio dia para evitar problemas de timezone
             dateObj.setHours(12, 0, 0, 0);
-            if (!isNaN(dateObj.getTime())) form.setValue("date", dateObj);
+            if (!isNaN(dateObj.getTime())) {
+                form.setValue("date", dateObj, { shouldValidate: true });
+                fieldsFilled++;
+            }
         }
 
-        toast({ title: "Sucesso!", description: "Dados preenchidos automaticamente." });
+        if (fieldsFilled > 0) {
+            toast({ title: "Sucesso!", description: `${fieldsFilled} campos preenchidos automaticamente.` });
+        } else {
+            toast({ variant: "warning", title: "Atenção", description: "A IA analisou o arquivo mas não encontrou dados claros de valor ou data." });
+        }
 
     } catch (error: any) {
         console.error(error);
@@ -172,14 +192,14 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         
-        {/* ÁREA DE SCAN (Inteligente) */}
+        {/* ÁREA DE SCAN */}
         <div className="bg-secondary/50 p-3 rounded-lg border border-dashed border-primary/30 flex flex-col gap-2">
              <div className="flex items-center justify-center gap-2 text-muted-foreground text-xs uppercase font-semibold mb-1">
                 <ScanLine className="w-3 h-3" /> Preencher com IA
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-3">
-                {/* VISÍVEL APENAS NO MOBILE: Botão de Câmera */}
+            <div className="grid grid-cols-1 gap-3">
+                {/* VISÍVEL APENAS NO MOBILE */}
                 <div className="md:hidden grid grid-cols-2 gap-3">
                      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
                      <Button 
@@ -204,7 +224,7 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                     </Button>
                 </div>
 
-                {/* VISÍVEL APENAS NO DESKTOP: Botão Único de Arquivo */}
+                {/* VISÍVEL APENAS NO DESKTOP */}
                 <div className="hidden md:block">
                     <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
                     <Button 

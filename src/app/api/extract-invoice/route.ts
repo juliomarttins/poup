@@ -6,7 +6,7 @@ export async function POST(req: Request) {
   try {
     const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {
-        return NextResponse.json({ error: 'Chave API não configurada no servidor.' }, { status: 500 });
+        return NextResponse.json({ error: 'Servidor sem chave API configurada.' }, { status: 500 });
     }
 
     const authHeader = req.headers.get('Authorization');
@@ -30,21 +30,28 @@ export async function POST(req: Request) {
     const base64Data = buffer.toString('base64');
     
     const genAI = new GoogleGenerativeAI(apiKey);
-    // [CORREÇÃO] Usando gemini-2.0-flash para compatibilidade com sua chave
+    // Usando o modelo mais rápido e estável para OCR
     const model = genAI.getGenerativeModel({ 
         model: "gemini-2.0-flash",
         generationConfig: { responseMimeType: "application/json" }
     });
 
     const prompt = `
-    Analise este documento financeiro (nota fiscal, recibo, print de app).
-    Extraia dados para uma transação.
-    Retorne APENAS JSON:
+    Analise a imagem deste comprovante, nota fiscal ou recibo.
+    Sua missão é extrair os dados para preenchimento automático de um formulário financeiro.
+    
+    Regras de Extração:
+    1. "name": Identifique o nome do estabelecimento (Ex: "Mercado Livre", "Uber", "Restaurante X"). Seja conciso.
+    2. "totalAmount": Encontre o valor TOTAL pago. Retorne APENAS NÚMERO (ex: 150.50). Se tiver símbolo de moeda, remova. Se não achar valor exato, estime o maior valor visível.
+    3. "dueDate": Data da transação no formato YYYY-MM-DD. Se não houver data explícita, use a data de hoje.
+    4. "category": Classifique o gasto em uma destas categorias: [Alimentação, Transporte, Lazer, Saúde, Educação, Mercado, Moradia, Contas, Outros]. Se não souber, use 'Outros'.
+
+    Retorne APENAS este JSON:
     {
-        "name": "Nome do estabelecimento ou serviço (Curto)",
-        "totalAmount": 0.00 (Valor numérico positivo),
-        "dueDate": "YYYY-MM-DD" (Data da transação),
-        "category": "Categoria sugerida (Mercado, Transporte, Alimentação, Saúde, Lazer, Educação, Outros)"
+        "name": string,
+        "totalAmount": number,
+        "dueDate": string,
+        "category": string
     }
     `;
 
@@ -58,12 +65,12 @@ export async function POST(req: Request) {
         const json = JSON.parse(text);
         return NextResponse.json(json);
     } catch (e) {
-        console.error("Erro parse:", text);
-        return NextResponse.json({ error: 'Não foi possível ler os dados da imagem.' }, { status: 500 });
+        console.error("Erro JSON IA:", text);
+        return NextResponse.json({ error: 'Falha ao interpretar a resposta da IA.' }, { status: 500 });
     }
 
   } catch (error: any) {
     console.error('Erro API:', error);
-    return NextResponse.json({ error: error.message || 'Erro interno.' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Erro interno ao processar.' }, { status: 500 });
   }
 }
