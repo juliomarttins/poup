@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, Sparkles, ArrowRight, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Bot, Sparkles, ArrowRight, AlertTriangle, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -9,7 +9,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase/auth/use-user';
-import { useProfile } from '@/contexts/profile-context'; // [IMPORTANTE]
+import { useProfile } from '@/contexts/profile-context';
 import { AvatarIcon } from '@/components/icons/avatar-icon';
 import { Skeleton } from '@/components/ui/skeleton';
 import ReactMarkdown from 'react-markdown';
@@ -24,7 +24,7 @@ interface Message {
 
 export default function PouppIAPage() {
   const { user } = useUser();
-  const { activeProfile } = useProfile(); // [IMPORTANTE]
+  const { activeProfile } = useProfile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -46,7 +46,6 @@ export default function PouppIAPage() {
 
         try {
             const token = await user.getIdToken();
-            // [INTELIGÊNCIA] Envia profileName no init
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -87,7 +86,7 @@ export default function PouppIAPage() {
         });
         const data = await res.json();
         if (data.suggestions && data.suggestions.length > 0) {
-             setSuggestions(data.suggestions); // Substitui
+             setSuggestions(data.suggestions);
              if (suggestionsRef.current) suggestionsRef.current.scrollLeft = 0;
         }
     } catch (e) {
@@ -153,7 +152,8 @@ export default function PouppIAPage() {
       </div>
 
       <Card className="flex-1 overflow-hidden bg-background/50 border-none relative flex flex-col shadow-none">
-        <ScrollArea className="flex-1 px-2 sm:px-4 py-2 w-full">
+        {/* FIX: max-w-[100vw] garante que o scroll container não exceda a largura da tela */}
+        <ScrollArea className="flex-1 px-2 sm:px-4 py-2 w-full max-w-[100vw]">
             {isInitializing && (
                 <div className="flex gap-3 items-center mt-4">
                     <Skeleton className="h-8 w-8 rounded-full" />
@@ -179,23 +179,29 @@ export default function PouppIAPage() {
                          <AvatarIcon iconName={activeProfile?.photoURL} fallbackName={activeProfile?.name} className="h-5 w-5" style={{color: activeProfile?.avatarColor}} />}
                     </Avatar>
 
-                    <div className={cn("flex flex-col gap-1 max-w-[85%] md:max-w-[75%] text-sm", message.role === 'user' ? "items-end" : "items-start")}>
-                    <div className={cn("rounded-2xl px-4 py-3 shadow-sm overflow-hidden w-full", message.role === 'user' ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-card border text-card-foreground rounded-tl-sm")}>
+                    {/* FIX: min-w-0 permite que o flex item encolha corretamente em telas pequenas */}
+                    <div className={cn("flex flex-col gap-1 max-w-[85%] md:max-w-[75%] text-sm min-w-0", message.role === 'user' ? "items-end" : "items-start")}>
+                    <div className={cn("rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 shadow-sm overflow-hidden w-full", message.role === 'user' ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-card border text-card-foreground rounded-tl-sm")}>
                         <ReactMarkdown 
                             remarkPlugins={[remarkGfm]}
                             className={cn(
                                 "prose prose-sm dark:prose-invert max-w-none break-words whitespace-pre-wrap leading-relaxed",
-                                "prose-p:m-0 prose-pre:bg-transparent prose-ul:my-1 prose-li:my-0.5", 
+                                "prose-p:m-0 prose-pre:bg-transparent prose-ul:my-1 prose-li:my-0.5",
+                                // FIX: Estilo específico para blocos de código (pre) para evitar overflow
+                                "[&_pre]:overflow-x-auto [&_pre]:max-w-full [&_pre]:bg-muted/50 [&_pre]:p-2 [&_pre]:rounded-md", 
                                 message.role === 'user' ? "prose-headings:text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground" : ""
                             )}
                             components={{
                                 a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium" {...props} />,
-                                table: ({node, ...props}) => <div className="my-3 w-full overflow-y-hidden overflow-x-auto rounded-lg border border-border/60 bg-muted/20 shadow-sm"><table className="w-full min-w-[300px] text-xs" {...props} /></div>,
+                                // FIX: Wrapper com overflow-x-auto para tabelas
+                                table: ({node, ...props}) => <div className="my-3 w-full overflow-x-auto rounded-lg border border-border/60 bg-muted/20 shadow-sm block"><table className="w-full min-w-[300px] text-xs" {...props} /></div>,
                                 thead: ({node, ...props}) => <thead className="bg-muted/50" {...props} />,
                                 tbody: ({node, ...props}) => <tbody className="divide-y divide-border/50" {...props} />,
                                 tr: ({node, ...props}) => <tr className="transition-colors hover:bg-muted/30" {...props} />,
                                 th: ({node, ...props}) => <th className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap" {...props} />,
                                 td: ({node, ...props}) => <td className="px-3 py-2 align-middle whitespace-nowrap" {...props} />,
+                                // FIX: Componente pre explícito para garantir scroll em códigos
+                                pre: ({node, ...props}) => <div className="w-full overflow-x-auto my-2 rounded-md bg-muted/50"><pre className="p-2 text-xs" {...props} /></div>
                             }}
                         >
                             {message.content}
