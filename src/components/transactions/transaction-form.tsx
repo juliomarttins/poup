@@ -94,8 +94,9 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (file.size > 4 * 1024 * 1024) {
-        toast({ variant: "destructive", title: "Erro", description: "Arquivo muito grande (Máx 4MB)." });
+    // Limite de 4.5MB para segurança
+    if (file.size > 4.5 * 1024 * 1024) {
+        toast({ variant: "destructive", title: "Erro", description: "Arquivo muito grande (Máx 4.5MB)." });
         e.target.value = "";
         return;
     }
@@ -123,7 +124,6 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
             fieldsFilled++;
         }
         
-        // Força conversão para número caso venha string "12.50"
         const amountVal = Number(data.totalAmount);
         if (amountVal && amountVal > 0) {
             form.setValue("amount", amountVal, { shouldValidate: true });
@@ -131,12 +131,18 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
         }
 
         if (data.category) {
+            // Lógica Inteligente de Categoria:
+            // 1. Verifica se a categoria retornada pela IA existe na lista padrão do tipo atual
             const hasCat = DEFAULT_CATEGORIES[transactionType].includes(data.category);
+            
             if (hasCat) {
+                // Se existe, seleciona ela direto
                 form.setValue("category", data.category, { shouldValidate: true });
+                form.setValue("customCategory", ""); 
                 fieldsFilled++;
             } else {
-                 form.setValue("category", "Outros");
+                 // Se não existe (ex: "Internet"), seleciona 'Outros' e preenche o campo customizado
+                 form.setValue("category", "Outros", { shouldValidate: true });
                  form.setValue("customCategory", data.category, { shouldValidate: true });
                  fieldsFilled++;
             }
@@ -153,9 +159,9 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
         }
 
         if (fieldsFilled > 0) {
-            toast({ title: "Sucesso!", description: `${fieldsFilled} campos preenchidos automaticamente.` });
+            toast({ title: "Sucesso!", description: "Dados preenchidos automaticamente." });
         } else {
-            toast({ variant: "warning", title: "Atenção", description: "A IA analisou o arquivo mas não encontrou dados claros de valor ou data." });
+            toast({ variant: "warning", title: "Atenção", description: "A IA analisou o arquivo mas não encontrou dados claros." });
         }
 
     } catch (error: any) {
@@ -172,6 +178,7 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
     if (!firestore || !user || !activeProfile) return;
     
     const amount = data.type === 'expense' ? -Math.abs(data.amount) : Math.abs(data.amount);
+    // Se for 'Outros', usa o valor customizado. Se não, usa o valor do select.
     const finalCategory = data.category === 'Outros' ? data.customCategory! : data.category;
     const id = initialData?.id || doc(collection(firestore, '_')).id;
 

@@ -35,26 +35,24 @@ export async function POST(req: Request) {
         generationConfig: { responseMimeType: "application/json" }
     });
 
-    // Prompt ultra-específico para documentos brasileiros
+    // Prompt Otimizado para Contexto Brasileiro e Detecção de Serviços
     const prompt = `
-    Analise este documento (pode ser PDF, imagem, boleto, fatura ou recibo).
-    Seu objetivo é extrair dados para uma transação financeira no Brasil.
+    Analise este documento (boleto, conta, recibo).
+    Extraia dados para uma transação financeira pessoal no Brasil.
 
-    REGRAS DE EXTRAÇÃO:
-    1. "totalAmount": Procure por "Valor do Documento", "Valor Cobrado", "Total a Pagar" ou "Valor Total". 
-       - Ignore juros/multa se houver campo de valor original.
-       - O formato brasileiro é 1.234,56. Converta para number (float) internacional (1234.56).
-    2. "dueDate": Procure por "Vencimento", "Data de Vencimento" ou "Data". Formato de saída: YYYY-MM-DD.
-    3. "name": Nome do Beneficiário, Cedente, Loja ou Empresa emissora.
-    4. "category": Baseado no nome e itens, escolha uma: 'Moradia' (luz, água, aluguel), 'Educação', 'Saúde', 'Mercado', 'Transporte', 'Lazer', 'Veículo', 'Contas' (internet, telefone), 'Outros'.
+    INTELIGÊNCIA DE CATEGORIA:
+    - Leia o LOGO da empresa e o Nome Fantasia.
+    - Procure palavras-chave: "Telecom", "Internet", "Fibra", "Energia", "Saneamento", "Educação".
+    - Se for "VIG TELECOM" ou similar, a categoria é "Internet" ou "Contas".
+    - Priorize categorias específicas (ex: "Internet" é melhor que "Outros").
 
-    Retorne APENAS este JSON (sem markdown):
-    {
-        "name": "string",
-        "totalAmount": 0.00,
-        "dueDate": "YYYY-MM-DD",
-        "category": "string"
-    }
+    CAMPOS OBRIGATÓRIOS (JSON):
+    1. "name": Nome da empresa (Ex: VIG Telecom, Enel, Netflix).
+    2. "totalAmount": Valor total numérico (float).
+    3. "dueDate": Data de vencimento (YYYY-MM-DD).
+    4. "category": Escolha a melhor categoria da lista: ['Moradia', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação', 'Mercado', 'Dívidas', 'Crianças', 'Assinaturas', 'Contas', 'Internet', 'Outros'].
+    
+    Retorne APENAS o JSON.
     `;
 
     const result = await model.generateContent([
@@ -64,11 +62,10 @@ export async function POST(req: Request) {
 
     const text = result.response.text();
     try {
-        // Limpeza extra caso a IA retorne ```json ... ```
         const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
         const json = JSON.parse(cleanText);
         
-        // Validação de segurança dos dados
+        // Fallback de segurança
         if (!json.totalAmount) json.totalAmount = 0;
         
         return NextResponse.json(json);
