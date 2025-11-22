@@ -11,7 +11,6 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
-// [ALTERADO] Importar o novo TransactionForm
 import { TransactionForm } from "./transaction-form";
 import type { Transaction } from "@/lib/types";
 import { useFirestore, useUser } from "@/firebase";
@@ -39,8 +38,8 @@ export function TransactionsEmptyState() {
 
   return (
     <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-      <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-full">
-        <div className="flex flex-col items-center gap-4 text-center p-8">
+      <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-full min-h-[300px] p-4">
+        <div className="flex flex-col items-center gap-4 text-center">
           <div className="bg-primary/10 text-primary p-4 rounded-full">
             <ArrowRightLeft className="h-10 w-10" />
           </div>
@@ -59,7 +58,8 @@ export function TransactionsEmptyState() {
           </DialogTrigger>
         </div>
       </div>
-      <DialogContent className="sm:max-w-md w-[90vw] rounded-md">
+      {/* Modal ajustado para não cortar no mobile */}
+      <DialogContent className="w-[95vw] max-w-md max-h-[80vh] overflow-y-auto rounded-lg">
         <DialogHeader>
           <DialogTitle>Adicionar Transação</DialogTitle>
           <DialogDescription>

@@ -12,7 +12,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { TransactionForm } from '@/components/transactions/transaction-form';
 import { setTransaction, deleteTransaction } from '@/firebase/firestore/actions';
 import { useFirestore, useUser } from '@/firebase';
@@ -34,7 +33,6 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
   const { user } = useUser();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const isMobile = useIsMobile();
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
@@ -64,21 +62,26 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
 
   return (
     <div className="w-full flex flex-col gap-4">
-      {isMobile ? (
+      
+      {/* VISÃO MOBILE (Visível apenas em telas pequenas via CSS) */}
+      <div className="block md:hidden">
         <MobileTransactionsView 
           transactions={initialTransactions}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onAdd={() => setIsAddDialogOpen(true)}
         />
-      ) : (
+      </div>
+
+      {/* VISÃO DESKTOP (Visível apenas em telas médias ou maiores via CSS) */}
+      <div className="hidden md:block">
         <DataTable 
           columns={columns({ onEdit: handleEdit, onDelete: handleDelete })} 
           data={initialTransactions}
           onAdd={() => setIsAddDialogOpen(true)}
           isLoading={false} 
         />
-      )}
+      </div>
 
       {hasMore && (
         <div className="flex justify-center pt-4 pb-8">
@@ -89,8 +92,9 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
         </div>
       )}
 
+      {/* MODAL DE EDIÇÃO - Ajustado para Mobile */}
       <Dialog open={!!editingTransaction} onOpenChange={(isOpen) => !isOpen && setEditingTransaction(null)}>
-        <DialogContent className="sm:max-w-[425px] max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-[425px] max-h-[80vh] overflow-y-auto rounded-lg">
           <DialogHeader>
             <DialogTitle>Editar Transação</DialogTitle>
             <DialogDescription>
@@ -107,8 +111,9 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
         </DialogContent>
       </Dialog>
 
+       {/* MODAL DE ADICIONAR - Ajustado para Mobile */}
        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-         <DialogContent className="sm:max-w-md w-[90vw] rounded-md max-h-[85vh] overflow-y-auto">
+         <DialogContent className="w-[95vw] max-w-md max-h-[80vh] overflow-y-auto rounded-lg">
            <DialogHeader>
              <DialogTitle>Adicionar Transação</DialogTitle>
              <DialogDescription>

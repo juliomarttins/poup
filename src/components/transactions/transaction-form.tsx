@@ -53,7 +53,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface TransactionFormProps {
-  initialData?: Transaction; // Opcional: se existir, é edição. Se não, é criação.
+  initialData?: Transaction;
   onSave: (transaction: Transaction) => void;
   onCancel: () => void;
 }
@@ -63,7 +63,6 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
   const { user } = useUser();
   const { activeProfile } = useProfile();
 
-  // Verifica se é uma categoria padrão ou personalizada
   const isDefaultCategory = initialData 
     ? (DEFAULT_CATEGORIES.income.includes(initialData.category) || DEFAULT_CATEGORIES.expense.includes(initialData.category))
     : true;
@@ -91,7 +90,6 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
     const amount = data.type === 'expense' ? -Math.abs(data.amount) : Math.abs(data.amount);
     const finalCategory = data.category === 'Outros' ? data.customCategory! : data.category;
 
-    // Se for criação, gera novo ID. Se for edição, mantém o ID.
     const id = initialData?.id || doc(collection(firestore, '_')).id;
 
     const transactionData: Transaction = {
@@ -129,7 +127,8 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                     </FormControl>
                     <FormLabel
                       className={cn(
-                        "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer",
+                        // Reduzi o padding aqui para caber melhor no celular (p-3 sm:p-4)
+                        "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 sm:p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors",
                         field.value === 'income' && "border-accent"
                       )}
                     >
@@ -142,7 +141,8 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                     </FormControl>
                     <FormLabel
                       className={cn(
-                        "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-destructive hover:text-destructive-foreground cursor-pointer",
+                        // Reduzi o padding aqui também
+                        "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 sm:p-4 hover:bg-destructive hover:text-destructive-foreground cursor-pointer transition-colors",
                         field.value === 'expense' && "border-destructive"
                       )}
                     >
@@ -271,7 +271,7 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                     />
                 )}
                 
-                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4">
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 pb-2">
                 <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
                     Cancelar
                 </Button>
