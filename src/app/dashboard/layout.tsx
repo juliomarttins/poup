@@ -2,11 +2,11 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/firebase/provider';
+// [CORREÇÃO] Usar o hook useUser que tem o estado de 'loading'
+import { useUser } from '@/firebase/auth/use-user';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { DashboardLayoutContent } from './_components/dashboard-layout-content';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-// REMOVIDO: import { ProfileProvider } from '@/contexts/profile-context';
 import { DashboardSettingsProvider } from '@/contexts/dashboard-settings-context';
 
 export default function DashboardLayout({
@@ -14,19 +14,26 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const auth = useAuth();
+  // [CORREÇÃO] Pegamos o estado de carregamento e o usuário do contexto global
+  const { user, loading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (auth && !auth.currentUser) {
+    // Só redireciona SE o carregamento terminou (loading = false) E não tem usuário
+    if (!loading && !user) {
       router.push('/');
     }
-  }, [auth, router]);
+  }, [user, loading, router]);
 
-  if (auth && !auth.currentUser) return null;
+  // Enquanto o Firebase está pensando (F5), não mostramos nada (ou poderíamos mostrar um spinner)
+  // Isso impede que o layout "pisque" ou redirecione errado
+  if (loading) return null;
+  
+  // Se carregou e não tem usuário, o useEffect acima já vai ter redirecionado.
+  // Se chegou aqui e não tem usuário, retornamos null para evitar renderizar o dashboard protegido.
+  if (!user) return null;
 
   return (
-    // ProfileProvider JÁ ESTÁ NO ROOT, NÃO PRECISA AQUI
     <DashboardSettingsProvider>
       <SidebarProvider>
         <div className="flex min-h-screen w-full">
