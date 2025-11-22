@@ -1,8 +1,8 @@
-
+// ARQUIVO 1/3: src/components/transactions/data-table-toolbar.tsx
 "use client"
 
 import { Table } from "@tanstack/react-table"
-import { PlusCircle, X } from "lucide-react"
+import { PlusCircle, X, FileDown } from "lucide-react" // [EDIT] Adicionado FileDown
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
 import type { Transaction } from "@/lib/types"
+import { generateTransactionsPDF } from "@/lib/generate-pdf" // [EDIT] Importar a função
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -32,6 +33,13 @@ export function DataTableToolbar<TData>({
   const isFiltered = table.getState().columnFilters.length > 0
   const categories = Array.from(new Set(allTransactions.map(t => t.category)));
 
+  // [EDIT] Função para exportar
+  const handleExport = () => {
+    // Obtém as linhas que estão visíveis após os filtros
+    const filteredRows = table.getFilteredRowModel().rows;
+    const transactions = filteredRows.map(row => row.original as Transaction);
+    generateTransactionsPDF(transactions, "Relatório de Transações (Filtro Desktop)");
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -84,6 +92,12 @@ export function DataTableToolbar<TData>({
           )}
         </div>
         <div className="flex items-center space-x-2">
+          {/* [EDIT] Botão de Exportar */}
+          <Button variant="outline" size="sm" className="h-8 gap-1 hidden sm:flex" onClick={handleExport}>
+            <FileDown className="h-3.5 w-3.5" />
+            Exportar PDF
+          </Button>
+
           <DataTableViewOptions table={table} />
           <Button size="sm" className="h-8 gap-1" onClick={onAdd}>
               <PlusCircle className="h-3.5 w-3.5" />
@@ -93,7 +107,7 @@ export function DataTableToolbar<TData>({
           </Button>
         </div>
       </div>
-      <div className="flex items-center">
+      <div className="flex items-center justify-between">
         <DateRangePicker
             onUpdate={({ range }) => {
               table.getColumn("date")?.setFilterValue(range);
@@ -104,6 +118,7 @@ export function DataTableToolbar<TData>({
             locale="pt-BR"
             showCompare={false}
           />
+           {/* [EDIT] Botão Exportar visível no mobile dentro dessa linha se necessário, ou mantemos oculto no mobile view */}
       </div>
     </div>
   )

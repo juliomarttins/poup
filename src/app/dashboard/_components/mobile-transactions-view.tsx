@@ -1,15 +1,16 @@
-
+// ARQUIVO 2/3: src/app/dashboard/_components/mobile-transactions-view.tsx
 'use client';
 
 import { useState, useMemo } from 'react';
 import type { Transaction } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, X } from 'lucide-react';
+import { PlusCircle, X, FileDown } from 'lucide-react'; // [EDIT] Import FileDown
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import type { DateRange } from 'react-day-picker';
 import { TransactionCard } from '@/components/transactions/transaction-card';
+import { generateTransactionsPDF } from '@/lib/generate-pdf'; // [EDIT] Importar função
 
 interface MobileTransactionsViewProps {
     transactions: Transaction[];
@@ -55,6 +56,12 @@ export function MobileTransactionsView({ transactions, onEdit, onDelete, onAdd }
     setCategoryFilter("all");
     setDateRange(undefined);
   }
+  
+  // [EDIT] Função de exportar
+  const handleExport = () => {
+      generateTransactionsPDF(filteredTransactions, "Relatório de Transações (Mobile)");
+  }
+
   const isMobileFiltered = descriptionFilter || typeFilter !== 'all' || categoryFilter !== 'all' || dateRange;
 
   return (
@@ -66,12 +73,18 @@ export function MobileTransactionsView({ transactions, onEdit, onDelete, onAdd }
           onChange={(event) => setDescriptionFilter(event.target.value)}
           className="h-9 flex-1"
         />
-        <Button size="sm" className="h-9 gap-1" onClick={onAdd}>
-          <PlusCircle className="h-4 w-4" />
-          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            Adicionar
-          </span>
-        </Button>
+        <div className="flex gap-1">
+            {/* [EDIT] Botão de Exportar Mobile */}
+            <Button size="sm" variant="outline" className="h-9 px-2" onClick={handleExport}>
+                <FileDown className="h-4 w-4" />
+            </Button>
+            <Button size="sm" className="h-9 gap-1" onClick={onAdd}>
+            <PlusCircle className="h-4 w-4" />
+            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Adicionar
+            </span>
+            </Button>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
         <Select value={typeFilter} onValueChange={setTypeFilter}>
