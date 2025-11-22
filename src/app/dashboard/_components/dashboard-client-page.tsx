@@ -10,6 +10,8 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import type { Transaction, ManagedDebt } from '@/lib/types';
 import { useDashboardSettings } from '@/contexts/dashboard-settings-context';
 import { generateGeneralReportPDF } from '@/lib/generate-pdf';
+import { saveReportHistory } from '@/firebase/firestore/actions'; // [NOVO]
+import { useFirestore, useUser } from '@/firebase'; // [NOVO]
 
 interface DashboardClientPageProps {
   initialData: {
@@ -22,6 +24,10 @@ interface DashboardClientPageProps {
 export function DashboardClientPage({ initialData, children }: DashboardClientPageProps) {
   const { settings } = useDashboardSettings();
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  
+  // Hooks para salvar histórico
+  const { user } = useUser();
+  const firestore = useFirestore();
 
   const filteredTransactions = useMemo(() => {
     if (!initialData.transactions) return [];
@@ -47,8 +53,11 @@ export function DashboardClientPage({ initialData, children }: DashboardClientPa
 
   const descriptionText = dateRange ? "Período selecionado" : "Geral";
 
-  const handleExport = () => {
+  const handleExport = async () => {
       generateGeneralReportPDF(filteredTransactions, filteredDebts, descriptionText);
+      if (user && firestore) {
+          await saveReportHistory(firestore, user.uid, 'painel', 'Exportação do Painel', descriptionText);
+      }
   };
 
   return (

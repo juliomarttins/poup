@@ -1,16 +1,17 @@
-// ARQUIVO 2/3: src/app/dashboard/_components/mobile-transactions-view.tsx
 'use client';
 
 import { useState, useMemo } from 'react';
 import type { Transaction } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, X, FileDown } from 'lucide-react'; // [EDIT] Import FileDown
+import { PlusCircle, X, FileDown } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import type { DateRange } from 'react-day-picker';
 import { TransactionCard } from '@/components/transactions/transaction-card';
-import { generateTransactionsPDF } from '@/lib/generate-pdf'; // [EDIT] Importar função
+import { generateTransactionsPDF } from '@/lib/generate-pdf';
+import { useUser, useFirestore } from '@/firebase'; // [NOVO]
+import { saveReportHistory } from '@/firebase/firestore/actions'; // [NOVO]
 
 interface MobileTransactionsViewProps {
     transactions: Transaction[];
@@ -24,6 +25,9 @@ export function MobileTransactionsView({ transactions, onEdit, onDelete, onAdd }
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  
+  const { user } = useUser();
+  const firestore = useFirestore();
 
   const categories = useMemo(() => Array.from(new Set(transactions.map(t => t.category))), [transactions]);
 
@@ -57,9 +61,12 @@ export function MobileTransactionsView({ transactions, onEdit, onDelete, onAdd }
     setDateRange(undefined);
   }
   
-  // [EDIT] Função de exportar
-  const handleExport = () => {
+  // [EDIT] Função de exportar com Histórico
+  const handleExport = async () => {
       generateTransactionsPDF(filteredTransactions, "Relatório de Transações (Mobile)");
+      if (user && firestore) {
+        await saveReportHistory(firestore, user.uid, 'transacoes', 'Exportação de Transações (Mobile)');
+      }
   }
 
   const isMobileFiltered = descriptionFilter || typeFilter !== 'all' || categoryFilter !== 'all' || dateRange;
@@ -74,7 +81,6 @@ export function MobileTransactionsView({ transactions, onEdit, onDelete, onAdd }
           className="h-9 flex-1"
         />
         <div className="flex gap-1">
-            {/* [EDIT] Botão de Exportar Mobile */}
             <Button size="sm" variant="outline" className="h-9 px-2" onClick={handleExport}>
                 <FileDown className="h-4 w-4" />
             </Button>

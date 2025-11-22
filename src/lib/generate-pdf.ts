@@ -109,7 +109,7 @@ export const generateTransactionsPDF = (transactions: Transaction[], filterDesc:
     startY: 95,
     head: [["Data", "Descrição", "Categoria", "Tipo", "Valor"]],
     body: tableData,
-    theme: 'grid',
+    theme: 'grid', 
     styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.1 },
     headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold', halign: 'center' },
     columnStyles: { 
@@ -155,10 +155,8 @@ export const generateDebtsPDF = (debts: ManagedDebt[]) => {
       head: [["Dívida", "Categoria", "Parcelas", "Total", "Restante", "% Pago"]],
       body: tableData,
       theme: 'grid',
-      styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.1 },
-      headStyles: { fillColor: [30, 41, 59], fontStyle: 'bold', halign: 'center' },
+      headStyles: { fillColor: [30, 41, 59], fontStyle: 'bold' },
       columnStyles: { 
-          2: { halign: 'center' },
           3: { halign: 'right' },
           4: { halign: 'right' },
           5: { halign: 'center' } 
@@ -175,7 +173,7 @@ export const generateGeneralReportPDF = (
     periodDescription: string = "Geral"
 ) => {
     const doc = new jsPDF();
-    drawHeader(doc, "Relatório Geral", periodDescription);
+    drawHeader(doc, "Relatório Geral Completo", periodDescription);
 
     let yPos = 55;
 
@@ -205,35 +203,57 @@ export const generateGeneralReportPDF = (
     yPos += 10;
     drawBarChart(doc, "Montante da Dívida Quitado", totalPaidDebt, totalDebt, yPos, [37, 99, 235]);
 
-    // 3. Resumo de Movimentações
+    // 3. Lista de Dívidas
     yPos += 25;
     doc.setFontSize(13);
-    doc.text("3. Últimas Movimentações", 14, yPos);
+    doc.text("3. Detalhamento de Dívidas", 14, yPos);
 
-    const lastTransactions = transactions.slice(0, 15).map(t => {
-        const d = new Date(t.date);
-        return [
-            d.toLocaleDateString("pt-BR", { timeZone: 'UTC' }),
-            t.description,
-            t.category,
-            t.type === 'income' ? '+' : '-',
-            formatMoney(t.amount)
-        ]
-    });
+    const debtData = debts.map(d => [
+        d.name, 
+        d.category, 
+        formatMoney(d.totalAmount),
+        `${((d.paidAmount / d.totalAmount) * 100).toFixed(0)}%`
+    ]);
 
     autoTable(doc, {
         startY: yPos + 5,
-        head: [["Data", "Descrição", "Categoria", "T", "Valor"]],
-        body: lastTransactions,
+        head: [["Nome", "Categoria", "Total", "% Pago"]],
+        body: debtData,
         theme: 'grid',
-        styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.1 },
-        headStyles: { fillColor: [71, 85, 105], halign: 'center' },
-        columnStyles: { 
-            0: { halign: 'center' },
-            3: { halign: 'center' },
-            4: { halign: 'right' } 
-        },
+        headStyles: { fillColor: [71, 85, 105] },
+        styles: { fontSize: 9 },
     });
 
-    doc.save(`relatorio_geral_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    // 4. Lista de Transações
+    // @ts-ignore
+    let finalY = doc.lastAutoTable.finalY + 15;
+    
+    // Nova página se necessário
+    if (finalY > 250) {
+        doc.addPage();
+        finalY = 20;
+    }
+
+    doc.setFontSize(13);
+    doc.text("4. Extrato de Transações (Filtrado)", 14, finalY);
+
+    const transData = transactions.map(t => [
+        new Date(t.date).toLocaleDateString("pt-BR", { timeZone: 'UTC' }),
+        t.description,
+        t.category,
+        t.type === 'income' ? '+' : '-',
+        formatMoney(t.amount)
+    ]);
+
+    autoTable(doc, {
+        startY: finalY + 5,
+        head: [["Data", "Descrição", "Categoria", "T", "Valor"]],
+        body: transData,
+        theme: 'grid',
+        headStyles: { fillColor: [71, 85, 105] },
+        columnStyles: { 4: { halign: 'right' } },
+        styles: { fontSize: 8 },
+    });
+
+    doc.save(`relatorio_geral_completo_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
 }

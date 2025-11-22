@@ -30,7 +30,7 @@ import {
 import { EditDebtForm } from "@/components/debts/edit-debt-form";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser } from "@/firebase";
-import { deleteDebt, setDebt } from "@/firebase/firestore/actions";
+import { deleteDebt, setDebt, saveReportHistory } from "@/firebase/firestore/actions"; // [EDIT] Importado saveReportHistory
 import { AddDebtForm } from "@/components/debts/add-debt-form";
 import { generateDebtsPDF } from "@/lib/generate-pdf";
 
@@ -166,6 +166,13 @@ export function DebtsClientPage({ initialDebts }: DebtsClientPageProps) {
         router.refresh();
     };
 
+    const handleExport = async () => {
+        generateDebtsPDF(initialDebts);
+        if (user && firestore) {
+            await saveReportHistory(firestore, user.uid, 'dividas', 'Relatório de Dívidas');
+        }
+    }
+
     const totalDebtAmount = initialDebts.reduce((acc, debt) => acc + debt.totalAmount, 0);
     const totalPaidAmount = initialDebts.reduce((acc, debt) => acc + debt.paidAmount, 0);
     const overallProgress = totalDebtAmount > 0 ? (totalPaidAmount / totalDebtAmount) * 100 : 0;
@@ -180,7 +187,7 @@ export function DebtsClientPage({ initialDebts }: DebtsClientPageProps) {
                         <p className="text-muted-foreground">Sua central para gerenciar e quitar suas dívidas.</p>
                     </div>
                     <div className="flex gap-2">
-                        <Button variant="outline" onClick={() => generateDebtsPDF(initialDebts)}>
+                        <Button variant="outline" onClick={handleExport}>
                             <FileDown className="mr-2 h-4 w-4" />
                             Exportar
                         </Button>
