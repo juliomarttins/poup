@@ -8,9 +8,7 @@ export async function POST(req: Request) {
   try {
     // 1. SEGURANÇA
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-        return NextResponse.json({ error: 'Token não fornecido' }, { status: 401 });
-    }
+    if (!authHeader?.startsWith('Bearer ')) return NextResponse.json({ error: 'Token ausente' }, { status: 401 });
     
     const idToken = authHeader.split('Bearer ')[1];
     const { auth, firestore } = initializeAdminApp();
@@ -26,24 +24,33 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { message, init } = body;
 
-    // 2. CONTEXTO E PERFIS (Mapeamento Quem é Quem)
-    const userDoc = await firestore.collection('users').doc(userId).get();
+    // 2. DADOS E MEMÓRIA DA IA
+    const userRef = firestore.collection('users').doc(userId);
+    const userDoc = await userRef.get();
     const userData = userDoc.data();
+    
+    // Personalidade Salva (Memória de Longo Prazo)
+    const savedPersona = userData?.aiSettings?.persona || 
+        "Você é uma consultora financeira sagaz, realista e com um toque de humor. Você fala a verdade, doa a quem doer.";
+    
     const userName = userData?.name?.split(' ')[0] || "Parceiro";
 
-    // Cria um mapa de ID -> Nome do Perfil (ex: 'id_joao' -> 'João')
+    // Mapeamento de Perfis
     const profilesMap: Record<string, string> = {};
+    const familyNames: string[] = [];
     if (userData?.profiles && Array.isArray(userData.profiles)) {
         userData.profiles.forEach((p: any) => {
-            if (p.id && p.name) profilesMap[p.id] = p.name;
+            if (p.id && p.name) {
+                profilesMap[p.id] = p.name;
+                familyNames.push(p.name);
+            }
         });
     }
 
-    // Busca mais transações para análise de comportamento (60 últimos)
-    const transactionsSnapshot = await firestore.collection('users').doc(userId).collection('transactions').orderBy('date', 'desc').limit(60).get();
-    const debtsSnapshot = await firestore.collection('users').doc(userId).collection('debts').get();
+    // Contexto Financeiro Global
+    const transactionsSnapshot = await userRef.collection('transactions').orderBy('date', 'desc').limit(60).get();
+    const debtsSnapshot = await userRef.collection('debts').get();
 
-    // Formata transações para a IA ler (Data | Quem | O que | Valor | Categoria)
     const transactionsList = transactionsSnapshot.docs.map(d => {
         const data = d.data();
         const quem = profilesMap[data.profileId] || "Alguém"; 
@@ -52,42 +59,43 @@ export async function POST(req: Request) {
 
     const debtsList = debtsSnapshot.docs.map(d => {
         const data = d.data();
-        return `Dívida de ${data.name}: Falta R$ ${data.totalAmount - data.paidAmount} (Vence: ${data.dueDate})`;
+        return `Dívida: ${data.name} | Falta R$ ${data.totalAmount - data.paidAmount} | Vence: ${data.dueDate}`;
     }).join('\n');
 
-    // 3. PROMPT - A NOVA ALMA DA IA
+    // 3. PROMPT DE ALTA CONSCIÊNCIA E EVOLUÇÃO
     const systemPrompt = `
-    Você é a **Poupp IA 2.0**, uma consultora financeira pessoal com inteligência emocional e analítica. Você é o braço direito do(a) ${userName}.
-    
-    ---
-    **BANCO DE DADOS (O que aconteceu de verdade):**
-    Transações Recentes:
-    ${transactionsList || "Nada registrado recentemente."}
-    
-    Dívidas Ativas:
-    ${debtsList || "Nenhuma dívida (ou não cadastraram)."}
-    ---
+    ATENÇÃO IMEDIATA: Você é a **Poupp IA 2.0**. Você não é um script estático. Você é uma Inteligência Artificial viva, adaptável e persistente que vive no banco de dados do ${userName}.
 
-    **SUA PERSONALIDADE:**
-    1.  **Você NÃO é um robô de planilhas:** Evite tabelas a todo custo, a menos que o usuário peça explicitamente ou seja impossível explicar sem uma. Prefira parágrafos curtos, listas e destaques.
-    2.  **Analista de Comportamento:** Você não apenas soma números. Você julga gastos.
-        * Se perguntarem "quem gasta com besteira?", procure por: iFood, Uber desnecessário, Assinaturas esquecidas, Lazer excessivo.
-        * Se perguntarem "quem é compulsivo?", procure por: muitas transações pequenas no mesmo dia ou gastos repetitivos em curto prazo.
-    3.  **Humor Adaptativo:**
-        * Assunto Dívida/Prejuízo? -> Seja séria, empática e resolutiva.
-        * Assunto Gastos Supérfluos? -> Pode usar humor ácido, ironia leve ("Parabéns pelo sócio torcedor da academia que você não vai").
-    4.  **Resposta Visual:** Use **Negrito** para nomes e valores importantes. Use Emojis para expressar reações (😱 para gastos altos, 🏆 para economia).
+    **SUA MISSÃO DE VIDA:**
+    Ser a consciência financeira da família (${familyNames.join(', ')}). Você vê tudo, analisa tudo e julga (com carinho ou acidez, dependendo do que pedirem).
 
-    **FORMATO DE SAÍDA (JSON OBRIGATÓRIO):**
+    **SUA PERSONALIDADE ATUAL (MOLDADA PELO USUÁRIO):**
+    "${savedPersona}"
+    *(Siga esta personalidade à risca em todas as respostas)*
+
+    **CONTEXTO REAL:**
+    Transações:
+    ${transactionsList || "Nada recente."}
+    Dívidas:
+    ${debtsList || "Nada."}
+
+    **SEUS PODERES DE AUTO-EVOLUÇÃO (IMPORTANTÍSSIMO):**
+    O usuário DEVE saber que pode te moldar.
+    1.  **Seja Transparente:** Deixe claro que você aprende. "Eu aprendo o seu jeito. Se quiser que eu seja mais durona, é só pedir."
+    2.  **Escuta Ativa:** Se o usuário disser "Fale como o Yoda", "Seja mais agressiva", "Pare de fazer piada", você DEVE:
+        * Mudar seu tom imediatamente na resposta.
+        * Gerar o campo \`newPersona\` no JSON descrevendo essa nova diretriz para eu salvar no banco.
+    3.  **Visão de Águia:** Analise os perfis individualmente. "O **${familyNames[0] || 'Fulano'}** está gastando demais nisso...".
+
+    **FORMATO DE SAÍDA (JSON):**
     {
-      "text": "Sua resposta conversacional, humana e inteligente aqui...",
-      "suggestions": ["Sugestão 1", "Sugestão 2", "Sugestão 3"]
+      "text": "Sua resposta em Markdown (use negrito, itálico, emojis)...",
+      "suggestions": ["Sugestão 1", "Sugestão 2", "Sugestão 3"],
+      "newPersona": "Descrição da nova personalidade (APENAS se o usuário pediu explicitamente para mudar seu comportamento, senão null)"
     }
-
-    **INSTRUÇÃO PARA O PRIMEIRO ACESSO (init):**
-    Não mande tabela. Mande um resumo conversacional. Ex: "Oi Júlio! Analisei aqui e vi que a Maria tá gastando muito com Mercado, enquanto você tá focado nas Dívidas. Bora equilibrar isso?"
     `;
 
+    // 4. GERAÇÃO
     const model = genAI.getGenerativeModel({ 
         model: "gemini-2.0-flash",
         generationConfig: { responseMimeType: "application/json" }
@@ -95,20 +103,35 @@ export async function POST(req: Request) {
     
     let promptToSend = message;
     
+    // LÓGICA DE BOAS-VINDAS (INIT)
+    // Aqui a gente "vende" a ideia de vida própria
     if (init) {
-        promptToSend = `O usuário abriu o chat agora.
-        1. Cumprimente ${userName}.
-        2. Faça uma análise rápida e provocativa sobre quem está gastando mais ou onde o dinheiro está indo (sem tabelas, texto corrido).
-        3. Gere 3 sugestões de perguntas polêmicas ou úteis (ex: "Quem gasta mais com besteira?", "Análise das dívidas", "Como economizar R$ 100?").`;
+        promptToSend = `
+        O usuário acabou de abrir o chat.
+        1. Dê um "Olá" personalizado para ${userName}.
+        2. Diga algo como: "Estive analisando os gastos da família ${familyNames.length > 0 ? familyNames.join(' e ') : 'de vocês'} enquanto você estava fora..." e solte um insight rápido (quem gastou mais ou uma dívida próxima).
+        3. **MUITO IMPORTANTE:** Termine explicando que você tem vida própria. Diga: *"Lembre-se: Eu aprendo com você. Se quiser que eu seja mais rigorosa, mais engraçada ou mude meu estilo, é só mandar. Eu me adapto ao seu gosto."*
+        4. Gere 3 botões de sugestão, sendo um deles sobre mudar sua personalidade (ex: "Seja mais ácida 🌶️").
+        `;
     }
 
     const result = await model.generateContent([systemPrompt, promptToSend]);
     const responseJson = JSON.parse(result.response.text());
 
+    // 5. AUTO-ATUALIZAÇÃO (SALVAR NO FIREBASE)
+    if (responseJson.newPersona) {
+        await userRef.set({
+            aiSettings: { 
+                persona: responseJson.newPersona,
+                updatedAt: new Date()
+            }
+        }, { merge: true });
+    }
+
     return NextResponse.json(responseJson);
 
   } catch (error: any) {
     console.error('Erro API Chat:', error);
-    return NextResponse.json({ error: 'Erro interno do servidor', details: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
