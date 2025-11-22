@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,13 +17,14 @@ import { Input } from "@/components/ui/input";
 import type { ManagedDebt } from "@/lib/types";
 import { doc, collection } from "firebase/firestore";
 import { useFirestore, useUser } from "@/firebase";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ScanLine, Loader2, Upload } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { ptBR } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
@@ -33,8 +33,8 @@ const formSchema = z.object({
   installmentAmount: z.coerce.number().positive({ message: "O valor da parcela deve ser positivo." }),
   paidInstallments: z.coerce.number().int().min(0, { message: "Não pode ser negativo." }).default(0),
   dueDate: z.date({ required_error: "A data de vencimento é obrigatória." }),
-  totalAmount: z.coerce.number(), // Será calculado, mas precisa estar no schema
-  paidAmount: z.coerce.number(), // Será calculado, mas precisa estar no schema
+  totalAmount: z.coerce.number(),
+  paidAmount: z.coerce.number(),
 }).refine(data => data.paidInstallments <= data.totalInstallments, {
   message: "As parcelas pagas não podem exceder o total de parcelas.",
   path: ["paidInstallments"],
@@ -54,16 +54,20 @@ const formatCurrency = (value: number) => {
     }).format(value);
 };
 
-
 export function AddDebtForm({ onSave, onCancel }: AddDebtFormProps) {
   const firestore = useFirestore();
   const { user } = useUser();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isScanning, setIsScanning] = useState(false);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       category: "",
       paidInstallments: 0,
+      totalInstallments: 1,
       dueDate: new Date(),
     },
   });
@@ -71,6 +75,7 @@ export function AddDebtForm({ onSave, onCancel }: AddDebtFormProps) {
   const { control, setValue } = form;
   const watchedValues = useWatch({ control });
 
+  // Recalcula totais quando parcelas mudam
   useEffect(() => {
     const totalInstallments = Number(watchedValues.totalInstallments) || 0;
     const installmentAmount = Number(watchedValues.installmentAmount) || 0;
@@ -83,10 +88,68 @@ export function AddDebtForm({ onSave, onCancel }: AddDebtFormProps) {
     setValue("paidAmount", paidAmount, { shouldValidate: true });
   }, [watchedValues.totalInstallments, watchedValues.installmentAmount, watchedValues.paidInstallments, setValue]);
 
+  const handleScanClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsScanning(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const token = await user.getIdToken();
+        const response = await fetch('/api/extract-invoice', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        if (!response.ok) throw new Error("Falha ao processar imagem");
+
+        const data = await response.json();
+
+        // Popula o formulário com os dados da IA
+        if (data.name) setValue("name", data.name);
+        if (data.category) setValue("category", data.category);
+        if (data.totalInstallments) setValue("totalInstallments", data.totalInstallments);
+        if (data.installmentAmount) setValue("installmentAmount", data.installmentAmount);
+        if (data.paidInstallments !== undefined) setValue("paidInstallments", data.paidInstallments);
+        
+        if (data.dueDate) {
+            // Corrige fuso horário simples adicionando horas para garantir o dia correto
+            const dateObj = new Date(data.dueDate);
+            dateObj.setHours(12, 0, 0, 0);
+            setValue("dueDate", dateObj);
+        }
+
+        toast({
+            title: "Leitura concluída!",
+            description: "Verifique os dados e salve a dívida.",
+        });
+
+    } catch (error) {
+        console.error(error);
+        toast({
+            variant: "destructive",
+            title: "Erro na leitura",
+            description: "Não foi possível extrair os dados. Tente digitar manualmente.",
+        });
+    } finally {
+        setIsScanning(false);
+        // Limpa o input para permitir selecionar o mesmo arquivo se falhar
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   function onSubmit(data: FormValues) {
     if (!firestore || !user) return;
-    const newDocRef = doc(collection(firestore, '_')); // Fake ref to get a new ID
+    const newDocRef = doc(collection(firestore, '_'));
     const newDebt: ManagedDebt = {
         id: newDocRef.id,
         ...data,
@@ -99,6 +162,34 @@ export function AddDebtForm({ onSave, onCancel }: AddDebtFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        
+        {/* BOTÃO DE ESCANEAR - MAGIC HAPPENS HERE */}
+        <div className="bg-muted/40 p-4 rounded-lg border border-dashed border-primary/20 flex flex-col items-center justify-center gap-2">
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*,application/pdf" 
+                onChange={handleFileChange}
+            />
+            <Button 
+                type="button" 
+                variant="secondary" 
+                className="w-full gap-2 border-primary/20 hover:border-primary/50 transition-colors"
+                onClick={handleScanClick}
+                disabled={isScanning}
+            >
+                {isScanning ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Lendo Arquivo...</>
+                ) : (
+                    <><ScanLine className="h-4 w-4 text-primary" /> Escanear Conta / Boleto</>
+                )}
+            </Button>
+            <p className="text-[10px] text-muted-foreground text-center">
+                Tire uma foto ou envie um PDF. A IA preencherá os dados para você.
+            </p>
+        </div>
+
         <FormField
           control={form.control}
           name="name"
