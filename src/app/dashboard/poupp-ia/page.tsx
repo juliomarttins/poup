@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, Lightbulb, ArrowRight } from 'lucide-react';
+import { Send, Bot, User, Sparkles, ArrowRight, Terminal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,6 +10,8 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase/auth/use-user';
 import { Skeleton } from '@/components/ui/skeleton';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
   id: string;
@@ -21,14 +23,14 @@ interface Message {
 export default function PouppIAPage() {
   const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [suggestions, setSuggestions] = useState<string[]>([]); // Estado para as sugestões
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true); // Loading inicial
+  const [isInitializing, setIsInitializing] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const hasFetchedInit = useRef(false);
 
-  // 1. Carregamento Inicial Inteligente
+  // Inicialização automática
   useEffect(() => {
     const fetchInitialGreeting = async () => {
         if (!user || hasFetchedInit.current) return;
@@ -43,7 +45,7 @@ export default function PouppIAPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ message: '', init: true }), // Flag init
+                body: JSON.stringify({ message: '', init: true }),
             });
             
             const data = await res.json();
@@ -66,22 +68,19 @@ export default function PouppIAPage() {
     fetchInitialGreeting();
   }, [user]);
 
-  // Scroll automático
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isLoading, isInitializing]);
 
-  // Função centralizada de envio
   const sendMessage = async (text: string) => {
     if (!text.trim() || !user) return;
 
     setInputValue('');
-    setSuggestions([]); // Limpa sugestões antigas ao enviar
+    setSuggestions([]); 
     setIsLoading(true);
 
-    // Adiciona mensagem do usuário
     const newMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -102,10 +101,8 @@ export default function PouppIAPage() {
         });
 
         const data = await response.json();
-
         if (!response.ok) throw new Error(data.error);
 
-        // Adiciona resposta da IA
         const assistantMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
@@ -113,15 +110,13 @@ export default function PouppIAPage() {
             timestamp: new Date(),
         };
         setMessages((prev) => [...prev, assistantMessage]);
-        
-        // Atualiza as sugestões com as novas fornecidas pela IA
         setSuggestions(data.suggestions || []);
 
     } catch (error) {
         const errorMsg: Message = {
             id: (Date.now() + 1).toString(),
             role: 'error',
-            content: 'Ops! Tive um problema de conexão. Tente novamente.',
+            content: 'Erro de conexão. Tente novamente.',
             timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMsg]);
@@ -130,32 +125,10 @@ export default function PouppIAPage() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(inputValue);
-    }
-  };
-
-  // Componente para renderizar texto com negrito simples (**texto**)
-  const FormattedText = ({ text }: { text: string }) => {
-    const parts = text.split(/(\*\*.*?\*\*)/g);
-    return (
-        <span className="whitespace-pre-wrap leading-relaxed">
-            {parts.map((part, index) => {
-                if (part.startsWith('**') && part.endsWith('**')) {
-                    return <strong key={index} className="text-foreground font-bold">{part.slice(2, -2)}</strong>;
-                }
-                return part;
-            })}
-        </span>
-    );
-  };
-
   return (
     <div className="flex flex-col h-[calc(100vh-5rem)] md:h-[calc(100vh-6rem)] w-full gap-2">
-      {/* Cabeçalho Compacto */}
-      <div className="flex items-center gap-3 px-4 py-2 shrink-0 border-b border-border/40">
+      {/* Cabeçalho */}
+      <div className="flex items-center gap-3 px-4 py-2 shrink-0 border-b border-border/40 bg-card/50 backdrop-blur-sm">
         <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-1.5 rounded-lg shadow-sm">
             <Sparkles className="h-4 w-4 text-white" />
         </div>
@@ -165,15 +138,14 @@ export default function PouppIAPage() {
         </div>
       </div>
 
-      {/* Área de Chat */}
+      {/* Chat */}
       <Card className="flex-1 overflow-hidden bg-background/50 border-none relative flex flex-col shadow-none">
-        <ScrollArea className="flex-1 px-4 py-2">
+        <ScrollArea className="flex-1 px-2 sm:px-4 py-2">
             {isInitializing && (
                 <div className="flex gap-3 items-center mt-4">
                     <Skeleton className="h-8 w-8 rounded-full" />
                     <div className="space-y-2">
-                        <Skeleton className="h-4 w-[200px]" />
-                        <Skeleton className="h-4 w-[150px]" />
+                        <Skeleton className="h-16 w-[250px] rounded-xl" />
                     </div>
                 </div>
             )}
@@ -187,7 +159,7 @@ export default function PouppIAPage() {
                     message.role === 'user' ? "flex-row-reverse" : "flex-row"
                     )}
                 >
-                    <Avatar className={cn("h-8 w-8 border shrink-0 shadow-sm", message.role === 'assistant' ? "bg-yellow-500/10 border-yellow-500/20" : "")}>
+                    <Avatar className={cn("h-8 w-8 border shrink-0 shadow-sm mt-1", message.role === 'assistant' ? "bg-yellow-500/10 border-yellow-500/20" : "")}>
                         {message.role === 'assistant' ? (
                             <div className="h-full w-full flex items-center justify-center text-yellow-600">
                                 <Bot className="h-5 w-5" />
@@ -202,19 +174,34 @@ export default function PouppIAPage() {
 
                     <div
                     className={cn(
-                        "flex flex-col gap-1 max-w-[85%] md:max-w-[70%] text-sm",
+                        "flex flex-col gap-1 max-w-[90%] md:max-w-[75%] text-sm",
                         message.role === 'user' ? "items-end" : "items-start"
                     )}
                     >
                     <div
                         className={cn(
-                        "rounded-2xl px-4 py-3 shadow-sm",
+                        "rounded-2xl px-4 py-3 shadow-sm overflow-hidden",
                         message.role === 'user'
                             ? "bg-primary text-primary-foreground rounded-tr-sm"
                             : "bg-card border text-card-foreground rounded-tl-sm"
                         )}
                     >
-                        <FormattedText text={message.content} />
+                        {/* RENDERIZADOR DE MARKDOWN COM TABELAS */}
+                        <ReactMarkdown 
+                            remarkPlugins={[remarkGfm]}
+                            className="prose prose-sm dark:prose-invert max-w-none break-words
+                                prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent
+                                prose-table:border-collapse prose-table:w-full prose-table:my-2 prose-table:text-xs
+                                prose-th:border prose-th:border-border prose-th:p-2 prose-th:bg-muted/50 prose-th:text-left
+                                prose-td:border prose-td:border-border prose-td:p-2
+                                "
+                            components={{
+                                // Componente customizado para links abrirem em nova aba (opcional)
+                                a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline" {...props} />
+                            }}
+                        >
+                            {message.content}
+                        </ReactMarkdown>
                     </div>
                     <span className="text-[10px] text-muted-foreground px-1">
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -228,7 +215,7 @@ export default function PouppIAPage() {
                          <div className="h-8 w-8 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-600 border border-yellow-500/20">
                             <Bot className="h-5 w-5 animate-pulse" />
                          </div>
-                         <div className="flex gap-1 items-center h-8">
+                         <div className="flex gap-1 items-center h-8 px-2">
                             <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
                             <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
                             <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-bounce"></span>
@@ -240,20 +227,22 @@ export default function PouppIAPage() {
         </ScrollArea>
       </Card>
 
-      {/* Área de Input e Sugestões */}
-      <div className="shrink-0 p-4 pt-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      {/* Sugestões e Input */}
+      <div className="shrink-0 p-4 pt-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
         
-        {/* Sugestões Inteligentes (Chips) */}
+        {/* Sugestões com Identificadores */}
         {suggestions.length > 0 && !isLoading && (
             <div className="flex gap-2 overflow-x-auto pb-3 no-scrollbar snap-x">
                 {suggestions.map((sug, idx) => (
                     <button
                         key={idx}
                         onClick={() => sendMessage(sug)}
-                        className="snap-start shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all text-xs font-medium whitespace-nowrap group"
+                        className="snap-start shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border hover:bg-primary/5 hover:border-primary/40 transition-all text-xs text-left group max-w-[200px]"
                     >
-                        <Lightbulb className="w-3 h-3 text-yellow-500 group-hover:text-primary" />
-                        {sug}
+                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-background border border-border text-[10px] font-bold text-muted-foreground group-hover:border-primary/50 group-hover:text-primary transition-colors shrink-0 shadow-sm">
+                            {idx + 1}
+                        </span>
+                        <span className="line-clamp-2 leading-tight">{sug}</span>
                     </button>
                 ))}
             </div>
@@ -263,7 +252,7 @@ export default function PouppIAPage() {
             <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage(inputValue)}
                 placeholder="Digite sua dúvida..."
                 className="pr-12 py-6 rounded-full shadow-md bg-background border-muted-foreground/20 focus-visible:ring-primary text-base pl-5"
                 disabled={isLoading}

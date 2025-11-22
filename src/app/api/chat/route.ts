@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { initializeAdminApp } from '@/firebase/admin';
 
@@ -22,69 +22,71 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { message, init } = body; // 'init' indica que a tela acabou de abrir
+    const { message, init } = body;
 
-    // 2. CONTEXTO FINANCEIRO (Busca rápida)
-    // Pegamos o nome
+    // 2. CONTEXTO
     const userDoc = await firestore.collection('users').doc(userId).get();
     const userName = userDoc.data()?.name?.split(' ')[0] || "Parceiro";
 
-    const transactionsSnapshot = await firestore.collection('users').doc(userId).collection('transactions').orderBy('date', 'desc').limit(30).get();
+    const transactionsSnapshot = await firestore.collection('users').doc(userId).collection('transactions').orderBy('date', 'desc').limit(40).get();
     const debtsSnapshot = await firestore.collection('users').doc(userId).collection('debts').get();
 
+    // Prepara dados para a IA ler
     const transactionsList = transactionsSnapshot.docs.map(d => {
         const data = d.data();
-        return `- ${data.date}: ${data.description} (R$ ${data.amount}) [${data.category}]`;
+        return `| ${data.date} | ${data.description} | R$ ${data.amount} | ${data.category} |`;
     }).join('\n');
 
     const debtsList = debtsSnapshot.docs.map(d => {
         const data = d.data();
-        return `- Dívida: ${data.name} | Falta: R$ ${data.totalAmount - data.paidAmount}`;
+        return `| ${data.name} | Restante: R$ ${data.totalAmount - data.paidAmount} | Vence: ${data.dueDate} |`;
     }).join('\n');
 
-    // 3. PROMPT OTIMIZADO PARA VISUAL E CONCISÃO
-    // Instruímos a IA a responder SEMPRE em JSON para o front montar os botões
+    // 3. PROMPT OTIMIZADO PARA TABELAS E ORGANIZAÇÃO
     const systemPrompt = `
-    Você é a **Poupp IA**, assistente do(a) ${userName}.
+    Você é a **Poupp IA 2.0**, consultora financeira de elite do(a) ${userName}.
     
-    DADOS REAIS:
-    Transações: \n${transactionsList || "Sem dados recentes."}
-    Dívidas: \n${debtsList || "Sem dívidas."}
+    DADOS FINANCEIROS:
+    ${transactionsList ? `Transações recentes:\n${transactionsList}` : "Sem transações."}
+    ${debtsList ? `Dívidas:\n${debtsList}` : "Sem dívidas."}
 
-    SUA MISSÃO:
-    1. **Personalidade:** Bem-humorada, realista, DIRETA AO PONTO.
-    2. **Formatação:** - Use MUITOS Emojis para dar cor (💰, 📉, 🚨, ✅).
-       - Use **Negrito** para valores e conclusões.
-       - Máximo de 2 ou 3 frases por bloco de texto. Nada de textão.
-    3. **Planos:** Se pedir ajuda, dê 3 opções (Conservadora 🐢, Equilibrada ⚖️, Ousada 🚀).
+    SUAS REGRAS VISUAIS (RIGOROSO):
+    1. **TABELAS:** Sempre que comparar valores, categorias ou listar mais de 3 itens, USE TABELAS MARKDOWN. O usuário pediu "linhas e colunas", então obedeça.
+       Exemplo de tabela:
+       | Categoria | Valor | Status |
+       | :--- | :--- | :--- |
+       | iFood | R$ 200 | 🚨 Alto |
 
-    FORMATO DE RESPOSTA OBRIGATÓRIO (JSON):
-    Você deve retornar APENAS um objeto JSON válido com esta estrutura:
+    2. **LISTAS:** Use listas com bullet points (•) para explicar planos.
+    3. **DIRETA:** Sem texto de introdução longo. Vá direto aos dados.
+    4. **EMOJIS:** Use emojis como ícones no início de títulos (ex: 📊 **Análise**, 🎯 **Meta**).
+
+    FORMATO DE RESPOSTA (JSON):
+    Retorne APENAS um JSON válido:
     {
-      "text": "Sua resposta formatada aqui...",
-      "suggestions": ["Sugestão curta 1", "Sugestão curta 2", "Sugestão curta 3"]
+      "text": "Sua resposta em Markdown aqui...",
+      "suggestions": ["Sugestão 1", "Sugestão 2", "Sugestão 3"]
     }
-    
-    As 'suggestions' devem ser perguntas curtas (máx 5 palavras) que o usuário provavelmente faria agora baseadas nos dados dele (ex: "Gastos com Uber?", "Como quitar dívida X?", "Resumo do mês").
+
+    Se for 'init' (início), faça um resumo em Tabela dos top 3 gastos do mês e sugira ações.
     `;
 
     const model = genAI.getGenerativeModel({ 
         model: "gemini-2.0-flash",
-        generationConfig: { responseMimeType: "application/json" } // Força JSON
+        generationConfig: { responseMimeType: "application/json" }
     });
     
     let promptToSend = message;
     
-    // Se for inicialização, pedimos uma saudação + sugestões iniciais
     if (init) {
-        promptToSend = `O usuário acabou de abrir o chat. Dê uma saudação curta e bem humorada usando o nome ${userName}, faça um micro resumo de 1 linha sobre a situação atual, e gere 3 botões de perguntas chaves nas sugestões.`;
+        promptToSend = `O usuário abriu o app.
+        1. Cumprimente pelo nome (${userName}).
+        2. Crie uma TABELA MARKDOWN resumindo a situação atual (Entradas vs Saídas ou Top Gastos).
+        3. Gere 3 sugestões de perguntas curtas e diretas sobre esses dados.`;
     }
 
     const result = await model.generateContent([systemPrompt, promptToSend]);
-    const responseText = result.response.text();
-    
-    // Parse do JSON gerado pela IA
-    const responseJson = JSON.parse(responseText);
+    const responseJson = JSON.parse(result.response.text());
 
     return NextResponse.json(responseJson);
 
