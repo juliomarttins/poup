@@ -1,21 +1,10 @@
-
 import type { ReactNode } from 'react';
-import { ProfileProvider } from '@/contexts/profile-context';
-import { ThemeProvider } from '@/components/theme-provider';
 
+// Providers já estão no RootLayout, não precisamos repetir aqui
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="dark">
-      <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          defaultColor="default"
-          enableSystem={false}
-      >
-        <ProfileProvider>
-          {children}
-        </ProfileProvider>
-      </ThemeProvider>
+    <div className="flex min-h-screen flex-col">
+      {children}
     </div>
   );
 }
