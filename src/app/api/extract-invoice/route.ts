@@ -30,28 +30,30 @@ export async function POST(req: Request) {
     const base64Data = buffer.toString('base64');
     
     const genAI = new GoogleGenerativeAI(apiKey);
-    // Usando o modelo mais rápido e estável para OCR
     const model = genAI.getGenerativeModel({ 
         model: "gemini-2.0-flash",
         generationConfig: { responseMimeType: "application/json" }
     });
 
+    // Prompt ultra-específico para documentos brasileiros
     const prompt = `
-    Analise a imagem deste comprovante, nota fiscal ou recibo.
-    Sua missão é extrair os dados para preenchimento automático de um formulário financeiro.
-    
-    Regras de Extração:
-    1. "name": Identifique o nome do estabelecimento (Ex: "Mercado Livre", "Uber", "Restaurante X"). Seja conciso.
-    2. "totalAmount": Encontre o valor TOTAL pago. Retorne APENAS NÚMERO (ex: 150.50). Se tiver símbolo de moeda, remova. Se não achar valor exato, estime o maior valor visível.
-    3. "dueDate": Data da transação no formato YYYY-MM-DD. Se não houver data explícita, use a data de hoje.
-    4. "category": Classifique o gasto em uma destas categorias: [Alimentação, Transporte, Lazer, Saúde, Educação, Mercado, Moradia, Contas, Outros]. Se não souber, use 'Outros'.
+    Analise este documento (pode ser PDF, imagem, boleto, fatura ou recibo).
+    Seu objetivo é extrair dados para uma transação financeira no Brasil.
 
-    Retorne APENAS este JSON:
+    REGRAS DE EXTRAÇÃO:
+    1. "totalAmount": Procure por "Valor do Documento", "Valor Cobrado", "Total a Pagar" ou "Valor Total". 
+       - Ignore juros/multa se houver campo de valor original.
+       - O formato brasileiro é 1.234,56. Converta para number (float) internacional (1234.56).
+    2. "dueDate": Procure por "Vencimento", "Data de Vencimento" ou "Data". Formato de saída: YYYY-MM-DD.
+    3. "name": Nome do Beneficiário, Cedente, Loja ou Empresa emissora.
+    4. "category": Baseado no nome e itens, escolha uma: 'Moradia' (luz, água, aluguel), 'Educação', 'Saúde', 'Mercado', 'Transporte', 'Lazer', 'Veículo', 'Contas' (internet, telefone), 'Outros'.
+
+    Retorne APENAS este JSON (sem markdown):
     {
-        "name": string,
-        "totalAmount": number,
-        "dueDate": string,
-        "category": string
+        "name": "string",
+        "totalAmount": 0.00,
+        "dueDate": "YYYY-MM-DD",
+        "category": "string"
     }
     `;
 
@@ -62,15 +64,21 @@ export async function POST(req: Request) {
 
     const text = result.response.text();
     try {
-        const json = JSON.parse(text);
+        // Limpeza extra caso a IA retorne ```json ... ```
+        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const json = JSON.parse(cleanText);
+        
+        // Validação de segurança dos dados
+        if (!json.totalAmount) json.totalAmount = 0;
+        
         return NextResponse.json(json);
     } catch (e) {
-        console.error("Erro JSON IA:", text);
-        return NextResponse.json({ error: 'Falha ao interpretar a resposta da IA.' }, { status: 500 });
+        console.error("Erro Parse IA:", text);
+        return NextResponse.json({ error: 'Erro ao interpretar dados do documento.' }, { status: 500 });
     }
 
   } catch (error: any) {
     console.error('Erro API:', error);
-    return NextResponse.json({ error: error.message || 'Erro interno ao processar.' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro interno ao processar.' }, { status: 500 });
   }
 }
