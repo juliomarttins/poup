@@ -293,8 +293,8 @@ export default function LandingPage() {
               </Button>
             ) : (
               <>
-                {/* Link corrigido explicitamente para /login */}
-                <Button variant="ghost" asChild className="hidden sm:inline-flex"><Link href="/login">Entrar</Link></Button>
+                {/* Link corrigido explicitamente para /login e sempre visível */}
+                <Button variant="ghost" asChild><Link href="/login">Entrar</Link></Button>
                 {/* Link explicitamente para /signup */}
                 <Button asChild className="rounded-full font-bold shadow-lg shadow-primary/20"><Link href="/signup">Testar Grátis</Link></Button>
               </>
