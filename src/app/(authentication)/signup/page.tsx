@@ -1,4 +1,3 @@
-
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -25,7 +24,8 @@ export default function SignupPage() {
                     <SignupForm />
                     <div className="mt-4 text-center text-sm">
                         Já tem uma conta?{' '}
-                        <Link href="/" className="underline">
+                        {/* CORREÇÃO AQUI: Mudou de "/" para "/login" */}
+                        <Link href="/login" className="underline hover:text-primary transition-colors">
                             Entrar
                         </Link>
                     </div>

@@ -1,8 +1,9 @@
 import Image from 'next/image';
+import Link from 'next/link';
+
 import { LoginForm } from '@/components/auth/login-form';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Logo } from '@/components/icons';
-import { APP_VERSION, APP_NAME } from '@/lib/constants';
 
 export default function LoginPage() {
   const loginBg = PlaceHolderImages.find(img => img.id === 'login-background');
@@ -15,7 +16,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-center gap-2">
               <Logo className="h-10 w-10 text-primary" />
               <h1 className="text-3xl font-bold font-headline">
-                {APP_NAME}
+                Poupp
               </h1>
             </div>
             <p className="text-balance text-muted-foreground">
@@ -23,8 +24,12 @@ export default function LoginPage() {
             </p>
           </div>
           <LoginForm />
-          <div className="pt-4 text-center text-xs text-muted-foreground">
-            {APP_VERSION}
+          {/* Link para ir para o Cadastro caso o usuário tenha caído aqui por engano */}
+          <div className="mt-4 text-center text-sm">
+                Não tem uma conta?{' '}
+                <Link href="/signup" className="underline hover:text-primary transition-colors">
+                  Cadastre-se
+                </Link>
           </div>
         </div>
       </div>
