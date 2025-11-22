@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, ArrowRight, Lightbulb, AlertTriangle } from 'lucide-react';
+import { Send, Bot, Sparkles, ArrowRight, Lightbulb, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'; // Removido AvatarImage
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase/auth/use-user';
+import { useProfile } from '@/contexts/profile-context'; // [NOVO] Contexto do Perfil
+import { AvatarIcon } from '@/components/icons/avatar-icon'; // [NOVO] Ícone do Avatar
 import { Skeleton } from '@/components/ui/skeleton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -22,12 +24,13 @@ interface Message {
 
 export default function PouppIAPage() {
   const { user } = useUser();
+  const { activeProfile } = useProfile(); // [NOVO] Pegamos o perfil ativo
   const [messages, setMessages] = useState<Message[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
-  const [initError, setInitError] = useState(false); // Novo estado de erro
+  const [initError, setInitError] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const hasFetchedInit = useRef(false);
 
@@ -50,7 +53,7 @@ export default function PouppIAPage() {
             });
             
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
+            if (!res.ok) throw new Error(data.error || "Erro desconhecido na API");
 
             if (data.text) {
                 setMessages([{
@@ -63,7 +66,7 @@ export default function PouppIAPage() {
             }
         } catch (e) {
             console.error("Erro na inicialização do chat:", e);
-            setInitError(true); // Ativa modo de erro
+            setInitError(true);
         } finally {
             setIsInitializing(false);
         }
@@ -84,7 +87,7 @@ export default function PouppIAPage() {
     setInputValue('');
     setSuggestions([]); 
     setIsLoading(true);
-    setInitError(false); // Limpa erro se tentar enviar mensagem
+    setInitError(false);
 
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -106,7 +109,7 @@ export default function PouppIAPage() {
         });
 
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || data.details);
+        if (!response.ok) throw new Error(data.error || data.details || "Erro na resposta da IA");
 
         const assistantMessage: Message = {
             id: (Date.now() + 1).toString(),
@@ -118,10 +121,11 @@ export default function PouppIAPage() {
         setSuggestions(data.suggestions || []);
 
     } catch (error) {
+        console.error(error);
         const errorMsg: Message = {
             id: (Date.now() + 1).toString(),
             role: 'error',
-            content: 'Não consegui conectar ao servidor. Verifique se o backend está rodando corretamente.',
+            content: 'Não consegui conectar. Verifique se o arquivo "service-account.json" está na pasta correta e se o servidor foi reiniciado.',
             timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMsg]);
@@ -145,7 +149,6 @@ export default function PouppIAPage() {
       <Card className="flex-1 overflow-hidden bg-background/50 border-none relative flex flex-col shadow-none">
         <ScrollArea className="flex-1 px-2 sm:px-4 py-2">
             
-            {/* Loading Skeleton */}
             {isInitializing && (
                 <div className="flex gap-3 items-center mt-4">
                     <Skeleton className="h-8 w-8 rounded-full" />
@@ -155,14 +158,13 @@ export default function PouppIAPage() {
                 </div>
             )}
 
-            {/* Erro de Inicialização */}
             {initError && !isLoading && messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full mt-10 gap-4 text-center opacity-80">
                     <AlertTriangle className="h-10 w-10 text-yellow-500" />
                     <div>
-                        <p className="text-sm font-medium">A IA está tirando um cochilo.</p>
+                        <p className="text-sm font-medium">A IA está offline.</p>
                         <p className="text-xs text-muted-foreground max-w-[250px] mx-auto mt-1">
-                            Não consegui carregar a análise inicial. Tente enviar uma mensagem abaixo para acordá-la.
+                           Reinicie o servidor (npm run dev) para carregar as novas credenciais.
                         </p>
                     </div>
                 </div>
@@ -177,17 +179,26 @@ export default function PouppIAPage() {
                     message.role === 'user' ? "flex-row-reverse" : "flex-row"
                     )}
                 >
-                    <Avatar className={cn("h-8 w-8 border shrink-0 shadow-sm mt-1", message.role === 'assistant' ? "bg-yellow-500/10 border-yellow-500/20" : "")}>
+                    {/* [CORREÇÃO] Avatar agora usa o Profile Context e AvatarIcon */}
+                    <Avatar className={cn(
+                        "h-8 w-8 border shrink-0 shadow-sm mt-1 flex items-center justify-center", 
+                        message.role === 'assistant' ? "bg-yellow-500/10 border-yellow-500/20" : "",
+                        message.role === 'error' ? "bg-red-100 border-red-200" : ""
+                    )}
+                    style={message.role === 'user' ? { background: activeProfile?.avatarBackground || 'hsl(var(--muted))' } : undefined}
+                    >
                         {message.role === 'assistant' ? (
-                            <div className="h-full w-full flex items-center justify-center text-yellow-600">
-                                <Bot className="h-5 w-5" />
-                            </div>
+                           <Bot className="h-5 w-5 text-yellow-600" />
                         ) : message.role === 'error' ? (
-                            <div className="h-full w-full flex items-center justify-center bg-red-100 text-red-600">!</div>
+                           <span className="font-bold text-red-600">!</span>
                         ) : (
-                             <AvatarImage src={user?.photoURL || ''} />
+                           <AvatarIcon 
+                             iconName={activeProfile?.photoURL} 
+                             fallbackName={activeProfile?.name}
+                             className="h-5 w-5"
+                             style={{ color: activeProfile?.avatarColor || 'hsl(var(--foreground))' }}
+                           />
                         )}
-                        <AvatarFallback>EU</AvatarFallback>
                     </Avatar>
 
                     <div
