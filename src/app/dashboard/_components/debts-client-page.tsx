@@ -1,5 +1,4 @@
-
-"use client";
+'use client';
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -7,7 +6,7 @@ import type { ManagedDebt } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MoreVertical } from "lucide-react";
+import { PlusCircle, MoreVertical, FileDown } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -33,7 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser } from "@/firebase";
 import { deleteDebt, setDebt } from "@/firebase/firestore/actions";
 import { AddDebtForm } from "@/components/debts/add-debt-form";
-
+import { generateDebtsPDF } from "@/lib/generate-pdf";
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -43,12 +42,10 @@ const formatCurrency = (value: number) => {
 };
 
 const formatDate = (dateString: string) => {
-    // Adjust for timezone issues by assuming UTC
     const [year, month, day] = dateString.split('-').map(Number);
     const date = new Date(Date.UTC(year, month - 1, day));
     return date.toLocaleDateString("pt-BR", { timeZone: 'UTC' });
 }
-
 
 const DebtCard = ({ debt, onEdit, onDelete }: { debt: ManagedDebt; onEdit: (debt: ManagedDebt) => void; onDelete: (debtId: string) => void; }) => {
     const [showDeleteAlert, setShowDeleteAlert] = useState(false);
@@ -182,12 +179,18 @@ export function DebtsClientPage({ initialDebts }: DebtsClientPageProps) {
                         <h1 className="text-2xl font-bold tracking-tight">Minhas Dívidas</h1>
                         <p className="text-muted-foreground">Sua central para gerenciar e quitar suas dívidas.</p>
                     </div>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Adicionar Nova Dívida
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => generateDebtsPDF(initialDebts)}>
+                            <FileDown className="mr-2 h-4 w-4" />
+                            Exportar
                         </Button>
-                    </DialogTrigger>
+                        <DialogTrigger asChild>
+                            <Button>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Nova Dívida
+                            </Button>
+                        </DialogTrigger>
+                    </div>
                 </header>
 
                  <DialogContent className="sm:max-w-md w-[90vw] rounded-md">

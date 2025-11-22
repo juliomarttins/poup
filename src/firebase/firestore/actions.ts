@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -8,10 +7,11 @@ import {
   type Firestore,
   serverTimestamp,
   collection,
+  addDoc
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import type { Transaction, ManagedDebt } from '@/lib/types';
+import type { Transaction, ManagedDebt, Report } from '@/lib/types';
 
 // Generic function to set a document in a user's subcollection
 async function setUserSubcollectionDoc<T extends { id: string, userId: string }>(
@@ -108,3 +108,25 @@ export const deleteDebt = (
 ) => {
   return deleteUserSubcollectionDoc(firestore, userId, 'debts', debtId);
 };
+
+// [NOVO] Salvar histórico de relatório
+export const saveReportHistory = async (
+    firestore: Firestore,
+    userId: string,
+    type: Report['type'],
+    title: string,
+    filterDescription?: string
+) => {
+    try {
+        const reportsCol = collection(firestore, 'users', userId, 'reports');
+        await addDoc(reportsCol, {
+            userId,
+            type,
+            title,
+            filterDescription: filterDescription || 'Sem filtros',
+            generatedAt: serverTimestamp()
+        });
+    } catch (error) {
+        console.error("Erro ao salvar histórico de relatório:", error);
+    }
+}

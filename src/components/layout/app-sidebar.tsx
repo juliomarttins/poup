@@ -11,7 +11,8 @@ import {
   Settings,
   HelpCircle,
   LogOut,
-  Bot, // [NOVO] Ícone do Robô
+  Bot,
+  FileText // [NOVO]
 } from 'lucide-react';
 
 import {
@@ -30,7 +31,6 @@ import { Logo } from '@/components/icons';
 import { useAuth } from '@/firebase/provider';
 import { signOut } from 'firebase/auth';
 
-// Definição dos itens do menu
 const mainNavItems = [
   {
     title: 'Visão Geral',
@@ -53,7 +53,12 @@ const mainNavItems = [
     icon: BarChart3,
   },
   {
-    title: 'Poupp IA', // [NOVO] Item de menu
+    title: 'Relatórios', // [NOVO]
+    url: '/dashboard/reports',
+    icon: FileText,
+  },
+  {
+    title: 'Poupp IA',
     url: '/dashboard/poupp-ia',
     icon: Bot,
   },

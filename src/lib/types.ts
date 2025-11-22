@@ -1,4 +1,3 @@
-
 import type { Timestamp } from 'firebase/firestore';
 
 export type Transaction = {
@@ -42,7 +41,6 @@ export type FinancialAnalysis = {
   advice: string;
 }
 
-
 export type UserProfile = {
   uid: string;
   name: string | null;
@@ -52,6 +50,10 @@ export type UserProfile = {
   profiles?: Profile[];
   familyId?: string;
   familyCode?: string;
+  aiSettings?: {
+      persona?: string;
+      updatedAt?: any;
+  }
 };
 
 export type Profile = {
@@ -62,3 +64,12 @@ export type Profile = {
   avatarBackground?: string | null;
 }
 
+// [NOVO] Tipo para o Histórico de Relatórios
+export type Report = {
+    id: string;
+    userId: string;
+    type: 'geral' | 'painel' | 'dividas' | 'transacoes';
+    title: string;
+    generatedAt: Timestamp | any; // Suporta tanto o Timestamp do Firebase quanto Date
+    filterDescription?: string; // Ex: "01/11/2024 - 30/11/2024"
+}
