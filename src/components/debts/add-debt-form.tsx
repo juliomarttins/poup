@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -21,7 +20,7 @@ import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, ScanLine, Loader2, Upload } from "lucide-react";
+import { CalendarIcon, Loader2, Camera, UploadCloud, FileText } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -29,14 +28,14 @@ import { useToast } from "@/hooks/use-toast";
 const formSchema = z.object({
   name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
   category: z.string().min(2, { message: "A categoria deve ter pelo menos 2 caracteres." }),
-  totalInstallments: z.coerce.number().int().positive({ message: "Deve ser um número inteiro positivo." }),
-  installmentAmount: z.coerce.number().positive({ message: "O valor da parcela deve ser positivo." }),
-  paidInstallments: z.coerce.number().int().min(0, { message: "Não pode ser negativo." }).default(0),
-  dueDate: z.date({ required_error: "A data de vencimento é obrigatória." }),
+  totalInstallments: z.coerce.number().int().positive({ message: "Deve ser positivo." }),
+  installmentAmount: z.coerce.number().positive({ message: "Deve ser positivo." }),
+  paidInstallments: z.coerce.number().int().min(0).default(0),
+  dueDate: z.date({ required_error: "Data obrigatória." }),
   totalAmount: z.coerce.number(),
   paidAmount: z.coerce.number(),
 }).refine(data => data.paidInstallments <= data.totalInstallments, {
-  message: "As parcelas pagas não podem exceder o total de parcelas.",
+  message: "Parcelas pagas excedem o total.",
   path: ["paidInstallments"],
 });
 
@@ -58,7 +57,11 @@ export function AddDebtForm({ onSave, onCancel }: AddDebtFormProps) {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
+  
+  // Refs separados para Câmera e Arquivo para garantir compatibilidade mobile
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  
   const [isScanning, setIsScanning] = useState(false);
 
   const form = useForm<FormValues>({
@@ -68,6 +71,7 @@ export function AddDebtForm({ onSave, onCancel }: AddDebtFormProps) {
       category: "",
       paidInstallments: 0,
       totalInstallments: 1,
+      installmentAmount: 0,
       dueDate: new Date(),
     },
   });
@@ -75,7 +79,6 @@ export function AddDebtForm({ onSave, onCancel }: AddDebtFormProps) {
   const { control, setValue } = form;
   const watchedValues = useWatch({ control });
 
-  // Recalcula totais quando parcelas mudam
   useEffect(() => {
     const totalInstallments = Number(watchedValues.totalInstallments) || 0;
     const installmentAmount = Number(watchedValues.installmentAmount) || 0;
@@ -84,17 +87,23 @@ export function AddDebtForm({ onSave, onCancel }: AddDebtFormProps) {
     const totalAmount = totalInstallments * installmentAmount;
     const paidAmount = paidInstallments * installmentAmount;
 
-    setValue("totalAmount", totalAmount, { shouldValidate: true });
-    setValue("paidAmount", paidAmount, { shouldValidate: true });
+    setValue("totalAmount", totalAmount);
+    setValue("paidAmount", paidAmount);
   }, [watchedValues.totalInstallments, watchedValues.installmentAmount, watchedValues.paidInstallments, setValue]);
-
-  const handleScanClick = () => {
-    fileInputRef.current?.click();
-  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
+
+    // Validação de Tamanho no Cliente (4MB)
+    if (file.size > 4 * 1024 * 1024) {
+        toast({
+            variant: "destructive",
+            title: "Arquivo muito grande",
+            description: "Por favor, envie uma imagem ou PDF menor que 4MB.",
+        });
+        return;
+    }
 
     setIsScanning(true);
     const formData = new FormData();
@@ -104,46 +113,58 @@ export function AddDebtForm({ onSave, onCancel }: AddDebtFormProps) {
         const token = await user.getIdToken();
         const response = await fetch('/api/extract-invoice', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
+            headers: { 'Authorization': `Bearer ${token}` },
             body: formData
         });
 
-        if (!response.ok) throw new Error("Falha ao processar imagem");
-
         const data = await response.json();
 
-        // Popula o formulário com os dados da IA
+        if (!response.ok) {
+            throw new Error(data.error || "Erro desconhecido na leitura.");
+        }
+
+        // Preenchimento Inteligente
         if (data.name) setValue("name", data.name);
         if (data.category) setValue("category", data.category);
-        if (data.totalInstallments) setValue("totalInstallments", data.totalInstallments);
-        if (data.installmentAmount) setValue("installmentAmount", data.installmentAmount);
+        
+        // Lógica para valores
+        if (data.totalAmount && (!data.installmentAmount || data.installmentAmount === 0)) {
+             // Se veio só o total, assume parcela única
+             setValue("installmentAmount", data.totalAmount);
+             setValue("totalInstallments", 1);
+        } else if (data.installmentAmount) {
+             setValue("installmentAmount", data.installmentAmount);
+             setValue("totalInstallments", data.totalInstallments || 1);
+        }
+
         if (data.paidInstallments !== undefined) setValue("paidInstallments", data.paidInstallments);
         
         if (data.dueDate) {
-            // Corrige fuso horário simples adicionando horas para garantir o dia correto
             const dateObj = new Date(data.dueDate);
-            dateObj.setHours(12, 0, 0, 0);
-            setValue("dueDate", dateObj);
+            // Ajuste simples de timezone
+            dateObj.setHours(12, 0, 0, 0); 
+            if (!isNaN(dateObj.getTime())) {
+                setValue("dueDate", dateObj);
+            }
         }
 
         toast({
             title: "Leitura concluída!",
-            description: "Verifique os dados e salve a dívida.",
+            description: "Confira os dados e salve a dívida.",
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         toast({
             variant: "destructive",
             title: "Erro na leitura",
-            description: "Não foi possível extrair os dados. Tente digitar manualmente.",
+            description: error.message || "Tente digitar manualmente.",
         });
     } finally {
         setIsScanning(false);
-        // Limpa o input para permitir selecionar o mesmo arquivo se falhar
+        // Limpa inputs
         if (fileInputRef.current) fileInputRef.current.value = '';
+        if (cameraInputRef.current) cameraInputRef.current.value = '';
     }
   };
 
@@ -163,8 +184,13 @@ export function AddDebtForm({ onSave, onCancel }: AddDebtFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         
-        {/* BOTÃO DE ESCANEAR - MAGIC HAPPENS HERE */}
-        <div className="bg-muted/40 p-4 rounded-lg border border-dashed border-primary/20 flex flex-col items-center justify-center gap-2">
+        {/* ÁREA DE SCAN INTELIGENTE */}
+        <div className="bg-primary/5 p-4 rounded-lg border border-dashed border-primary/20 flex flex-col gap-3">
+            <p className="text-xs font-medium text-primary text-center mb-1">
+                Preenchimento Automático com IA
+            </p>
+            
+            {/* Inputs Ocultos */}
             <input 
                 type="file" 
                 ref={fileInputRef} 
@@ -172,71 +198,105 @@ export function AddDebtForm({ onSave, onCancel }: AddDebtFormProps) {
                 accept="image/*,application/pdf" 
                 onChange={handleFileChange}
             />
-            <Button 
-                type="button" 
-                variant="secondary" 
-                className="w-full gap-2 border-primary/20 hover:border-primary/50 transition-colors"
-                onClick={handleScanClick}
-                disabled={isScanning}
-            >
-                {isScanning ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Lendo Arquivo...</>
-                ) : (
-                    <><ScanLine className="h-4 w-4 text-primary" /> Escanear Conta / Boleto</>
-                )}
-            </Button>
-            <p className="text-[10px] text-muted-foreground text-center">
-                Tire uma foto ou envie um PDF. A IA preencherá os dados para você.
-            </p>
+            <input 
+                type="file" 
+                ref={cameraInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                capture="environment" // Força câmera traseira no mobile
+                onChange={handleFileChange}
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full gap-2 h-12 border-primary/30 hover:bg-primary/10 hover:text-primary"
+                    onClick={() => cameraInputRef.current?.click()}
+                    disabled={isScanning}
+                >
+                    {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                    <span className="text-xs">Câmera</span>
+                </Button>
+                
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full gap-2 h-12 border-primary/30 hover:bg-primary/10 hover:text-primary"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isScanning}
+                >
+                    {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                    <span className="text-xs">Arquivo/PDF</span>
+                </Button>
+            </div>
         </div>
 
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome da Dívida</FormLabel>
-              <FormControl>
-                <Input placeholder="Ex: Financiamento do Carro" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="category"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Categoria</FormLabel>
-              <FormControl>
-                <Input placeholder="Ex: Veículo" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-             <FormField
+        <div className="space-y-4 pt-2">
+            <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Nome da Dívida</FormLabel>
+                <FormControl>
+                    <Input placeholder="Ex: Financiamento do Carro" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
                 control={form.control}
-                name="installmentAmount"
+                name="category"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Valor da Parcela</FormLabel>
+                    <FormLabel>Categoria</FormLabel>
                     <FormControl>
-                        <Input type="number" step="0.01" {...field} />
+                        <Input placeholder="Ex: Veículo" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
-            />
-            <FormField
+                />
+                 <FormField
+                    control={form.control}
+                    name="installmentAmount"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Valor da Parcela</FormLabel>
+                        <FormControl>
+                            <Input type="number" step="0.01" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4">
+                <FormField
+                    control={form.control}
+                    name="totalInstallments"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Total Parc.</FormLabel>
+                        <FormControl>
+                            <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+
+                <FormField
                 control={form.control}
-                name="totalInstallments"
+                name="paidInstallments"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Total de Parcelas</FormLabel>
+                    <FormLabel>Pagas</FormLabel>
                     <FormControl>
                         <Input type="number" {...field} />
                     </FormControl>
@@ -244,40 +304,31 @@ export function AddDebtForm({ onSave, onCancel }: AddDebtFormProps) {
                     </FormItem>
                 )}
                 />
-        </div>
+                
+                <div className="flex flex-col justify-end pb-2">
+                     <div className="text-xs text-muted-foreground text-right">Total Calculado</div>
+                     <div className="font-bold text-primary text-right text-sm">{formatCurrency(watchedValues.totalAmount || 0)}</div>
+                </div>
+            </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-            control={form.control}
-            name="paidInstallments"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Parcelas Pagas</FormLabel>
-                <FormControl>
-                    <Input type="number" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
             <FormField
                 control={form.control}
                 name="dueDate"
                 render={({ field }) => (
-                     <FormItem className="flex flex-col">
-                        <FormLabel>Primeiro Vencimento</FormLabel>
+                        <FormItem className="flex flex-col">
+                        <FormLabel>1º Vencimento</FormLabel>
                         <Popover>
                             <PopoverTrigger asChild>
                             <FormControl>
                                 <Button
                                 variant={"outline"}
                                 className={cn(
-                                    "pl-3 text-left font-normal",
+                                    "pl-3 text-left font-normal w-full",
                                     !field.value && "text-muted-foreground"
                                 )}
                                 >
                                 {field.value ? (
-                                    format(field.value, "PPP", { locale: ptBR })
+                                    format(field.value, "dd/MM/yyyy", { locale: ptBR })
                                 ) : (
                                     <span>Escolha uma data</span>
                                 )}
@@ -300,23 +351,11 @@ export function AddDebtForm({ onSave, onCancel }: AddDebtFormProps) {
             />
         </div>
 
-        <div className="rounded-md border bg-muted/50 p-4 space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">Resumo Calculado</h4>
-            <div className="flex justify-between items-center">
-                <span className="text-sm">Valor Total da Dívida</span>
-                <span className="font-semibold text-lg">{formatCurrency(watchedValues.totalAmount || 0)}</span>
-            </div>
-             <div className="flex justify-between items-center">
-                <span className="text-sm">Total Já Pago</span>
-                <span className="font-semibold">{formatCurrency(watchedValues.paidAmount || 0)}</span>
-            </div>
-        </div>
-
-        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4">
-          <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 border-t mt-4">
+          <Button type="button" variant="ghost" onClick={onCancel} className="w-full sm:w-auto">
             Cancelar
           </Button>
-          <Button type="submit" className="w-full sm:w-auto">Adicionar Dívida</Button>
+          <Button type="submit" className="w-full sm:w-auto">Salvar Dívida</Button>
         </div>
       </form>
     </Form>
