@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Logo } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/firebase/auth/use-user';
@@ -18,13 +18,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, Settings, User as UserIcon, LayoutDashboard } from 'lucide-react';
+import { AvatarIcon } from '@/components/icons/avatar-icon'; // Importar para usar o ícone correto
 
 export function Header() {
   const { user, loading } = useUser();
-  // Agora podemos chamar direto, pois o Provider está no root
-  const { currentProfile } = useProfile(); 
+  const { activeProfile } = useProfile(); 
   const auth = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // [CORREÇÃO CRÍTICA - VISUAL]
+  // Se estiver no Dashboard ou Seleção de Perfil, esconde este Header global.
+  // Isso evita a barra duplicada e a bagunça visual.
+  if (pathname?.startsWith('/dashboard') || pathname === '/select-profile') {
+    return null;
+  }
 
   const handleSignOut = async () => {
     if (auth) {
@@ -43,33 +51,32 @@ export function Header() {
       .toUpperCase();
   };
 
-  // Prioridade: Perfil Selecionado > Usuário Google > Fallback
-  const displayName = currentProfile?.name || user?.displayName || 'Usuário';
-  const displayImage = currentProfile?.photoURL || user?.photoURL || '';
+  const displayName = activeProfile?.name || user?.displayName || 'Usuário';
+  const displayImage = activeProfile?.photoURL || user?.photoURL || null;
   const displayInitials = getInitials(displayName);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        {/* LADO ESQUERDO: LOGO */}
+      <div className="container flex h-16 items-center justify-between px-4 md:px-8 mx-auto">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center space-x-2">
             <Logo className="h-8 w-8 text-primary" />
+            <span className="text-xl font-bold tracking-tight font-headline hidden sm:inline-block">Poupp</span>
           </Link>
         </div>
 
-        {/* LADO DIREITO */}
         <div className="flex items-center gap-2 md:gap-4">
           {loading ? (
             <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
           ) : user ? (
-            // --- LOGADO ---
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={displayImage} alt={displayName} />
-                    <AvatarFallback>{displayInitials}</AvatarFallback>
+                     {/* Usa o componente AvatarIcon para suportar ícones do Lucide ou Imagens */}
+                     <div className="flex items-center justify-center w-full h-full bg-muted">
+                        <AvatarIcon iconName={displayImage} fallbackName={displayName} className="h-5 w-5" />
+                     </div>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
@@ -90,12 +97,6 @@ export function Header() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/settings">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Configurações
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
                    <Link href="/select-profile">
                     <UserIcon className="mr-2 h-4 w-4" />
                     Trocar Perfil
@@ -109,7 +110,6 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            // --- DESLOGADO ---
             <>
               <Button variant="ghost" asChild className="text-sm font-medium">
                 <Link href="/login">Entrar</Link>
