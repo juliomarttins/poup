@@ -27,16 +27,14 @@ export function Header() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // [CORREÇÃO 1] Onde o Header Global deve SUMIR completamente?
-  // 1. Na Home ('/') -> Porque ela tem o header dela.
-  // 2. Na Seleção de Perfil -> Para ficar limpo.
-  // NOTA: Removemos '/dashboard' daqui para o Avatar voltar a aparecer!
-  if (pathname === '/' || pathname === '/select-profile') {
+  // [CORREÇÃO DEFINITIVA - LÓGICA DE EXIBIÇÃO]
+  // 1. Home ('/'): Retorna NULL (A Home tem seu próprio header).
+  // 2. Dashboard ('/dashboard...'): Retorna NULL (O Dashboard tem seu próprio layout com sidebar e header).
+  // 3. Select Profile ('/select-profile'): Retorna NULL (Design limpo).
+  // O Header Global só deve aparecer em páginas "órfãs" (como 404, termos de uso, etc).
+  if (pathname === '/' || pathname?.startsWith('/dashboard') || pathname === '/select-profile') {
     return null;
   }
-
-  // Verifica se estamos no painel para ajustes visuais
-  const isDashboard = pathname?.startsWith('/dashboard');
 
   const handleSignOut = async () => {
     if (auth) {
@@ -57,27 +55,20 @@ export function Header() {
 
   const displayName = activeProfile?.name || user?.displayName || 'Usuário';
   const displayImage = activeProfile?.photoURL || user?.photoURL || undefined;
-  const displayInitials = getInitials(displayName);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4 md:px-8 mx-auto">
         
-        {/* LADO ESQUERDO */}
+        {/* LADO ESQUERDO - Logo sempre visível se o header aparecer */}
         <div className="flex items-center gap-2">
-          {/* [CORREÇÃO 2] Se estiver no Dashboard, ESCONDE o logo do Header Global.
-              Motivo: A Sidebar já tem o logo. Isso evita o "Logo Duplo".
-              Se não for dashboard (ex: página de erro), mostra o logo. */}
-          {!isDashboard && (
             <Link href="/" className="flex items-center space-x-2">
               <Logo className="h-8 w-8 text-primary" />
               <span className="text-xl font-bold tracking-tight font-headline hidden sm:inline-block">Poupp</span>
             </Link>
-          )}
         </div>
 
-        {/* LADO DIREITO (Avatar) */}
-        {/* Usamos 'ml-auto' para garantir que fique na direita mesmo se o lado esquerdo estiver vazio */}
+        {/* LADO DIREITO */}
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
           {loading ? (
             <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
@@ -112,12 +103,6 @@ export function Header() {
                    <Link href="/select-profile">
                     <UserIcon className="mr-2 h-4 w-4" />
                     Trocar Perfil
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/settings">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Configurações
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
