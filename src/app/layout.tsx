@@ -7,6 +7,7 @@ import { UserProvider } from "@/firebase/auth/use-user";
 import { Header } from "@/components/layout/header";
 import { ProfileProvider } from "@/contexts/profile-context";
 import { ThemeProvider } from "@/components/theme-provider";
+import { LoadingProvider } from "@/contexts/loading-context"; // <--- IMPORTAR ISSO
 
 // Usando fonte do Google para evitar erro de arquivo local faltando
 const inter = Inter({ subsets: ["latin"] });
@@ -32,13 +33,15 @@ export default function RootLayout({
         >
           <FirebaseClientProvider>
             <UserProvider>
-              {/* ProfileProvider CENTRALIZADO: Garante que a escolha do perfil persista em toda a navegação */}
               <ProfileProvider>
-                <div className="relative flex min-h-screen flex-col">
-                  <Header />
-                  <main className="flex-1">{children}</main>
-                </div>
-                <Toaster />
+                {/* ADICIONAR O LOADING PROVIDER AQUI PARA COBRIR TUDO */}
+                <LoadingProvider>
+                  <div className="relative flex min-h-screen flex-col">
+                    <Header />
+                    <main className="flex-1">{children}</main>
+                  </div>
+                  <Toaster />
+                </LoadingProvider>
               </ProfileProvider>
             </UserProvider>
           </FirebaseClientProvider>
