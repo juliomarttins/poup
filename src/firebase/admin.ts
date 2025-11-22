@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp, cert, App } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp, cert, App, ServiceAccount } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import fs from 'fs';
@@ -12,30 +12,41 @@ function initializeAdminApp() {
 
     let credential;
 
-    // Tenta carregar as credenciais do arquivo service-account.json se a variável estiver definida
-    const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-
-    if (serviceAccountPath) {
+    // 1. PRODUÇÃO (Vercel): Tenta usar variáveis de ambiente diretas
+    // Isso resolve o problema de "IA Offline" no site oficial
+    if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+        const serviceAccount: ServiceAccount = {
+            projectId: process.env.FIREBASE_PROJECT_ID || "studio-5059883647-300c7",
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            // Corrige a formatação da chave privada (quebra de linha)
+            privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        };
+        credential = cert(serviceAccount);
+    } 
+    // 2. LOCAL (Seu PC): Tenta ler o arquivo service-account.json
+    else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
         try {
-            // Resolve o caminho absoluto do arquivo na raiz do projeto
-            const fullPath = path.resolve(process.cwd(), serviceAccountPath);
+            const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+            // Resolve o caminho absoluto
+            const fullPath = path.isAbsolute(serviceAccountPath) 
+                ? serviceAccountPath 
+                : path.resolve(process.cwd(), serviceAccountPath);
             
-            // Verifica se o arquivo existe antes de tentar ler
             if (fs.existsSync(fullPath)) {
                 const serviceAccount = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
                 credential = cert(serviceAccount);
             } else {
-                console.warn(`[Firebase Admin] Arquivo de credenciais não encontrado em: ${fullPath}`);
+                console.warn(`[Firebase Admin] Arquivo não encontrado: ${fullPath}`);
             }
         } catch (error) {
-            console.error("[Firebase Admin] Erro ao carregar credenciais:", error);
+            console.error("[Firebase Admin] Erro ao ler arquivo:", error);
         }
     }
 
-    // Inicializa o app (se credential for undefined, ele tenta usar o Application Default Credentials do ambiente)
+    // Inicializa o app
     const app = initializeApp({
         credential: credential,
-        projectId: "studio-5059883647-300c7" // Força o Project ID correto
+        projectId: "studio-5059883647-300c7"
     });
 
     return getAdminSdks(app);
