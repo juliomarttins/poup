@@ -63,7 +63,6 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
   return (
     <div className="w-full flex flex-col gap-4">
       
-      {/* VISÃO MOBILE (Visível apenas em telas pequenas via CSS) */}
       <div className="block md:hidden">
         <MobileTransactionsView 
           transactions={initialTransactions}
@@ -73,7 +72,6 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
         />
       </div>
 
-      {/* VISÃO DESKTOP (Visível apenas em telas médias ou maiores via CSS) */}
       <div className="hidden md:block">
         <DataTable 
           columns={columns({ onEdit: handleEdit, onDelete: handleDelete })} 
@@ -92,9 +90,10 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
         </div>
       )}
 
-      {/* MODAL DE EDIÇÃO - Ajustado para Mobile */}
+      {/* MODAL DE EDIÇÃO */}
       <Dialog open={!!editingTransaction} onOpenChange={(isOpen) => !isOpen && setEditingTransaction(null)}>
-        <DialogContent className="w-[95vw] max-w-[425px] max-h-[80vh] overflow-y-auto rounded-lg">
+        {/* CORREÇÃO: Removido max-h-[80vh] no desktop (sm:) para evitar scroll */}
+        <DialogContent className="w-[95vw] max-w-[425px] max-h-[85vh] sm:max-h-none overflow-y-auto sm:overflow-visible rounded-lg">
           <DialogHeader>
             <DialogTitle>Editar Transação</DialogTitle>
             <DialogDescription>
@@ -111,9 +110,10 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
         </DialogContent>
       </Dialog>
 
-       {/* MODAL DE ADICIONAR - Ajustado para Mobile */}
+       {/* MODAL DE ADICIONAR */}
        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-         <DialogContent className="w-[95vw] max-w-md max-h-[80vh] overflow-y-auto rounded-lg">
+         {/* CORREÇÃO: Removido max-h-[80vh] no desktop (sm:) para evitar scroll */}
+         <DialogContent className="w-[95vw] max-w-md max-h-[85vh] sm:max-h-none overflow-y-auto sm:overflow-visible rounded-lg">
            <DialogHeader>
              <DialogTitle>Adicionar Transação</DialogTitle>
              <DialogDescription>

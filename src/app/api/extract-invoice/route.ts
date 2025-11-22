@@ -35,24 +35,22 @@ export async function POST(req: Request) {
         generationConfig: { responseMimeType: "application/json" }
     });
 
-    // Prompt Otimizado para Contexto Brasileiro e Detecção de Serviços
     const prompt = `
-    Analise este documento (boleto, conta, recibo).
-    Extraia dados para uma transação financeira pessoal no Brasil.
-
-    INTELIGÊNCIA DE CATEGORIA:
-    - Leia o LOGO da empresa e o Nome Fantasia.
-    - Procure palavras-chave: "Telecom", "Internet", "Fibra", "Energia", "Saneamento", "Educação".
-    - Se for "VIG TELECOM" ou similar, a categoria é "Internet" ou "Contas".
-    - Priorize categorias específicas (ex: "Internet" é melhor que "Outros").
-
-    CAMPOS OBRIGATÓRIOS (JSON):
-    1. "name": Nome da empresa (Ex: VIG Telecom, Enel, Netflix).
-    2. "totalAmount": Valor total numérico (float).
-    3. "dueDate": Data de vencimento (YYYY-MM-DD).
-    4. "category": Escolha a melhor categoria da lista: ['Moradia', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação', 'Mercado', 'Dívidas', 'Crianças', 'Assinaturas', 'Contas', 'Internet', 'Outros'].
+    Extraia os dados deste documento financeiro (boleto, fatura, recibo).
     
-    Retorne APENAS o JSON.
+    Instruções:
+    1. "totalAmount": Encontre o valor TOTAL a pagar. Se tiver juros ou multa calculados, use o valor final.
+    2. "dueDate": Data de vencimento (YYYY-MM-DD).
+    3. "name": Nome da empresa/beneficiário. Tente identificar do que se trata (ex: "VIG TELECOM" -> "Internet VIG").
+    4. "category": Baseado no nome, classifique em: 'Internet', 'Moradia', 'Energia', 'Mercado', 'Transporte', 'Saúde', 'Outros'.
+
+    Retorne JSON:
+    {
+        "name": string,
+        "totalAmount": number | string,
+        "dueDate": string,
+        "category": string
+    }
     `;
 
     const result = await model.generateContent([
@@ -65,9 +63,27 @@ export async function POST(req: Request) {
         const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
         const json = JSON.parse(cleanText);
         
-        // Fallback de segurança
-        if (!json.totalAmount) json.totalAmount = 0;
+        // Tratamento de dados robusto (Correção para o erro de leitura)
         
+        // 1. Corrigir Valor (aceita string "137,05" ou number 137.05)
+        let amount = 0;
+        if (json.totalAmount) {
+            if (typeof json.totalAmount === 'number') {
+                amount = json.totalAmount;
+            } else if (typeof json.totalAmount === 'string') {
+                // Remove R$, troca vírgula por ponto
+                const cleanAmount = json.totalAmount.replace(/[^0-9,.-]/g, '').replace(',', '.');
+                amount = parseFloat(cleanAmount);
+            }
+        }
+        json.totalAmount = amount;
+
+        // 2. Normalizar Categoria
+        // Se a IA retornou "Internet" ou "VIG", forçamos para uma categoria que o frontend entende ou "Outros" com customização
+        if (json.name && json.name.toUpperCase().includes('TELECOM')) {
+             if (!json.category || json.category === 'Outros') json.category = 'Internet';
+        }
+
         return NextResponse.json(json);
     } catch (e) {
         console.error("Erro Parse IA:", text);
