@@ -30,7 +30,6 @@ export default function PouppIAPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const hasFetchedInit = useRef(false);
 
-  // Inicialização automática
   useEffect(() => {
     const fetchInitialGreeting = async () => {
         if (!user || hasFetchedInit.current) return;
@@ -68,7 +67,6 @@ export default function PouppIAPage() {
     fetchInitialGreeting();
   }, [user]);
 
-  // Scroll automático inteligente
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -175,19 +173,19 @@ export default function PouppIAPage() {
 
                     <div
                     className={cn(
-                        "flex flex-col gap-1 max-w-[90%] md:max-w-[80%] text-sm", // Aumentei um pouco a largura no mobile
+                        "flex flex-col gap-1 max-w-[90%] md:max-w-[80%] text-sm",
                         message.role === 'user' ? "items-end" : "items-start"
                     )}
                     >
                     <div
                         className={cn(
-                        "rounded-2xl px-4 py-3 shadow-sm overflow-hidden w-full", // w-full para usar todo espaço disponível
+                        "rounded-2xl px-4 py-3 shadow-sm overflow-hidden w-full",
                         message.role === 'user'
                             ? "bg-primary text-primary-foreground rounded-tr-sm"
                             : "bg-card border text-card-foreground rounded-tl-sm"
                         )}
                     >
-                        {/* RENDERIZADOR DE MARKDOWN COM TABELAS OTIMIZADAS PARA MOBILE */}
+                        {/* --- CORREÇÃO PARA MOBILE --- */}
                         <ReactMarkdown 
                             remarkPlugins={[remarkGfm]}
                             className={cn(
@@ -197,24 +195,25 @@ export default function PouppIAPage() {
                                 message.role === 'user' ? "prose-headings:text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground" : ""
                             )}
                             components={{
-                                // Links externos
                                 a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium" {...props} />,
                                 
-                                // Tabela com Container de Rolagem (Correção Mobile)
+                                // Container Responsivo para Tabelas
                                 table: ({node, ...props}) => (
                                     <div className="my-3 w-full overflow-y-hidden overflow-x-auto rounded-lg border border-border/60 bg-muted/20 shadow-sm">
-                                        <table className="w-full min-w-[300px] text-xs" {...props} />
+                                        <table className="w-full min-w-[350px] text-xs" {...props} />
                                     </div>
                                 ),
                                 thead: ({node, ...props}) => <thead className="bg-muted/50" {...props} />,
                                 tbody: ({node, ...props}) => <tbody className="divide-y divide-border/50" {...props} />,
                                 tr: ({node, ...props}) => <tr className="transition-colors hover:bg-muted/30" {...props} />,
+                                // Whitespace-nowrap impede quebra de linha em células, forçando scroll horizontal
                                 th: ({node, ...props}) => <th className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap" {...props} />,
-                                td: ({node, ...props}) => <td className="px-3 py-2 align-middle whitespace-nowrap" {...props} />, // whitespace-nowrap mantém a tabela bonita na rolagem
+                                td: ({node, ...props}) => <td className="px-3 py-2 align-middle whitespace-nowrap" {...props} />,
                             }}
                         >
                             {message.content}
                         </ReactMarkdown>
+                        {/* --------------------------- */}
                     </div>
                     <span className="text-[10px] text-muted-foreground px-1 opacity-70">
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
