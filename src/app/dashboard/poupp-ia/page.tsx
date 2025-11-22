@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, ArrowRight, Lightbulb } from 'lucide-react';
+import { Send, Bot, User, Sparkles, ArrowRight, Lightbulb, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -27,6 +27,7 @@ export default function PouppIAPage() {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [initError, setInitError] = useState(false); // Novo estado de erro
   const scrollRef = useRef<HTMLDivElement>(null);
   const hasFetchedInit = useRef(false);
 
@@ -35,6 +36,7 @@ export default function PouppIAPage() {
         if (!user || hasFetchedInit.current) return;
         hasFetchedInit.current = true;
         setIsInitializing(true);
+        setInitError(false);
 
         try {
             const token = await user.getIdToken();
@@ -48,6 +50,8 @@ export default function PouppIAPage() {
             });
             
             const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+
             if (data.text) {
                 setMessages([{
                     id: 'init',
@@ -58,7 +62,8 @@ export default function PouppIAPage() {
                 setSuggestions(data.suggestions || []);
             }
         } catch (e) {
-            console.error(e);
+            console.error("Erro na inicialização do chat:", e);
+            setInitError(true); // Ativa modo de erro
         } finally {
             setIsInitializing(false);
         }
@@ -79,6 +84,7 @@ export default function PouppIAPage() {
     setInputValue('');
     setSuggestions([]); 
     setIsLoading(true);
+    setInitError(false); // Limpa erro se tentar enviar mensagem
 
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -100,7 +106,7 @@ export default function PouppIAPage() {
         });
 
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
+        if (!response.ok) throw new Error(data.error || data.details);
 
         const assistantMessage: Message = {
             id: (Date.now() + 1).toString(),
@@ -115,7 +121,7 @@ export default function PouppIAPage() {
         const errorMsg: Message = {
             id: (Date.now() + 1).toString(),
             role: 'error',
-            content: 'Erro de conexão. Tente novamente.',
+            content: 'Não consegui conectar ao servidor. Verifique se o backend está rodando corretamente.',
             timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMsg]);
@@ -126,7 +132,6 @@ export default function PouppIAPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-5rem)] md:h-[calc(100vh-6rem)] w-full gap-2">
-      {/* Cabeçalho */}
       <div className="flex items-center gap-3 px-4 py-2 shrink-0 border-b border-border/40 bg-card/50 backdrop-blur-sm">
         <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-1.5 rounded-lg shadow-sm">
             <Sparkles className="h-4 w-4 text-white" />
@@ -137,14 +142,28 @@ export default function PouppIAPage() {
         </div>
       </div>
 
-      {/* Chat */}
       <Card className="flex-1 overflow-hidden bg-background/50 border-none relative flex flex-col shadow-none">
         <ScrollArea className="flex-1 px-2 sm:px-4 py-2">
+            
+            {/* Loading Skeleton */}
             {isInitializing && (
                 <div className="flex gap-3 items-center mt-4">
                     <Skeleton className="h-8 w-8 rounded-full" />
                     <div className="space-y-2">
                         <Skeleton className="h-16 w-[250px] rounded-xl" />
+                    </div>
+                </div>
+            )}
+
+            {/* Erro de Inicialização */}
+            {initError && !isLoading && messages.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-full mt-10 gap-4 text-center opacity-80">
+                    <AlertTriangle className="h-10 w-10 text-yellow-500" />
+                    <div>
+                        <p className="text-sm font-medium">A IA está tirando um cochilo.</p>
+                        <p className="text-xs text-muted-foreground max-w-[250px] mx-auto mt-1">
+                            Não consegui carregar a análise inicial. Tente enviar uma mensagem abaixo para acordá-la.
+                        </p>
                     </div>
                 </div>
             )}
@@ -185,7 +204,6 @@ export default function PouppIAPage() {
                             : "bg-card border text-card-foreground rounded-tl-sm"
                         )}
                     >
-                        {/* --- CORREÇÃO PARA MOBILE --- */}
                         <ReactMarkdown 
                             remarkPlugins={[remarkGfm]}
                             className={cn(
@@ -196,8 +214,6 @@ export default function PouppIAPage() {
                             )}
                             components={{
                                 a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-medium" {...props} />,
-                                
-                                // Container Responsivo para Tabelas
                                 table: ({node, ...props}) => (
                                     <div className="my-3 w-full overflow-y-hidden overflow-x-auto rounded-lg border border-border/60 bg-muted/20 shadow-sm">
                                         <table className="w-full min-w-[350px] text-xs" {...props} />
@@ -206,14 +222,12 @@ export default function PouppIAPage() {
                                 thead: ({node, ...props}) => <thead className="bg-muted/50" {...props} />,
                                 tbody: ({node, ...props}) => <tbody className="divide-y divide-border/50" {...props} />,
                                 tr: ({node, ...props}) => <tr className="transition-colors hover:bg-muted/30" {...props} />,
-                                // Whitespace-nowrap impede quebra de linha em células, forçando scroll horizontal
                                 th: ({node, ...props}) => <th className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap" {...props} />,
                                 td: ({node, ...props}) => <td className="px-3 py-2 align-middle whitespace-nowrap" {...props} />,
                             }}
                         >
                             {message.content}
                         </ReactMarkdown>
-                        {/* --------------------------- */}
                     </div>
                     <span className="text-[10px] text-muted-foreground px-1 opacity-70">
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -239,10 +253,7 @@ export default function PouppIAPage() {
         </ScrollArea>
       </Card>
 
-      {/* Sugestões e Input */}
       <div className="shrink-0 p-3 sm:p-4 pt-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
-        
-        {/* Sugestões com Identificadores */}
         {suggestions.length > 0 && !isLoading && (
             <div className="flex gap-2 overflow-x-auto pb-3 no-scrollbar snap-x">
                 {suggestions.map((sug, idx) => (
