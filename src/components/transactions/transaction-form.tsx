@@ -190,9 +190,9 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3"> {/* Espaçamento reduzido de 4 para 3 */}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
         
-        {/* ÁREA DE SCAN COMPACTA */}
+        {/* ÁREA DE SCAN */}
         <div className="bg-secondary/30 p-3 rounded-lg border border-dashed border-primary/30 flex flex-col gap-2">
              <div className="flex items-center justify-center gap-2 text-primary font-semibold text-[10px] uppercase tracking-wide">
                 <ScanLine className="w-3 h-3" /> Importar Boleto / Recibo
