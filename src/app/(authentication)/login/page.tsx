@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { Sparkles } from 'lucide-react'; // [CORREÇÃO] Importação adicionada
 
 import { LoginForm } from '@/components/auth/login-form';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -30,7 +31,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* FORMULÁRIO - O link de cadastro já está dentro do componente LoginForm */}
+          {/* FORMULÁRIO */}
           <div className="p-6 rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm shadow-2xl">
              <LoginForm />
           </div>
