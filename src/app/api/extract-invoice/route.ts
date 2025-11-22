@@ -6,7 +6,7 @@ export async function POST(req: Request) {
   try {
     const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {
-        return NextResponse.json({ error: 'Chave API não configurada.' }, { status: 500 });
+        return NextResponse.json({ error: 'Chave API ausente.' }, { status: 500 });
     }
 
     const authHeader = req.headers.get('Authorization');
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     if (file.size > 4.5 * 1024 * 1024) {
-        return NextResponse.json({ error: 'Arquivo muito grande (Máx 4.5MB).' }, { status: 413 });
+        return NextResponse.json({ error: 'Arquivo muito grande.' }, { status: 413 });
     }
 
     const bytes = await file.arrayBuffer();
@@ -30,46 +30,44 @@ export async function POST(req: Request) {
     const base64Data = buffer.toString('base64');
     
     const genAI = new GoogleGenerativeAI(apiKey);
+    // Usando Gemini 2.0 Flash que é superior para OCR
     const model = genAI.getGenerativeModel({ 
         model: "gemini-2.0-flash",
         generationConfig: { responseMimeType: "application/json" }
     });
 
-    // Prompt Especializado em Boletos e Recibos Brasileiros
     const prompt = `
-    Analise este documento financeiro (Boleto, Fatura, Recibo).
-    
-    ESTRATÉGIA DE LEITURA (Prioridade Máxima):
-    1. **CÓDIGO DE BARRAS / LINHA DIGITÁVEL**: Procure por uma sequência longa de números (aprox 47 dígitos), geralmente no topo ou rodapé ("FICHA DE COMPENSAÇÃO"). 
-       - Os últimos 10 dígitos geralmente indicam o valor (sem vírgula). 
-       - Os 4 dígitos anteriores a esses indicam o fator de vencimento.
-       - SE ACHAR A LINHA, USE-A PARA CONFIRMAR O VALOR.
-    
-    2. **PALAVRAS-CHAVE DE VALOR**:
-       - Procure: "Valor do Documento", "Valor Cobrado", "Total a Pagar", "Valor Total", "Total".
-       - O formato brasileiro é 1.000,00 (milhar ponto, decimal vírgula). Converta para float (1000.00).
+    Você vai analisar uma IMAGEM ou PDF contendo um boleto brasileiro.
 
-    3. **PALAVRAS-CHAVE DE DATA**:
-       - Procure: "Vencimento", "Data de Vencimento", "Pagar até".
-       - Formato esperado: DD/MM/AAAA. Converta para YYYY-MM-DD.
-       - Se não achar, use a data de "Processamento" ou "Documento".
+    Etapa 1 — OCR:
+    Extraia TODO o texto visível do documento de forma literal.
+    Não resuma. Não interprete. Apenas texto bruto.
 
-    4. **IDENTIFICAÇÃO (Nome e Categoria)**:
-       - Nome: Busque "Beneficiário", "Cedente", "Razão Social" ou o LOGOTIPO principal.
-       - Categoria: 
-         - Se for "VIG", "Claro", "Vivo", "Oi" -> 'Internet'
-         - Se for "Enel", "Light", "Sabesp", "Saneago" -> 'Contas'
-         - Se for "Assaí", "Carrefour", "Atacadão" -> 'Mercado'
-         - Se for "Uber", "99", "Posto" -> 'Transporte'
-         - Se for "Escola", "Faculdade" -> 'Educação'
-         - Outros casos: tente inferir ou use 'Outros'.
+    Etapa 2 — Interpretação:
+    A partir do texto OCR, aplique estas regras:
 
-    Retorne JSON estrito:
+    1. VALOR TOTAL:
+       - procure por: "Valor do Documento", "Valor Cobrado", "Total a Pagar", "VALOR"
+       - considere números perto de "R$"
+       - formato final: 1234.56
+
+    2. DATA DE VENCIMENTO:
+       - procure "Vencimento"
+       - formato final: YYYY-MM-DD
+
+    3. NOME DO BENEFICIÁRIO:
+       - procure "Beneficiário", "Cedente" ou empresa principal mencionada
+
+    4. CATEGORIA:
+       - Internet, Contas, Mercado, Transporte, Saúde ou Outros
+
+    Retorne APENAS este JSON:
+
     {
-        "name": "string (Nome da empresa)",
-        "totalAmount": 0.00 (number float),
-        "dueDate": "YYYY-MM-DD",
-        "category": "string"
+        "name": "string",
+        "totalAmount": 0.00,
+        "dueDate": "YYYY-MM-DD",
+        "category": "string"
     }
     `;
 
@@ -82,14 +80,10 @@ export async function POST(req: Request) {
     try {
         const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
         const json = JSON.parse(cleanText);
-        
-        // Tratamento de erro silencioso: Se valor vier zerado, tenta achar string de valor
-        if (!json.totalAmount) json.totalAmount = 0;
-
         return NextResponse.json(json);
     } catch (e) {
-        console.error("Erro Parse IA:", text);
-        return NextResponse.json({ error: 'Falha na leitura inteligente.' }, { status: 500 });
+        console.error("Erro JSON IA:", text);
+        return NextResponse.json({ error: 'Falha na interpretação do documento.' }, { status: 500 });
     }
 
   } catch (error: any) {
