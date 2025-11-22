@@ -7,7 +7,7 @@ import {
   TrendingUp, ShieldCheck, Users, CreditCard, TrendingDown, Download, 
   Palette, PiggyBank, Check, Laptop, Bell, X, AlertTriangle, RefreshCw, 
   Server, Zap, Coffee, ShoppingCart, Car, Home, Plane, Music, 
-  Shield, Gift 
+  Shield, Gift, BrainCircuit, Sparkles 
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -178,9 +178,9 @@ const IntegratedDebtAI = () => {
     useEffect(() => { const i = setInterval(() => setStep(s => (s + 1) % 3), 4000); return () => clearInterval(i); }, []);
 
     const data = [
-        { title: "Análise", debtTotal: "R$ 15.400", color: "bg-red-500", progress: 10, chat: "Juros altos no Cartão Master. Priorize este pagamento." },
-        { title: "Estratégia", debtTotal: "R$ 14.900", color: "bg-blue-500", progress: 35, chat: "Pague R$ 500 extras aqui para economizar 4 meses de juros." },
-        { title: "Liberdade", debtTotal: "R$ 8.200", color: "bg-green-500", progress: 75, chat: "Parabéns! Nesse ritmo, em outubro você estará livre." }
+        { title: "Evolutiva", debtTotal: "Analiso você", color: "bg-purple-500", progress: 10, chat: "Notei que você prefere ser tratado com ironia. Ajustando minha personalidade para ser mais ácida." },
+        { title: "Adaptável", debtTotal: "Entendo você", color: "bg-blue-500", progress: 50, chat: "Quer que eu seja mais rígida com as contas? Considere feito. A partir de hoje, serei seu sargento financeiro." },
+        { title: "Viva", debtTotal: "Mudo por você", color: "bg-green-500", progress: 90, chat: "Eu tenho memória. Lembro que você odeia gráficos. Vou te mandar apenas resumos em texto direto a partir de agora." }
     ];
     const current = data[step];
 
@@ -193,7 +193,7 @@ const IntegratedDebtAI = () => {
                 </div>
                 <div className="space-y-3">
                     <div className="flex justify-between items-end">
-                        <span className="text-xs text-zinc-400">Saldo Devedor</span>
+                        <span className="text-xs text-zinc-400">Status da IA</span>
                         <span className="text-xl font-bold text-white transition-all duration-500">{current.debtTotal}</span>
                     </div>
                     <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden">
@@ -203,7 +203,7 @@ const IntegratedDebtAI = () => {
             </div>
             <div className="flex-1 p-4 bg-zinc-900/50 flex flex-col justify-center gap-3">
                 <div className="flex gap-2 items-start animate-in slide-in-from-bottom-2 fade-in duration-500 key={step}">
-                    <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white shrink-0 mt-1"><Bot size={12} /></div>
+                    <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white shrink-0 mt-1"><Sparkles size={12} /></div>
                     <div className="bg-zinc-800 border border-zinc-700 p-2 rounded-2xl rounded-tl-none text-[11px] text-zinc-200 leading-relaxed shadow-sm">{current.chat}</div>
                 </div>
             </div>
@@ -375,12 +375,17 @@ export default function LandingPage() {
                         <div className="mt-4 relative flex items-center justify-center h-40"><PDFReportMockup /></div>
                     </div>
 
-                    {/* Debt & AI */}
+                    {/* Debt & AI (EDITADO) */}
                     <div className="md:col-span-2 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col hover:shadow-xl transition-all duration-500">
                         <div className="space-y-4 relative z-10 mb-6">
-                            <div className="flex gap-2"><div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500"><ShieldCheck size={16} /></div><div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><Bot size={16} /></div></div>
-                            <h3 className="text-lg font-bold">IA Contra as Dívidas</h3>
-                            <p className="text-xs text-muted-foreground">O Poupp analisa juros e cria estratégias de amortização automaticamente.</p>
+                            <div className="flex gap-2">
+                                <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><BrainCircuit size={16} /></div>
+                                <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><Sparkles size={16} /></div>
+                            </div>
+                            <h3 className="text-lg font-bold">IA com Personalidade Própria</h3>
+                            <p className="text-xs text-muted-foreground max-w-md">
+                                Esqueça os robôs chatos. A Poupp IA aprende com você. Peça para ela ser ácida, engraçada ou séria, e ela se adaptará. É sua consultora pessoal, do seu jeito.
+                            </p>
                         </div>
                         <div className="flex-1 w-full flex items-center justify-center"><IntegratedDebtAI /></div>
                     </div>
