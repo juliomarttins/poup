@@ -1,35 +1,47 @@
+'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/firebase/provider';
 import { AppSidebar } from '@/components/layout/app-sidebar';
-import { Header } from '@/components/layout/header';
-import { DashboardSettingsProvider } from '@/contexts/dashboard-settings-context';
-import { ProfileProvider } from '@/contexts/profile-context';
 import { DashboardLayoutContent } from './_components/dashboard-layout-content';
-import { ThemeProvider } from '@/components/theme-provider';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'; // <--- IMPORTAR ISSO
+import { ProfileProvider } from '@/contexts/profile-context';
+import { DashboardSettingsProvider } from '@/contexts/dashboard-settings-context';
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const auth = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (auth && !auth.currentUser) {
+      router.push('/');
+    }
+  }, [auth, router]);
+
+  // Se não estiver autenticado, retorna null (ou loading) enquanto redireciona
+  // Para evitar flash de conteúdo
+  if (auth && !auth.currentUser) return null;
+
   return (
     <ProfileProvider>
-      <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          defaultColor="default"
-          enableSystem={false}
-      >
-          <DashboardSettingsProvider>
-              <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-                <AppSidebar />
-                <div className="flex flex-col">
-                  <Header />
-                  <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-                    <DashboardLayoutContent>
-                      {children}
-                    </DashboardLayoutContent>
-                  </main>
-                </div>
-              </div>
-          </DashboardSettingsProvider>
-      </ThemeProvider>
+      <DashboardSettingsProvider>
+        {/* O SidebarProvider TEM que ficar aqui em volta de tudo */}
+        <SidebarProvider>
+          <div className="flex min-h-screen w-full">
+            <AppSidebar />
+            <SidebarInset>
+                <DashboardLayoutContent>
+                    {children}
+                </DashboardLayoutContent>
+            </SidebarInset>
+          </div>
+        </SidebarProvider>
+      </DashboardSettingsProvider>
     </ProfileProvider>
   );
 }
