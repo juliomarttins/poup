@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState } from 'react';
@@ -14,7 +12,7 @@ import { signInWithEmailAndPassword, sendPasswordResetEmail, GoogleAuthProvider,
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { generateUsername, generateFamilyCode } from '@/lib/utils';
-
+import { Loader2 } from 'lucide-react';
 
 type View = 'login' | 'forgot-password';
 
@@ -51,26 +49,19 @@ export function LoginForm() {
                 email: user.email,
                 createdAt: serverTimestamp(),
                 profiles: [mainProfile],
-                familyId: user.uid, // O pai da família é ele mesmo
-                familyCode: generateFamilyCode() // Gera o código
+                familyId: user.uid, 
+                familyCode: generateFamilyCode() 
             };
             await setDoc(userDocRef, userProfileData);
         }
     } catch (error) {
         console.error("Error setting up user:", error);
-        toast({
-            variant: "destructive",
-            title: "Erro de Configuração",
-            description: "Não foi possível configurar o perfil do usuário no banco de dados.",
-        });
-        throw error; // Propagate error to stop the login flow
     }
   };
 
   const handleLoginSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!auth) return;
-
     setIsLoading(true);
     
     try {
@@ -79,29 +70,10 @@ export function LoginForm() {
         router.push('/select-profile'); 
     } catch (error: unknown) {
         const authError = error as AuthError;
-        let description = "E-mail ou senha inválidos. Por favor, tente novamente.";
-        
-        // Don't show specific error messages for security reasons in production,
-        // but it's useful for debugging now.
-        switch (authError.code) {
-            case 'auth/user-not-found':
-                description = "Nenhum usuário encontrado com este e-mail. Por favor, cadastre-se.";
-                break;
-            case 'auth/wrong-password':
-                description = "Senha incorreta. Por favor, tente novamente.";
-                break;
-            case 'auth/invalid-credential':
-                 description = "As credenciais fornecidas são inválidas ou o usuário não existe.";
-                break;
-            case 'auth/invalid-email':
-                description = "O formato do e-mail é inválido.";
-                break;
-        }
-
         toast({
             variant: 'destructive',
             title: "Falha no login",
-            description: description,
+            description: "E-mail ou senha incorretos.",
         });
     } finally {
         setIsLoading(false);
@@ -111,7 +83,6 @@ export function LoginForm() {
   const handleGoogleSignIn = () => {
     if (!auth) return;
     setIsGoogleLoading(true);
-
     const provider = new GoogleAuthProvider();
     signInWithPopup(auth, provider)
       .then(async (result) => {
@@ -119,120 +90,78 @@ export function LoginForm() {
         router.push('/select-profile');
       })
       .catch((error: any) => {
-        toast({
-            variant: 'destructive',
-            title: 'Erro de Autenticação com Google',
-            description: error.message,
-        });
+        toast({ variant: 'destructive', title: 'Erro Google', description: error.message });
       })
-      .finally(() => {
-        setIsGoogleLoading(false);
-      });
-  };
-
-  const handleForgotSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!auth) return;
-    setIsLoading(true);
-    try {
-      auth.languageCode = 'pt-BR';
-      await sendPasswordResetEmail(auth, email);
-      toast({
-        title: "E-mail de redefinição enviado",
-        description: "Se o e-mail estiver cadastrado, você receberá um link. Não se esqueça de verificar sua caixa de spam.",
-      });
-      setView('login');
-    } catch (error: any) {
-       toast({
-        variant: 'destructive',
-        title: "Erro",
-        description: "Não foi possível enviar o e-mail de redefinição. Tente novamente.",
-      });
-    } finally {
-        setIsLoading(false);
-    }
+      .finally(() => setIsGoogleLoading(false));
   };
 
   if (view === 'forgot-password') {
     return (
-      <form onSubmit={handleForgotSubmit} className="grid gap-4">
-        <div className="grid gap-2">
+      <div className="space-y-4 animate-in fade-in duration-300">
+        <div className="space-y-2 text-center">
           <h3 className="font-semibold text-lg">Recuperar Senha</h3>
-          <p className="text-sm text-muted-foreground">Digite seu e-mail para receber um link de redefinição.</p>
+          <p className="text-xs text-muted-foreground">Digite seu e-mail para receber o link.</p>
         </div>
-        <div className="grid gap-2">
-          <Label htmlFor="email-forgot">E-mail</Label>
-          <Input
-            id="email-forgot"
-            type="email"
-            placeholder="m@example.com"
-            required
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? 'Enviando...' : 'Enviar E-mail de Recuperação'}
-        </Button>
-        <Button variant="link" onClick={() => setView('login')} disabled={isLoading}>Voltar para o Login</Button>
-      </form>
+        <form onSubmit={async (e) => {
+            e.preventDefault();
+            if(!auth) return;
+            setIsLoading(true);
+            try {
+                await sendPasswordResetEmail(auth, email);
+                toast({ title: "E-mail enviado!", description: "Verifique sua caixa de entrada." });
+                setView('login');
+            } catch(e) {
+                toast({ variant: 'destructive', title: "Erro", description: "Falha ao enviar." });
+            } finally { setIsLoading(false); }
+        }} className="space-y-4">
+             <div className="space-y-2">
+                <Label htmlFor="email-forgot" className="text-xs uppercase text-muted-foreground font-bold">E-mail</Label>
+                <Input id="email-forgot" type="email" placeholder="seu@email.com" required value={email} onChange={e => setEmail(e.target.value)} disabled={isLoading} className="bg-zinc-950/50 border-white/10 h-11 focus-visible:ring-primary/50" />
+            </div>
+            <Button type="submit" className="w-full h-11 font-bold" disabled={isLoading}>{isLoading ? <Loader2 className="animate-spin" /> : 'Enviar Link'}</Button>
+            <Button variant="link" type="button" onClick={() => setView('login')} disabled={isLoading} className="w-full text-xs text-muted-foreground">Voltar para o Login</Button>
+        </form>
+      </div>
     );
   }
 
   return (
-    <div className="grid gap-4">
-      <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading || isLoading}>
-        {isGoogleLoading ? 'Aguardando Google...' : 'Entrar com Google'}
+    <div className="grid gap-5 animate-in fade-in duration-300">
+      <Button variant="outline" className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white transition-all" onClick={handleGoogleSignIn} disabled={isGoogleLoading || isLoading}>
+        {isGoogleLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 
+        <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path></svg>}
+        Continuar com Google
       </Button>
+      
       <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            Ou continue com
-          </span>
-        </div>
+        <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/10" /></div>
+        <div className="relative flex justify-center text-[10px] uppercase tracking-wider"><span className="bg-transparent px-2 text-muted-foreground bg-zinc-900">Ou via e-mail</span></div>
       </div>
+
       <form onSubmit={handleLoginSubmit} className="grid gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="email">E-mail</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="m@example.com"
-            required
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            disabled={isLoading || isGoogleLoading}
-          />
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-xs uppercase text-muted-foreground font-bold ml-1">E-mail</Label>
+          <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} disabled={isLoading || isGoogleLoading} className="bg-zinc-950/50 border-white/10 h-11 focus-visible:ring-primary/50" />
         </div>
-        <div className="grid gap-2">
-          <div className="flex items-center">
-            <Label htmlFor="password">Senha</Label>
-            <Button variant="link" type="button" onClick={() => setView('forgot-password')} className="ml-auto inline-block text-sm underline" disabled={isLoading || isGoogleLoading}>
-              Esqueceu sua senha?
-            </Button>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between ml-1">
+            <Label htmlFor="password" className="text-xs uppercase text-muted-foreground font-bold">Senha</Label>
+            <Button variant="link" type="button" onClick={() => setView('forgot-password')} className="p-0 h-auto text-xs text-primary font-normal hover:text-primary/80" disabled={isLoading}>Esqueceu?</Button>
           </div>
-          <Input 
-              id="password" 
-              type="password" 
-              required 
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              disabled={isLoading || isGoogleLoading}
-          />
+          <Input id="password" type="password" required value={password} onChange={e => setPassword(e.target.value)} disabled={isLoading || isGoogleLoading} className="bg-zinc-950/50 border-white/10 h-11 focus-visible:ring-primary/50" />
         </div>
-        <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
-          {isLoading ? 'Entrando...' : 'Entrar'}
+        
+        <Button type="submit" className="w-full h-11 font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform" disabled={isLoading || isGoogleLoading}>
+          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Acessar Conta'}
         </Button>
-        <div className="mt-4 text-center text-sm">
-              Não tem uma conta?{' '}
-              <Link href="/signup" className={cn((isLoading || isGoogleLoading) && "pointer-events-none opacity-50", "underline")}>
-                Cadastre-se
-              </Link>
-            </div>
+
+        {/* DUPLICIDADE REMOVIDA (agora é o único local) */}
+        <div className="text-center text-sm mt-2 text-muted-foreground">
+            Não tem uma conta?{' '}
+            <Link href="/signup" className={cn((isLoading || isGoogleLoading) && "pointer-events-none opacity-50", "underline hover:text-primary transition-colors font-medium")}>
+            Cadastre-se
+            </Link>
+        </div>
       </form>
     </div>
   );
