@@ -18,13 +18,13 @@ import { setTransaction, deleteTransaction } from '@/firebase/firestore/actions'
 import { useFirestore, useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { MobileTransactionsView } from './mobile-transactions-view';
-import { Button } from '@/components/ui/button'; // [NOVO]
-import { ChevronDown } from 'lucide-react'; // [NOVO]
+import { Button } from '@/components/ui/button';
+import { ChevronDown } from 'lucide-react';
 
 interface TransactionsClientPageProps {
   initialTransactions: Transaction[];
-  onLoadMore: () => void; // [NOVO]
-  hasMore: boolean; // [NOVO]
+  onLoadMore: () => void;
+  hasMore: boolean;
 }
 
 export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMore }: TransactionsClientPageProps) {
@@ -80,7 +80,6 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
         />
       )}
 
-      {/* [NOVO] Botão Carregar Mais */}
       {hasMore && (
         <div className="flex justify-center pt-4 pb-8">
           <Button variant="outline" onClick={onLoadMore} className="gap-2">
@@ -91,7 +90,7 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
       )}
 
       <Dialog open={!!editingTransaction} onOpenChange={(isOpen) => !isOpen && setEditingTransaction(null)}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Transação</DialogTitle>
             <DialogDescription>
@@ -109,7 +108,7 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
       </Dialog>
 
        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-         <DialogContent className="sm:max-w-md w-[90vw] rounded-md">
+         <DialogContent className="sm:max-w-md w-[90vw] rounded-md max-h-[85vh] overflow-y-auto">
            <DialogHeader>
              <DialogTitle>Adicionar Transação</DialogTitle>
              <DialogDescription>

@@ -29,6 +29,16 @@
     --positive-foreground: 0 0% 98%;
     --negative: 0 84.2% 60.2%;
     --negative-foreground: 0 0% 98%;
+
+    /* Sidebar colors - Fix Transparent Menu */
+    --sidebar-background: 220 13% 96%;
+    --sidebar-foreground: 220 13% 10%;
+    --sidebar-primary: 48 96% 50%;
+    --sidebar-primary-foreground: 48 96% 10%;
+    --sidebar-accent: 220 13% 92%;
+    --sidebar-accent-foreground: 220 13% 10%;
+    --sidebar-border: 220 13% 88%;
+    --sidebar-ring: 48 96% 50%;
   }
 
   .dark {
@@ -57,6 +67,16 @@
     --positive-foreground: 210 40% 98%;
     --negative: 0 72% 51%;
     --negative-foreground: 210 40% 98%;
+
+    /* Sidebar colors - Fix Transparent Menu */
+    --sidebar-background: 216 14% 14%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 48 96% 50%;
+    --sidebar-primary-foreground: 48 96% 10%;
+    --sidebar-accent: 216 14% 22%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 216 14% 22%;
+    --sidebar-ring: 48 96% 50%;
   }
 
   .neutral {
@@ -84,6 +104,16 @@
     --positive-foreground: 210 40% 98%;
     --negative: 0 72% 51%;
     --negative-foreground: 210 40% 98%;
+
+    /* Sidebar colors - Fix Transparent Menu */
+    --sidebar-background: 216 14% 24%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 48 96% 50%;
+    --sidebar-primary-foreground: 48 96% 10%;
+    --sidebar-accent: 216 14% 32%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 216 14% 32%;
+    --sidebar-ring: 48 96% 50%;
   }
 
   :root.theme-verde {
@@ -92,6 +122,10 @@
     --accent: 142.1 76.2% 36.3%;
     --accent-foreground: 355.7 100% 97.3%;
     --ring: 142.1 76.2% 36.3%;
+    
+    --sidebar-primary: 142.1 76.2% 36.3%;
+    --sidebar-primary-foreground: 355.7 100% 97.3%;
+    --sidebar-ring: 142.1 76.2% 36.3%;
   }
 
   .dark.theme-verde, .neutral.theme-verde {
@@ -100,6 +134,10 @@
     --accent: 142.1 70.6% 45.3%;
     --accent-foreground: 144.9 80.4% 97.3%;
     --ring: 142.1 70.6% 45.3%;
+
+    --sidebar-primary: 142.1 70.6% 45.3%;
+    --sidebar-primary-foreground: 144.9 80.4% 97.3%;
+    --sidebar-ring: 142.1 70.6% 45.3%;
   }
 
   :root.theme-roxo {
@@ -108,6 +146,10 @@
     --accent: 262.1 83.3% 57.8%;
     --accent-foreground: 210 40% 98%;
     --ring: 262.1 83.3% 57.8%;
+
+    --sidebar-primary: 262.1 83.3% 57.8%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-ring: 262.1 83.3% 57.8%;
   }
   
   .dark.theme-roxo, .neutral.theme-roxo {
@@ -116,6 +158,10 @@
     --accent: 263.4 95.2% 58.4%;
     --accent-foreground: 210 40% 98%;
     --ring: 263.4 95.2% 58.4%;
+
+    --sidebar-primary: 263.4 95.2% 58.4%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-ring: 263.4 95.2% 58.4%;
   }
 
   :root.theme-rosa {
@@ -124,6 +170,10 @@
     --accent: 346.8 97.7% 49.8%;
     --accent-foreground: 210 40% 98%;
     --ring: 346.8 97.7% 49.8%;
+
+    --sidebar-primary: 346.8 97.7% 49.8%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-ring: 346.8 97.7% 49.8%;
   }
 
   .dark.theme-rosa, .neutral.theme-rosa {
@@ -132,6 +182,10 @@
     --accent: 346.8 97.7% 49.8%;
     --accent-foreground: 210 40% 98%;
     --ring: 346.8 97.7% 49.8%;
+
+    --sidebar-primary: 346.8 97.7% 49.8%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-ring: 346.8 97.7% 49.8%;
   }
 }
 

@@ -23,6 +23,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
+  useSidebar, // Importado para controlar o fechamento no mobile
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -69,10 +70,18 @@ const settingsNavItems = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const auth = useAuth();
+  const { isMobile, setOpenMobile } = useSidebar(); // Hook para detectar mobile
 
   const handleSignOut = async () => {
     if (auth) {
       await signOut(auth);
+    }
+  };
+
+  // Função auxiliar para fechar o menu no mobile ao clicar
+  const handleLinkClick = () => {
+    if (isMobile) {
+        setOpenMobile(false);
     }
   };
 
@@ -82,7 +91,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/dashboard">
+              <Link href="/dashboard" onClick={handleLinkClick}>
                 {/* LOGO AMARELO AQUI */}
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Logo className="size-8 text-yellow-500" />
@@ -102,7 +111,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {mainNavItems.map((item) => (
             <SidebarMenuItem key={item.url}>
               <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
-                <Link href={item.url}>
+                <Link href={item.url} onClick={handleLinkClick}>
                   <item.icon className="size-4" />
                   <span>{item.title}</span>
                 </Link>
@@ -117,7 +126,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {settingsNavItems.map((item) => (
             <SidebarMenuItem key={item.url}>
               <SidebarMenuButton asChild isActive={pathname.startsWith(item.url)} tooltip={item.title}>
-                <Link href={item.url}>
+                <Link href={item.url} onClick={handleLinkClick}>
                   <item.icon className="size-4" />
                   <span>{item.title}</span>
                 </Link>
