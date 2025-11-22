@@ -24,12 +24,11 @@ export default function LoginPage() {
             </p>
           </div>
           <LoginForm />
-          {/* Link para ir para o Cadastro caso o usuário tenha caído aqui por engano */}
           <div className="mt-4 text-center text-sm">
-                Não tem uma conta?{' '}
-                <Link href="/signup" className="underline hover:text-primary transition-colors">
-                  Cadastre-se
-                </Link>
+            Não tem uma conta?{' '}
+            <Link href="/signup" className="underline hover:text-primary transition-colors">
+              Cadastre-se
+            </Link>
           </div>
         </div>
       </div>
