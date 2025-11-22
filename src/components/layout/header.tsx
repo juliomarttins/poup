@@ -6,6 +6,7 @@ import { Logo } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/firebase/auth/use-user';
 import { useAuth } from '@/firebase/provider';
+import { useProfile } from '@/contexts/profile-context'; // <--- IMPORTANTE
 import { signOut } from 'firebase/auth';
 import {
   DropdownMenu,
@@ -20,6 +21,17 @@ import { LogOut, Settings, User as UserIcon, LayoutDashboard } from 'lucide-reac
 
 export function Header() {
   const { user, loading } = useUser();
+  // Tenta pegar o perfil, mas não quebra se estiver fora do Provider (ex: Landing Page deslogada)
+  // Se o seu ProfileProvider estiver apenas no Dashboard, isso pode ser undefined
+  let currentProfile = null;
+  try {
+     // eslint-disable-next-line react-hooks/rules-of-hooks
+     const profileContext = useProfile();
+     currentProfile = profileContext.currentProfile;
+  } catch (e) {
+    // Ignora erro se não tiver provider (ex: página inicial pública)
+  }
+
   const auth = useAuth();
   const router = useRouter();
 
@@ -30,7 +42,6 @@ export function Header() {
     }
   };
 
-  // Iniciais do usuário para o Avatar Fallback (Ex: Julio Martins -> JM)
   const getInitials = (name: string | null) => {
     if (!name) return 'U';
     return name
@@ -40,6 +51,11 @@ export function Header() {
       .join('')
       .toUpperCase();
   };
+
+  // Prioridade: Perfil Selecionado > Usuário Google > Fallback
+  const displayName = currentProfile?.name || user?.displayName || 'Usuário';
+  const displayImage = currentProfile?.photoURL || user?.photoURL || '';
+  const displayInitials = getInitials(displayName);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -51,26 +67,24 @@ export function Header() {
           </Link>
         </div>
 
-        {/* LADO DIREITO: LÓGICA DE AUTENTICAÇÃO */}
+        {/* LADO DIREITO */}
         <div className="flex items-center gap-2 md:gap-4">
           {loading ? (
-            // Estado de Carregamento (opcional: pode por um Skeleton aqui)
             <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
           ) : user ? (
-            // --- USUÁRIO LOGADO: MOSTRA AVATAR E MENU ---
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'Avatar'} />
-                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                    <AvatarImage src={displayImage} alt={displayName} />
+                    <AvatarFallback>{displayInitials}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.displayName || 'Usuário'}</p>
+                    <p className="text-sm font-medium leading-none">{displayName}</p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {user.email}
                     </p>
@@ -103,7 +117,6 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            // --- USUÁRIO DESLOGADO: MOSTRA BOTÕES ---
             <>
               <Button variant="ghost" asChild className="text-sm font-medium">
                 <Link href="/login">Entrar</Link>

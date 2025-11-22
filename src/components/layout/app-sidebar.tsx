@@ -1,89 +1,147 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { memo } from "react";
+import * as React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
-  FileText,
   LayoutDashboard,
-  PiggyBank,
-  Settings,
+  CreditCard,
   ArrowRightLeft,
-  Bot,
-} from "lucide-react";
+  BarChart3,
+  Settings,
+  HelpCircle,
+  LogOut,
+} from 'lucide-react';
 
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { Logo } from "@/components/icons";
-import { APP_VERSION, APP_NAME } from "@/lib/constants"; // [NOVO IMPORT]
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  SidebarSeparator,
+} from '@/components/ui/sidebar';
+import { Logo } from '@/components/icons';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/firebase/provider';
+import { signOut } from 'firebase/auth';
 
-
-const navItems = [
-  { href: "/dashboard", label: "Painel", icon: LayoutDashboard },
-  { href: "/dashboard/transactions", label: "Transações", icon: ArrowRightLeft },
-  { href: "/dashboard/debts", label: "Minhas Dívidas", icon: PiggyBank },
-  { href: "/dashboard/situation", label: "Minha Situação", icon: FileText },
-  { href: "/dashboard/poupp-ia", label: "Poupp - IA", icon: Bot },
-  { href: "/dashboard/settings", label: "Configurações", icon: Settings },
+// Definição dos itens do menu
+const mainNavItems = [
+  {
+    title: 'Visão Geral',
+    url: '/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    title: 'Transações',
+    url: '/dashboard/transactions',
+    icon: ArrowRightLeft,
+  },
+  {
+    title: 'Dívidas',
+    url: '/dashboard/debts',
+    icon: CreditCard,
+  },
+  {
+    title: 'Situação',
+    url: '/dashboard/situation',
+    icon: BarChart3,
+  },
 ];
 
-function SidebarComponent() {
+const settingsNavItems = [
+  {
+    title: 'Configurações',
+    url: '/dashboard/settings',
+    icon: Settings,
+  },
+  {
+    title: 'Ajuda',
+    url: '/dashboard/help',
+    icon: HelpCircle,
+  },
+];
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const auth = useAuth();
+
+  const handleSignOut = async () => {
+    if (auth) {
+      await signOut(auth);
+    }
+  };
 
   return (
-    <div className="hidden border-r bg-background md:block">
-      <div className="flex h-full max-h-screen flex-col gap-2">
-        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-          <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-            <Logo className="h-8 w-8 text-primary" />
-            <span className="">{APP_NAME}</span>
-          </Link>
-        </div>
-        <div className="flex-1">
-          <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-            {navItems.map(({ href, icon: Icon, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                  pathname.startsWith(href) && (href === "/dashboard" && pathname === href || href !== "/dashboard") ? "bg-muted text-primary" : ""
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <Link href="/dashboard">
+                {/* LOGO AMARELO AQUI */}
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <Logo className="size-8 text-yellow-500" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold text-foreground">Poupp</span>
+                  <span className="truncate text-xs text-muted-foreground">Gestão Financeira</span>
+                </div>
               </Link>
-            ))}
-          </nav>
-        </div>
-        <div className="mt-auto p-4">
-              <Card>
-                <CardHeader className="p-2 pt-0 md:p-4">
-                  <CardTitle>Precisa de Ajuda?</CardTitle>
-                  <CardDescription>
-                    Contate o suporte para assistência com o gerenciamento de suas finanças.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
-                  <Button size="sm" className="w-full" asChild>
-                    <Link href="https://wa.me/5562998413382" target="_blank">Contatar Suporte</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-        </div>
-         <div className="p-4 pt-0 text-center text-xs text-muted-foreground">
-            {APP_VERSION}
-        </div>
-      </div>
-    </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      
+      <SidebarContent>
+        <SidebarMenu>
+          {mainNavItems.map((item) => (
+            <SidebarMenuItem key={item.url}>
+              <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
+                <Link href={item.url}>
+                  <item.icon className="size-4" />
+                  <span>{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+        
+        <SidebarSeparator className="mx-2 my-2" />
+        
+        <SidebarMenu>
+          {settingsNavItems.map((item) => (
+            <SidebarMenuItem key={item.url}>
+              <SidebarMenuButton asChild isActive={pathname.startsWith(item.url)} tooltip={item.title}>
+                <Link href={item.url}>
+                  <item.icon className="size-4" />
+                  <span>{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              onClick={handleSignOut}
+              tooltip="Sair"
+              className="text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50"
+            >
+              <LogOut className="size-4" />
+              <span>Sair</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
   );
 }
-
-export const AppSidebar = memo(SidebarComponent);
