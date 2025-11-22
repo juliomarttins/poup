@@ -94,7 +94,6 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // Limite de 4.5MB para segurança
     if (file.size > 4.5 * 1024 * 1024) {
         toast({ variant: "destructive", title: "Erro", description: "Arquivo muito grande (Máx 4.5MB)." });
         e.target.value = "";
@@ -131,18 +130,13 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
         }
 
         if (data.category) {
-            // Lógica Inteligente de Categoria:
-            // 1. Verifica se a categoria retornada pela IA existe na lista padrão do tipo atual
             const hasCat = DEFAULT_CATEGORIES[transactionType].includes(data.category);
-            
             if (hasCat) {
-                // Se existe, seleciona ela direto
                 form.setValue("category", data.category, { shouldValidate: true });
-                form.setValue("customCategory", ""); 
+                form.setValue("customCategory", "");
                 fieldsFilled++;
             } else {
-                 // Se não existe (ex: "Internet"), seleciona 'Outros' e preenche o campo customizado
-                 form.setValue("category", "Outros", { shouldValidate: true });
+                 form.setValue("category", "Outros");
                  form.setValue("customCategory", data.category, { shouldValidate: true });
                  fieldsFilled++;
             }
@@ -159,14 +153,14 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
         }
 
         if (fieldsFilled > 0) {
-            toast({ title: "Sucesso!", description: "Dados preenchidos automaticamente." });
+            toast({ title: "Leitura realizada!", description: "Verifique os dados importados." });
         } else {
-            toast({ variant: "warning", title: "Atenção", description: "A IA analisou o arquivo mas não encontrou dados claros." });
+            toast({ variant: "warning", title: "Atenção", description: "Não foi possível identificar os dados com clareza." });
         }
 
     } catch (error: any) {
         console.error(error);
-        toast({ variant: "destructive", title: "Erro na leitura", description: error.message });
+        toast({ variant: "destructive", title: "Erro", description: error.message });
     } finally {
         setIsScanning(false);
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -178,7 +172,6 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
     if (!firestore || !user || !activeProfile) return;
     
     const amount = data.type === 'expense' ? -Math.abs(data.amount) : Math.abs(data.amount);
-    // Se for 'Outros', usa o valor customizado. Se não, usa o valor do select.
     const finalCategory = data.category === 'Outros' ? data.customCategory! : data.category;
     const id = initialData?.id || doc(collection(firestore, '_')).id;
 
@@ -199,49 +192,49 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         
-        {/* ÁREA DE SCAN */}
-        <div className="bg-secondary/50 p-3 rounded-lg border border-dashed border-primary/30 flex flex-col gap-2">
-             <div className="flex items-center justify-center gap-2 text-muted-foreground text-xs uppercase font-semibold mb-1">
-                <ScanLine className="w-3 h-3" /> Preencher com IA
+        {/* ÁREA DE SCAN - DESIGN LIMPO */}
+        <div className="bg-secondary/30 p-4 rounded-lg border border-dashed border-primary/30 flex flex-col gap-3">
+             <div className="flex items-center justify-center gap-2 text-primary font-semibold text-xs uppercase tracking-wide">
+                <ScanLine className="w-4 h-4" /> Importar Boleto / Recibo
             </div>
 
             <div className="grid grid-cols-1 gap-3">
-                {/* VISÍVEL APENAS NO MOBILE */}
+                {/* MOBILE: CÂMERA + ARQUIVO */}
                 <div className="md:hidden grid grid-cols-2 gap-3">
                      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
                      <Button 
                         type="button" variant="outline" 
-                        className="h-10 gap-2 border-primary/20 hover:bg-primary/10 hover:text-primary"
+                        className="h-12 gap-2 border-primary/20 hover:bg-primary/10 text-primary hover:text-primary font-normal"
                         onClick={() => cameraInputRef.current?.click()}
                         disabled={isScanning}
                     >
-                        {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                        {isScanning ? <Loader2 className="w-5 h-5 animate-spin" /> : <Camera className="w-5 h-5" />}
                         Câmera
                     </Button>
 
                     <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
                     <Button 
                         type="button" variant="outline" 
-                        className="h-10 gap-2 border-primary/20 hover:bg-primary/10 hover:text-primary"
+                        className="h-12 gap-2 border-primary/20 hover:bg-primary/10 text-primary hover:text-primary font-normal"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isScanning}
                     >
-                        {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                        {isScanning ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
                         Arquivo
                     </Button>
                 </div>
 
-                {/* VISÍVEL APENAS NO DESKTOP */}
+                {/* DESKTOP: APENAS ARQUIVO */}
                 <div className="hidden md:block">
                     <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
                     <Button 
                         type="button" variant="outline" 
-                        className="w-full h-10 gap-2 border-primary/20 hover:bg-primary/10 hover:text-primary"
+                        className="w-full h-12 gap-2 border-primary/20 hover:bg-primary/10 text-primary hover:text-primary font-normal"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isScanning}
                     >
-                         {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                         Carregar Arquivo ou PDF
+                         {isScanning ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                         Carregar Imagem ou PDF
                     </Button>
                 </div>
             </div>
