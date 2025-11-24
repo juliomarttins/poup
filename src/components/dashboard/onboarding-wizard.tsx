@@ -6,16 +6,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, CheckCircle2, Target, Wallet, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Target, Wallet, Sparkles, X } from "lucide-react";
 import { doc, setDoc, collection } from "firebase/firestore";
-import type { Transaction, ManagedDebt } from "@/lib/types";
+import type { Transaction } from "@/lib/types";
 import { useProfile } from "@/contexts/profile-context";
 
 const STEPS = [
-    { id: 'welcome', title: 'Bem-vindo ao Poupp', desc: 'Vamos configurar seu painel em menos de 1 minuto.' },
+    { id: 'welcome', title: 'Bem-vindo ao Poupp', desc: 'Vamos configurar seu painel para você não começar do zero.' },
     { id: 'income', title: 'Renda Mensal', desc: 'Qual sua estimativa de ganhos mensais?' },
     { id: 'debts', title: 'Dívidas', desc: 'Você possui alguma dívida ativa para monitorar?' },
-    { id: 'tutorial', title: 'Como usar', desc: 'Aprenda o básico para dominar suas finanças.' },
+    { id: 'tutorial', title: 'Dicas Rápidas', desc: 'Aprenda a usar a IA a seu favor.' },
 ];
 
 export function OnboardingWizard() {
@@ -28,14 +28,30 @@ export function OnboardingWizard() {
     const [income, setIncome] = useState("");
     const [hasDebt, setHasDebt] = useState<boolean | null>(null);
 
-    // Verifica se já fez o onboarding (usando localStorage para MVP, idealmente no perfil do user)
+    const STORAGE_KEY = `poup_onboarding_status_${user?.uid}`;
+
     useEffect(() => {
-        const hasOnboarded = localStorage.getItem(`poup_onboarded_${user?.uid}`);
-        if (user && !hasOnboarded) {
-            // Pequeno delay para não ser agressivo
-            setTimeout(() => setIsOpen(true), 1000);
+        if (!user) return;
+        
+        // Status: 'completed' | 'skipped' | null (pending)
+        const status = localStorage.getItem(STORAGE_KEY);
+        
+        if (!status) {
+            // Se não tem status, é a primeira vez ou clicou em "Fazer depois"
+            const timer = setTimeout(() => setIsOpen(true), 1500);
+            return () => clearTimeout(timer);
         }
-    }, [user]);
+    }, [user, STORAGE_KEY]);
+
+    const handleSkipForever = () => {
+        localStorage.setItem(STORAGE_KEY, 'skipped');
+        setIsOpen(false);
+    };
+
+    const handleDoLater = () => {
+        // Não salva nada no localStorage, então vai aparecer de novo no próximo reload
+        setIsOpen(false);
+    };
 
     const handleNext = async () => {
         if (currentStep < STEPS.length - 1) {
@@ -55,7 +71,7 @@ export function OnboardingWizard() {
                 const newTx: Transaction = {
                     id: doc(collection(firestore, '_')).id,
                     amount: Math.abs(amount),
-                    description: "Salário / Renda Mensal",
+                    description: "Salário / Renda Inicial",
                     category: "Salário",
                     date: new Date().toISOString().split('T')[0],
                     type: 'income',
@@ -66,7 +82,8 @@ export function OnboardingWizard() {
             }
         }
 
-        localStorage.setItem(`poup_onboarded_${user?.uid}`, 'true');
+        // Marca como completado para não aparecer mais
+        localStorage.setItem(STORAGE_KEY, 'completed');
         setIsOpen(false);
     };
 
@@ -76,72 +93,72 @@ export function OnboardingWizard() {
         switch (STEPS[currentStep].id) {
             case 'welcome':
                 return (
-                    <div className="flex flex-col items-center text-center py-4 space-y-4">
+                    <div className="flex flex-col items-center text-center py-6 space-y-4">
                         <div className="h-20 w-20 bg-primary/10 rounded-full flex items-center justify-center mb-2 animate-bounce">
                             <Sparkles className="h-10 w-10 text-primary" />
                         </div>
-                        <p className="text-muted-foreground">
-                            O Poupp usa IA para organizar seu dinheiro. Para começar, precisamos de alguns dados básicos.
+                        <p className="text-muted-foreground text-sm">
+                            O Poupp usa inteligência artificial para categorizar seus gastos automaticamente. Precisamos de alguns dados para calibrar o sistema.
                         </p>
                     </div>
                 );
             case 'income':
                 return (
-                    <div className="space-y-4 py-4">
-                        <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
-                            <Wallet className="text-green-500" />
+                    <div className="space-y-4 py-6">
+                        <div className="flex items-center gap-4 p-4 border rounded-xl bg-muted/30 transition-all hover:border-primary/30">
+                            <div className="p-3 bg-green-500/10 rounded-full text-green-500">
+                                <Wallet className="w-6 h-6" />
+                            </div>
                             <div className="flex-1">
-                                <label className="text-xs font-bold uppercase text-muted-foreground">Salário / Entradas</label>
+                                <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Salário / Entradas</label>
                                 <Input 
                                     autoFocus
                                     type="number" 
-                                    placeholder="Ex: 3500.00" 
+                                    placeholder="0,00" 
                                     value={income} 
                                     onChange={e => setIncome(e.target.value)}
-                                    className="border-0 bg-transparent text-2xl font-bold p-0 h-auto placeholder:text-muted-foreground/50 focus-visible:ring-0"
+                                    className="border-0 bg-transparent text-3xl font-bold p-0 h-auto placeholder:text-muted-foreground/30 focus-visible:ring-0"
                                 />
                             </div>
                         </div>
-                        <p className="text-xs text-muted-foreground text-center">Isso ajuda a calcular seu saldo inicial.</p>
                     </div>
                 );
             case 'debts':
                 return (
-                    <div className="space-y-4 py-4">
+                    <div className="space-y-6 py-6">
                          <div className="grid grid-cols-2 gap-4">
                             <button 
                                 onClick={() => setHasDebt(true)}
-                                className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${hasDebt === true ? 'border-primary bg-primary/5' : 'border-muted hover:border-primary/50'}`}
+                                className={`p-6 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all duration-200 ${hasDebt === true ? 'border-red-500/50 bg-red-500/5 scale-[1.02]' : 'border-muted hover:border-red-500/20'}`}
                             >
                                 <Target className="h-8 w-8 text-red-500" />
-                                <span className="font-bold">Sim, tenho</span>
+                                <span className="font-semibold text-sm">Sim, tenho</span>
                             </button>
                             <button 
                                 onClick={() => setHasDebt(false)}
-                                className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${hasDebt === false ? 'border-primary bg-primary/5' : 'border-muted hover:border-primary/50'}`}
+                                className={`p-6 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all duration-200 ${hasDebt === false ? 'border-green-500/50 bg-green-500/5 scale-[1.02]' : 'border-muted hover:border-green-500/20'}`}
                             >
                                 <CheckCircle2 className="h-8 w-8 text-green-500" />
-                                <span className="font-bold">Estou livre</span>
+                                <span className="font-semibold text-sm">Estou livre</span>
                             </button>
                          </div>
                          {hasDebt && (
-                             <p className="text-sm text-center text-muted-foreground animate-in fade-in">
-                                 Sem problemas! Vamos cadastrar suas dívidas na aba "Dívidas" após finalizar.
+                             <p className="text-sm text-center text-muted-foreground bg-muted/30 p-3 rounded-lg animate-in fade-in slide-in-from-bottom-2">
+                                 Ok! Após finalizar aqui, vá na aba <strong>Dívidas</strong> para cadastrar os detalhes e criarmos um plano.
                              </p>
                          )}
                     </div>
                 );
             case 'tutorial':
                 return (
-                    <div className="space-y-4 py-2">
-                        <div className="space-y-3 text-sm">
-                            <div className="flex gap-3 items-start">
-                                <div className="bg-primary/10 p-2 rounded-md shrink-0"><Sparkles className="w-4 h-4 text-primary"/></div>
-                                <p>Use o <strong>Quick Add</strong> no topo para digitar gastos como "50 padaria". A IA faz o resto.</p>
-                            </div>
-                            <div className="flex gap-3 items-start">
-                                <div className="bg-blue-500/10 p-2 rounded-md shrink-0"><Target className="w-4 h-4 text-blue-500"/></div>
-                                <p>Defina metas na aba <strong>Dívidas</strong> para o sistema criar um plano de pagamento.</p>
+                    <div className="space-y-6 py-4">
+                        <div className="space-y-4 text-sm">
+                            <div className="flex gap-4 p-3 rounded-lg bg-muted/20">
+                                <div className="bg-primary/20 p-2 rounded-md h-fit"><Sparkles className="w-5 h-5 text-primary"/></div>
+                                <div>
+                                    <strong className="block text-foreground mb-1">Quick Add Inteligente</strong>
+                                    <p className="text-muted-foreground">No topo da tela, digite coisas como "56 pastel" ou "1200 amortecedor". A IA detecta o valor, o nome e a categoria (Veículo) sozinha.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -151,31 +168,40 @@ export function OnboardingWizard() {
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Passo {currentStep + 1} de {STEPS.length}</span>
-                    </div>
-                    <DialogTitle className="text-2xl">{STEPS[currentStep].title}</DialogTitle>
-                    <DialogDescription>{STEPS[currentStep].desc}</DialogDescription>
-                </DialogHeader>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleDoLater()}>
+            <DialogContent className="sm:max-w-md overflow-hidden p-0 gap-0 border-none shadow-2xl">
+                <div className="px-6 pt-6 pb-4">
+                    <DialogHeader className="mb-4">
+                        <div className="flex items-center justify-between">
+                            <DialogTitle className="text-xl font-bold">{STEPS[currentStep].title}</DialogTitle>
+                            {currentStep === 0 && (
+                                <Button variant="ghost" size="sm" onClick={handleSkipForever} className="text-xs text-muted-foreground h-8">
+                                    Não mostrar mais
+                                </Button>
+                            )}
+                        </div>
+                        <DialogDescription className="text-base">{STEPS[currentStep].desc}</DialogDescription>
+                    </DialogHeader>
 
-                <div className="mt-2">
-                     {renderContent()}
+                    <div className="min-h-[180px] flex flex-col justify-center">
+                        {renderContent()}
+                    </div>
                 </div>
 
-                <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
-                    {currentStep === 0 && (
-                        <Button variant="ghost" onClick={() => setIsOpen(false)}>Pular Configuração</Button>
-                    )}
-                    <Button onClick={handleNext} className="w-full sm:w-auto gap-2" disabled={currentStep === 2 && hasDebt === null}>
-                        {currentStep === STEPS.length - 1 ? 'Começar a usar' : 'Continuar'}
+                <div className="bg-muted/30 p-4 px-6 flex justify-between items-center">
+                     {currentStep === 0 ? (
+                        <Button variant="ghost" onClick={handleDoLater} className="text-muted-foreground hover:text-foreground">Fazer depois</Button>
+                     ) : (
+                        <Button variant="ghost" onClick={() => setCurrentStep(prev => prev - 1)} disabled={currentStep === 0}>Voltar</Button>
+                     )}
+                    
+                    <Button onClick={handleNext} className="gap-2 pl-6 pr-6" disabled={currentStep === 2 && hasDebt === null}>
+                        {currentStep === STEPS.length - 1 ? 'Finalizar' : 'Próximo'}
                         <ArrowRight className="w-4 h-4" />
                     </Button>
-                </DialogFooter>
+                </div>
                 
-                <Progress value={progress} className="h-1 w-full absolute bottom-0 left-0 rounded-none" />
+                <Progress value={progress} className="h-1 w-full rounded-none bg-muted" />
             </DialogContent>
         </Dialog>
     );

@@ -16,13 +16,13 @@ import type { Transaction, ManagedDebt } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ArrowRight, TrendingUp, TrendingDown, DollarSign, CreditCard, Command } from 'lucide-react';
+import { Sparkles, ArrowRight, TrendingUp, TrendingDown, DollarSign, CreditCard, Command, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { setTransaction } from '@/firebase/firestore/actions';
 import { doc } from 'firebase/firestore';
-import { parseTransactionInput } from '@/lib/smart-parser'; // [NOVO] Import do Parser Inteligente
+import { parseTransactionInput } from '@/lib/smart-parser';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-// --- COMPONENTE DE QUICK ADD (Inteligente) ---
 function QuickAddInput() {
     const [value, setValue] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
@@ -38,7 +38,6 @@ function QuickAddInput() {
         setIsProcessing(true);
         
         try {
-            // [ATUALIZAÇÃO] Usa o parser inteligente local
             const parsedData = parseTransactionInput(value);
 
             const newTx: Transaction = {
@@ -55,8 +54,13 @@ function QuickAddInput() {
             await setTransaction(firestore, user.uid, newTx);
             
             toast({
-                title: "Salvo com IA!",
-                description: `${newTx.category}: ${newTx.description} (${Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(newTx.amount)})`,
+                title: "Salvo com Sucesso!",
+                description: (
+                    <div className="flex flex-col gap-1">
+                        <span className="font-bold">{newTx.description}</span>
+                        <span className="text-xs opacity-90">Categoria detectada: {newTx.category}</span>
+                    </div>
+                ),
                 className: "bg-primary text-primary-foreground border-none"
             });
             setValue("");
@@ -72,37 +76,47 @@ function QuickAddInput() {
         <div className="mb-6 space-y-2">
             <div className="flex items-center justify-between px-1">
                 <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-yellow-500" /> Adição Rápida
+                    <Sparkles className="w-3 h-3 text-yellow-500" /> Adicionar Movimentação
                 </span>
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                        <HelpCircle className="w-3 h-3 text-muted-foreground cursor-pointer" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Digite o valor e o nome. Ex: "50 pastel". A IA categoriza sozinha.</p>
+                    </TooltipContent>
+                </Tooltip>
             </div>
-            <Card className="bg-gradient-to-br from-background to-muted/20 border-primary/20 shadow-sm hover:shadow-md transition-all">
+            <Card className="bg-gradient-to-br from-background to-muted/20 border-primary/20 shadow-sm hover:shadow-md transition-all ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                 <CardContent className="p-3">
                     <form onSubmit={handleQuickAdd} className="flex gap-2 relative items-center">
                         <div className="absolute left-3 text-muted-foreground pointer-events-none hidden sm:block">
                             <Command className="w-4 h-4" />
                         </div>
                         <Input 
-                            placeholder="Ex: 56 pastel (Digite e dê Enter)" 
+                            placeholder="Ex: 56 pastel... (Enter para salvar)" 
                             value={value}
                             onChange={(e) => setValue(e.target.value)}
                             className="bg-transparent border-none shadow-none h-10 focus-visible:ring-0 sm:pl-8 text-base placeholder:text-muted-foreground/60"
                             disabled={isProcessing}
                             autoComplete="off"
                         />
-                        <Button size="icon" type="submit" disabled={isProcessing || !value} className="h-10 w-10 shrink-0 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
+                        <Button size="icon" type="submit" disabled={isProcessing || !value} className="h-10 w-10 shrink-0 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-95">
                             <ArrowRight className="w-5 h-5" />
                         </Button>
                     </form>
                 </CardContent>
             </Card>
-            <p className="text-[10px] text-muted-foreground px-2 text-center sm:text-left">
-                Dica: Tente <strong>"50 uber"</strong>, <strong>"3500 salário"</strong> ou <strong>"120 jantar"</strong>. A IA categoriza para você.
-            </p>
+            {/* Texto explicativo melhorado */}
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                <Badge variant="outline" className="text-[10px] text-muted-foreground whitespace-nowrap bg-muted/20 border-dashed">Ex: 1200 amortecedor</Badge>
+                <Badge variant="outline" className="text-[10px] text-muted-foreground whitespace-nowrap bg-muted/20 border-dashed">Ex: 3500 salário</Badge>
+                <Badge variant="outline" className="text-[10px] text-muted-foreground whitespace-nowrap bg-muted/20 border-dashed">Ex: 45 ifood</Badge>
+            </div>
         </div>
     )
 }
 
-// --- COMPONENTE DE INSIGHT ATIVO (IA Passiva) ---
 function AiInsightCard() {
     return (
         <div className="mb-6 px-4 py-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-3 text-sm text-blue-600 dark:text-blue-400 animate-fade-up">
@@ -120,14 +134,12 @@ export default function DashboardPage() {
   const firestore = useFirestore();
   const { activeProfile, isLoading: isProfileLoading } = useProfile();
 
-  // Fetch Transactions
   const transactionsQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(collection(firestore, 'users', user.uid, 'transactions'), orderBy('date', 'desc'));
   }, [firestore, user?.uid]);
   const { data: transactions, isLoading: isLoadingTransactions } = useCollection<Transaction>(transactionsQuery);
 
-  // Fetch Debts
   const debtsQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(collection(firestore, 'users', user.uid, 'debts'), orderBy('dueDate', 'asc'));
@@ -140,7 +152,7 @@ export default function DashboardPage() {
   if (isDataLoading) {
     return (
       <div className="flex flex-1 flex-col gap-6">
-        <Skeleton className="h-24 w-full rounded-xl" /> {/* Quick Add Skeleton */}
+        <Skeleton className="h-24 w-full rounded-xl" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Skeleton className="h-[126px]" />
           <Skeleton className="h-[126px]" />
@@ -155,15 +167,6 @@ export default function DashboardPage() {
     );
   }
   
-  if (isDataEmpty) {
-    return (
-        <>
-            <QuickAddInput /> {/* Mesmo no vazio, mostramos o Quick Add para facilitar o start */}
-            <WelcomeEmptyState />
-        </>
-    );
-  }
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
         style: "currency",
@@ -183,45 +186,51 @@ export default function DashboardPage() {
             
             {transactions && transactions.length > 3 && Math.random() > 0.7 && <AiInsightCard />}
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-              <StatCard 
-                title="Renda" 
-                value={formatCurrency(totalIncome)}
-                icon={TrendingUp}
-                description={descriptionText}
-                valueClassName="text-positive"
-              />
-              <StatCard 
-                title="Despesas" 
-                value={formatCurrency(totalExpenses)}
-                icon={TrendingDown}
-                description={descriptionText}
-                valueClassName="text-negative"
-              />
-              <StatCard 
-                title="Saldo" 
-                value={formatCurrency(netBalance)}
-                icon={DollarSign}
-                description={descriptionText}
-                valueClassName={netBalance >= 0 ? 'text-positive' : 'text-negative'}
-              />
-              <StatCard 
-                title="Dívida Total" 
-                value={formatCurrency(totalDebt)}
-                icon={CreditCard}
-                description="Saldo restante"
-              />
-            </div>
+            {isDataEmpty ? (
+                 <WelcomeEmptyState />
+            ) : (
+                <>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+                    <StatCard 
+                        title="Renda" 
+                        value={formatCurrency(totalIncome)}
+                        icon={TrendingUp}
+                        description={descriptionText}
+                        valueClassName="text-positive"
+                    />
+                    <StatCard 
+                        title="Despesas" 
+                        value={formatCurrency(totalExpenses)}
+                        icon={TrendingDown}
+                        description={descriptionText}
+                        valueClassName="text-negative"
+                    />
+                    <StatCard 
+                        title="Saldo" 
+                        value={formatCurrency(netBalance)}
+                        icon={DollarSign}
+                        description={descriptionText}
+                        valueClassName={netBalance >= 0 ? 'text-positive' : 'text-negative'}
+                    />
+                    <StatCard 
+                        title="Dívida Total" 
+                        value={formatCurrency(totalDebt)}
+                        icon={CreditCard}
+                        description="Saldo restante"
+                    />
+                    </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 flex flex-col gap-6">
-                <OverviewChart transactions={filteredData.transactions}/>
-                <DebtProgressChart debts={filteredData.debts} />
-              </div>
-              <div className="lg:col-span-1">
-                <RecentTransactions transactions={(transactions || []).slice(0, 5)} />
-              </div>
-            </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 flex flex-col gap-6">
+                        <OverviewChart transactions={filteredData.transactions}/>
+                        <DebtProgressChart debts={filteredData.debts} />
+                    </div>
+                    <div className="lg:col-span-1">
+                        <RecentTransactions transactions={(transactions || []).slice(0, 5)} />
+                    </div>
+                    </div>
+                </>
+            )}
           </div>
         );
       }}

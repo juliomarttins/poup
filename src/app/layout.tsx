@@ -7,35 +7,31 @@ import { Header } from "@/components/layout/header";
 import { ProfileProvider } from "@/contexts/profile-context";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LoadingProvider } from "@/contexts/loading-context";
+import { TitleRotator } from "@/components/ui/title-rotator"; // [NOVO]
 
-// [CORREÇÃO APPLE/GOOGLE] Metadados completos para PWA e SEO
+// [CORREÇÃO] Metadados Base (O TitleRotator vai sobrescrever o título no cliente)
 export const metadata: Metadata = {
-  title: {
-    template: "%s | Poupp",
-    default: "Poupp - Finanças Inteligentes",
-  },
+  title: "Poupp", // Fallback para SEO
   description: "Gestão financeira familiar com inteligência artificial.",
-  manifest: "/manifest.json", // Link para o manifesto PWA
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Poupp",
   },
-  formatDetection: {
-    telephone: false,
-  },
   icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-icon.png", // Você precisará adicionar esta imagem depois na pasta public
+    // [IMPORTANTE] O Next.js procura esses arquivos na pasta /public
+    // Certifique-se de ter favicon.ico e apple-icon.png lá.
+    icon: "/favicon.ico", 
+    apple: "/apple-icon.png", 
   },
 };
 
-// [CORREÇÃO APPLE] Viewport travado para evitar zoom indesejado em inputs e garantir área segura
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false, // Impede zoom por pinça (comportamento de App Nativo)
+  userScalable: false,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "white" },
     { media: "(prefers-color-scheme: dark)", color: "#09090b" },
@@ -61,6 +57,9 @@ export default function RootLayout({
             <UserProvider>
               <ProfileProvider>
                 <LoadingProvider>
+                  {/* [NOVO] Componente que gira o título da aba */}
+                  <TitleRotator />
+                  
                   <div className="relative flex min-h-screen flex-col">
                     <Header />
                     <main className="flex-1 flex flex-col max-w-[100vw] overflow-x-hidden">{children}</main>
