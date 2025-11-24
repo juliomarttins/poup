@@ -16,12 +16,13 @@ import type { Transaction, ManagedDebt } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ArrowRight, Plus, TrendingUp, TrendingDown, DollarSign, CreditCard } from 'lucide-react';
+import { Sparkles, ArrowRight, TrendingUp, TrendingDown, DollarSign, CreditCard, Command } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { setTransaction } from '@/firebase/firestore/actions';
 import { doc } from 'firebase/firestore';
+import { parseTransactionInput } from '@/lib/smart-parser'; // [NOVO] Import do Parser Inteligente
 
-// --- COMPONENTE DE QUICK ADD (O Coração do App) ---
+// --- COMPONENTE DE QUICK ADD (Inteligente) ---
 function QuickAddInput() {
     const [value, setValue] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
@@ -36,27 +37,17 @@ function QuickAddInput() {
 
         setIsProcessing(true);
         
-        // Lógica "Burra" mas rápida para MVP: 
-        // Se começa com número, é valor. Resto é descrição.
-        // Ex: "50 Padaria" -> R$ 50,00 - Padaria (Despesa)
-        
         try {
-            const parts = value.split(' ');
-            const firstPart = parts[0].replace(',', '.');
-            const amount = parseFloat(firstPart);
-            
-            if (isNaN(amount)) {
-                throw new Error("Comece com o valor (ex: '50 almoço')");
-            }
+            // [ATUALIZAÇÃO] Usa o parser inteligente local
+            const parsedData = parseTransactionInput(value);
 
-            const description = parts.slice(1).join(' ') || "Gasto Rápido";
             const newTx: Transaction = {
                 id: doc(collection(firestore, '_')).id,
-                amount: -Math.abs(amount), // Assume despesa por padrão no quick add
-                description: description.charAt(0).toUpperCase() + description.slice(1),
-                category: 'Outros', // AI categorizaria aqui no futuro
+                amount: parsedData.amount,
+                description: parsedData.description,
+                category: parsedData.category,
                 date: new Date().toISOString().split('T')[0],
-                type: 'expense',
+                type: parsedData.type,
                 userId: user.uid,
                 profileId: activeProfile?.id
             };
@@ -64,51 +55,61 @@ function QuickAddInput() {
             await setTransaction(firestore, user.uid, newTx);
             
             toast({
-                title: "Salvo!",
-                description: `R$ ${amount} em ${description}`,
-                className: "bg-green-600 text-white border-none"
+                title: "Salvo com IA!",
+                description: `${newTx.category}: ${newTx.description} (${Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(newTx.amount)})`,
+                className: "bg-primary text-primary-foreground border-none"
             });
             setValue("");
 
         } catch (error: any) {
-            toast({ variant: "destructive", title: "Erro", description: error.message });
+            toast({ variant: "destructive", title: "Não entendi", description: error.message });
         } finally {
             setIsProcessing(false);
         }
     };
 
     return (
-        <Card className="mb-6 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
-            <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0">
-                    <Sparkles className="w-5 h-5" />
-                </div>
-                <form onSubmit={handleQuickAdd} className="flex-1 flex gap-2 relative">
-                    <Input 
-                        placeholder="Ex: 25.90 Uber (Enter para salvar)" 
-                        value={value}
-                        onChange={(e) => setValue(e.target.value)}
-                        className="bg-background/50 border-0 shadow-inner h-10 focus-visible:ring-primary/30"
-                        disabled={isProcessing}
-                    />
-                    <Button size="icon" type="submit" disabled={isProcessing || !value} className="h-10 w-10 shrink-0 rounded-xl">
-                        <ArrowRight className="w-4 h-4" />
-                    </Button>
-                </form>
-            </CardContent>
-        </Card>
+        <div className="mb-6 space-y-2">
+            <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-yellow-500" /> Adição Rápida
+                </span>
+            </div>
+            <Card className="bg-gradient-to-br from-background to-muted/20 border-primary/20 shadow-sm hover:shadow-md transition-all">
+                <CardContent className="p-3">
+                    <form onSubmit={handleQuickAdd} className="flex gap-2 relative items-center">
+                        <div className="absolute left-3 text-muted-foreground pointer-events-none hidden sm:block">
+                            <Command className="w-4 h-4" />
+                        </div>
+                        <Input 
+                            placeholder="Ex: 56 pastel (Digite e dê Enter)" 
+                            value={value}
+                            onChange={(e) => setValue(e.target.value)}
+                            className="bg-transparent border-none shadow-none h-10 focus-visible:ring-0 sm:pl-8 text-base placeholder:text-muted-foreground/60"
+                            disabled={isProcessing}
+                            autoComplete="off"
+                        />
+                        <Button size="icon" type="submit" disabled={isProcessing || !value} className="h-10 w-10 shrink-0 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
+                            <ArrowRight className="w-5 h-5" />
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+            <p className="text-[10px] text-muted-foreground px-2 text-center sm:text-left">
+                Dica: Tente <strong>"50 uber"</strong>, <strong>"3500 salário"</strong> ou <strong>"120 jantar"</strong>. A IA categoriza para você.
+            </p>
+        </div>
     )
 }
 
 // --- COMPONENTE DE INSIGHT ATIVO (IA Passiva) ---
 function AiInsightCard() {
-    // Mockup visual para "IA Ativa" - No futuro isso vem do backend
     return (
         <div className="mb-6 px-4 py-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-3 text-sm text-blue-600 dark:text-blue-400 animate-fade-up">
             <Sparkles className="w-4 h-4 mt-0.5 shrink-0" />
             <div>
                 <span className="font-bold block mb-0.5">Insight da Semana</span>
-                <p className="opacity-90">Seus gastos com <span className="font-semibold underline decoration-blue-500/30">Alimentação</span> estão 15% menores que a média. Continue assim!</p>
+                <p className="opacity-90">Notei que você gastou com <strong>Lazer</strong> ontem. Que tal revisar sua meta mensal?</p>
             </div>
         </div>
     )
@@ -139,7 +140,7 @@ export default function DashboardPage() {
   if (isDataLoading) {
     return (
       <div className="flex flex-1 flex-col gap-6">
-        <Skeleton className="h-16 w-full rounded-xl" /> {/* Quick Add Skeleton */}
+        <Skeleton className="h-24 w-full rounded-xl" /> {/* Quick Add Skeleton */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Skeleton className="h-[126px]" />
           <Skeleton className="h-[126px]" />
@@ -155,7 +156,12 @@ export default function DashboardPage() {
   }
   
   if (isDataEmpty) {
-    return <WelcomeEmptyState />;
+    return (
+        <>
+            <QuickAddInput /> {/* Mesmo no vazio, mostramos o Quick Add para facilitar o start */}
+            <WelcomeEmptyState />
+        </>
+    );
   }
 
   const formatCurrency = (value: number) => {
@@ -173,11 +179,9 @@ export default function DashboardPage() {
         return (
           <div className="animate-in fade-in duration-500">
             
-            {/* [FEATURE 7] Quick Add Input (Fluxo Rápido) */}
             <QuickAddInput />
             
-            {/* [FEATURE 6] AI Insight (IA Ativa) */}
-            {transactions && transactions.length > 5 && <AiInsightCard />}
+            {transactions && transactions.length > 3 && Math.random() > 0.7 && <AiInsightCard />}
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
               <StatCard 
@@ -210,7 +214,6 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* [CORREÇÃO 4] Gráficos mais limpos */}
               <div className="lg:col-span-2 flex flex-col gap-6">
                 <OverviewChart transactions={filteredData.transactions}/>
                 <DebtProgressChart debts={filteredData.debts} />
