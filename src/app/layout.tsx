@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-// [ALTERAÇÃO] Removemos a importação da fonte do Google para evitar erro de conexão
-// import { Inter } from "next/font/google"; 
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
@@ -10,12 +8,15 @@ import { ProfileProvider } from "@/contexts/profile-context";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LoadingProvider } from "@/contexts/loading-context";
 
-// [ALTERAÇÃO] Removemos a inicialização da fonte
-// const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: "Poupp",
-  description: "Gestão financeira inteligente para famílias",
+  title: {
+    template: "%s | Poupp",
+    default: "Poupp - Finanças Inteligentes",
+  },
+  description: "Gestão financeira familiar com inteligência artificial.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
@@ -25,13 +26,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      {/* [ALTERAÇÃO] Removemos ${inter.className} e mantemos apenas as classes do Tailwind */}
-      <body className={`antialiased min-h-screen bg-background font-sans`}>
+      <body className="antialiased min-h-screen bg-background font-sans selection:bg-primary/20 selection:text-primary">
         <ThemeProvider
             attribute="class"
-            defaultTheme="dark"
+            defaultTheme="system"
             defaultColor="default"
-            enableSystem={false}
+            enableSystem
+            disableTransitionOnChange
         >
           <FirebaseClientProvider>
             <UserProvider>
@@ -39,7 +40,7 @@ export default function RootLayout({
                 <LoadingProvider>
                   <div className="relative flex min-h-screen flex-col">
                     <Header />
-                    <main className="flex-1">{children}</main>
+                    <main className="flex-1 flex flex-col">{children}</main>
                   </div>
                   <Toaster />
                 </LoadingProvider>

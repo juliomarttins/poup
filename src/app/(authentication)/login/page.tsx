@@ -1,7 +1,5 @@
 import Image from 'next/image';
-import Link from 'next/link';
-import { Sparkles } from 'lucide-react'; // [CORREÇÃO] Importação adicionada
-
+import { Sparkles } from 'lucide-react';
 import { LoginForm } from '@/components/auth/login-form';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Logo } from '@/components/icons';
@@ -10,37 +8,40 @@ export default function LoginPage() {
   const loginBg = PlaceHolderImages.find(img => img.id === 'login-background');
 
   return (
-    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="w-full h-screen lg:grid lg:grid-cols-2 overflow-hidden bg-background">
       
       {/* LADO ESQUERDO: FORMULÁRIO */}
-      <div className="flex items-center justify-center p-6 py-12 sm:p-12 relative overflow-hidden">
-        {/* Efeito de fundo sutil */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 blur-[100px] rounded-full -z-10 pointer-events-none" />
-
-        <div className="mx-auto grid w-full max-w-[380px] gap-8 relative z-10">
+      <div className="flex flex-col justify-center items-center p-6 relative z-10 h-full">
+        
+        <div className="w-full max-w-[380px] space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
           
           <div className="flex flex-col items-center text-center space-y-2">
-            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-2 ring-1 ring-primary/20 shadow-lg shadow-primary/10">
-              <Logo className="h-7 w-7 text-primary" />
+            <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center mb-4 shadow-xl shadow-primary/20">
+              <Logo className="h-6 w-6 text-primary-foreground" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight font-headline">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight font-headline">
               Bem-vindo de volta
             </h1>
-            <p className="text-sm text-muted-foreground max-w-xs">
+            <p className="text-sm text-muted-foreground max-w-xs mx-auto">
               Acesse sua conta para gerenciar suas finanças com inteligência.
             </p>
           </div>
 
-          {/* FORMULÁRIO */}
-          <div className="p-6 rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm shadow-2xl">
+          {/* CONTAINER DO FORMULÁRIO - Glassmorphism sutil */}
+          <div className="p-1">
              <LoginForm />
           </div>
           
+          <p className="px-8 text-center text-xs text-muted-foreground">
+            Ao clicar em continuar, você concorda com nossos{' '}
+            <a href="#" className="underline underline-offset-4 hover:text-primary">Termos de Serviço</a> e{' '}
+            <a href="#" className="underline underline-offset-4 hover:text-primary">Política de Privacidade</a>.
+          </p>
         </div>
       </div>
 
       {/* LADO DIREITO: IMAGEM DE FUNDO */}
-      <div className="hidden bg-zinc-900 lg:block relative overflow-hidden">
+      <div className="hidden lg:block relative h-full bg-muted">
         {loginBg && (
           <Image
             src={loginBg.imageUrl}
@@ -48,20 +49,23 @@ export default function LoginPage() {
             data-ai-hint={loginBg.imageHint}
             fill
             priority
-            className="object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-1000 ease-in-out scale-105"
+            className="object-cover transition-transform duration-1000 hover:scale-105"
           />
         )}
-        {/* Gradiente de sobreposição para integração perfeita */}
-        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/50 to-transparent" />
         
-        <div className="absolute bottom-10 left-10 max-w-md space-y-2 z-20">
-             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-medium backdrop-blur-md">
-                <Sparkles className="w-3 h-3" /> <span>Powered by Gemini AI</span>
+        {/* Gradiente Overlay Profissional */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        
+        <div className="absolute bottom-12 left-12 max-w-lg z-20 space-y-4">
+             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-medium backdrop-blur-md shadow-lg">
+                <Sparkles className="w-3.5 h-3.5 text-yellow-400" /> <span>IA Integrada</span>
             </div>
-            <h2 className="text-2xl font-bold text-white">O controle total do seu dinheiro.</h2>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-                Junte-se a milhares de famílias que estão saindo do vermelho e construindo um futuro sólido com o Poupp.
-            </p>
+            <blockquote className="space-y-2">
+              <p className="text-3xl font-bold text-white leading-tight">
+                "O controle financeiro não é sobre cortar gastos, é sobre criar liberdade."
+              </p>
+              <footer className="text-sm text-white/80 font-medium">Poupp Team</footer>
+            </blockquote>
         </div>
       </div>
     </div>
