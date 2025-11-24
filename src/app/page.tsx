@@ -5,9 +5,8 @@ import Link from "next/link";
 import { 
   ArrowRight, Bot, CheckCircle2, LayoutDashboard, PieChart, Smartphone, 
   TrendingUp, ShieldCheck, Users, CreditCard, TrendingDown, Download, 
-  Palette, PiggyBank, Check, Laptop, Bell, X, AlertTriangle, RefreshCw, 
-  Server, Zap, Coffee, ShoppingCart, Car, Home, Plane, Music, 
-  Shield, Gift, BrainCircuit, Sparkles, ChevronDown
+  Palette, PiggyBank, Check, Laptop, Bell, X, Zap, ShoppingCart, Car, 
+  Plane, Shield, BrainCircuit, Sparkles, ChevronDown
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -17,8 +16,9 @@ import { Logo } from "@/components/icons";
 import { useUser } from "@/firebase/auth/use-user";
 import { Progress } from "@/components/ui/progress";
 
-// ... (MANTENHA OS MOCKUPS AQUI - GoogleLogo, DashboardMockupHero, etc. O código é longo, vou focar na alteração principal abaixo) ...
-// SEU CÓDIGO DE MOCKUPS CONTINUA IGUAL AQUI EM CIMA.
+// MOCKUPS (Mantidos os SVG/Componentes visuais puros para brevidade, focando na correção do layout)
+// ... [MANTENHA OS COMPONENTES GoogleLogo, FirebaseLogo, DashboardMockupHero, ETC AQUI IGUAIS AO ANTERIOR] ...
+// VOU REPETIR O CÓDIGO PRINCIPAL DA PÁGINA COM A CORREÇÃO SOLICITADA:
 
 // --- MOCKUPS (Reutilize os componentes visuais do arquivo anterior para economizar espaço na resposta, se necessário, mas garanta que a export function esteja completa) ---
 const GoogleLogo = () => (
@@ -266,14 +266,14 @@ export default function LandingPage() {
             </div>
           </div>
           
-          {/* SCROLL INDICATOR (MODIFICADO: VISUAL E MOBILE ONLY) */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce opacity-70 md:hidden pointer-events-none">
-            <span className="text-xs uppercase tracking-widest text-muted-foreground">Descubra Mais</span>
-            <ChevronDown className="h-6 w-6 text-primary" />
+          {/* [CORREÇÃO 1] SCROLL INDICATOR: Ajuste para mobile Android (bottom-12) e cor primária com animação */}
+          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 md:hidden pointer-events-none animate-pulse">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Descubra Mais</span>
+            <ChevronDown className="h-6 w-6 text-primary animate-bounce" />
           </div>
         </section>
 
-        {/* FEATURES GRID */}
+        {/* SEÇÕES SEGUINTES (Mantidas iguais) */}
         <section id="features" className="py-24 bg-muted/20">
             <div className="container px-4 mx-auto">
                 <div className="text-center max-w-3xl mx-auto mb-16">
@@ -281,8 +281,6 @@ export default function LandingPage() {
                     <p className="text-muted-foreground text-lg">Ferramentas poderosas desenhadas para quem quer resultado rápido.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                    
-                    {/* Mobile & Desktop */}
                     <div className="md:col-span-1 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col hover:shadow-xl transition-all duration-500">
                         <div className="space-y-2 relative z-10 mb-6">
                             <div className="flex gap-2"><div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500"><Smartphone size={16} /></div><div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500"><Laptop size={16} /></div></div>
@@ -291,26 +289,18 @@ export default function LandingPage() {
                         </div>
                         <div className="mt-auto relative h-48 w-full overflow-hidden flex items-end justify-center"><CrossPlatformMockup /></div>
                     </div>
-
-                    {/* Caixinhas */}
                     <div className="md:col-span-1 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-500">
                         <div className="space-y-2 relative z-10"><div className="h-8 w-8 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-500"><PiggyBank size={16} /></div><h3 className="text-lg font-bold">Metas Reais</h3><p className="text-xs text-muted-foreground">Veja quanto falta para realizar seus sonhos.</p></div>
                         <div className="mt-4 flex-1"><GoalsMockup /></div>
                     </div>
-
-                    {/* Personalização */}
                     <div className="md:col-span-1 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col hover:shadow-xl transition-all duration-500">
                         <div className="space-y-2 relative z-10 mb-4"><div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><Palette size={16} /></div><h3 className="text-lg font-bold">Seu Estilo</h3><p className="text-xs text-muted-foreground">Avatares e temas para deixar do seu jeito.</p></div>
                         <div className="mt-auto flex flex-col gap-2"><PersonalizationMockup /></div>
                     </div>
-
-                    {/* Exportação */}
                     <div className="md:col-span-1 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-500">
                         <div className="space-y-2 relative z-10"><div className="h-8 w-8 rounded-lg bg-yellow-500/10 flex items-center justify-center text-yellow-600"><Download size={16} /></div><h3 className="text-lg font-bold">Exportação PDF</h3><p className="text-xs text-muted-foreground">Relatórios profissionais com um clique.</p></div>
                         <div className="mt-4 relative flex items-center justify-center h-40"><PDFReportMockup /></div>
                     </div>
-
-                    {/* Debt & AI */}
                     <div className="md:col-span-2 relative group overflow-hidden rounded-3xl border bg-background p-6 flex flex-col hover:shadow-xl transition-all duration-500">
                         <div className="space-y-4 relative z-10 mb-6">
                             <div className="flex gap-2">
@@ -328,7 +318,6 @@ export default function LandingPage() {
             </div>
         </section>
 
-        {/* PRICING & SECURITY sections continue below unchanged... */}
         <section id="pricing" className="py-24 bg-gradient-to-b from-background to-muted/30">
             <div className="container px-4 mx-auto">
                 <div className="text-center max-w-3xl mx-auto mb-16">
