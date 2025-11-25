@@ -13,7 +13,7 @@ import {
   LogOut,
   Bot,
   FileText,
-  ShieldAlert // [NOVO]
+  ShieldAlert
 } from 'lucide-react';
 
 import {
@@ -31,8 +31,8 @@ import {
 import { Logo } from '@/components/icons';
 import { useAuth } from '@/firebase/provider';
 import { signOut } from 'firebase/auth';
-import { useDoc } from '@/firebase/firestore/use-doc'; // [NOVO]
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase'; // [NOVO]
+import { useDoc } from '@/firebase/firestore/use-doc';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
 
@@ -55,7 +55,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const auth = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();
   
-  // [NOVO] Verificação de Admin
   const { user } = useUser();
   const firestore = useFirestore();
   
@@ -108,7 +107,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuItem>
           ))}
 
-          {/* [NOVO] Item de Admin Secreto */}
           {isAdmin && (
              <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname === '/dashboard/admin'} tooltip="Painel Admin">

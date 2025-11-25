@@ -33,7 +33,7 @@ export type FinancialAnalysis = {
   advice: string;
 }
 
-// [ATUALIZADO] Adicionado role e subscription
+// [ATUALIZADO]
 export type UserProfile = {
   uid: string;
   name: string | null;
@@ -44,12 +44,15 @@ export type UserProfile = {
   familyId?: string;
   familyCode?: string;
   
-  // Controle de Acesso e Pagamento
+  // Controle de Acesso
   role?: 'admin' | 'user'; 
+  isBlocked?: boolean; // Bloqueio total
+  adminMessage?: string; // Mensagem de aviso
+
   subscription?: {
-      plan: 'free' | 'pro';
-      status: 'active' | 'expired' | 'trial';
-      expiresAt: string | Timestamp; // ISO String ou Timestamp
+      plan: string; // ID do plano
+      status: 'active' | 'expired' | 'trial' | 'lifetime';
+      expiresAt: string | Timestamp; 
   };
 
   aiSettings?: {

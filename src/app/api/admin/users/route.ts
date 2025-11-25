@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { initializeAdminApp } from '@/firebase/admin';
 import { Timestamp } from 'firebase-admin/firestore';
+import { SUBSCRIPTION_PLANS } from '@/lib/constants';
 
 // Listar Usuários (Apenas Admin)
 export async function GET(req: Request) {
@@ -21,23 +22,22 @@ export async function GET(req: Request) {
         }
 
         // Busca todos os usuários
-        // NOTA: Em escala real, precisaria de paginação. Para agora, serve.
         const snapshot = await firestore.collection('users').get();
         
         const users = snapshot.docs.map(doc => {
             const data = doc.data();
-            // Sanitiza dados sensíveis antes de enviar pro front
             return {
                 uid: doc.id,
                 name: data.name,
                 email: data.email,
                 role: data.role || 'user',
+                isBlocked: data.isBlocked || false,
+                adminMessage: data.adminMessage || '',
                 subscription: {
                     status: data.subscription?.status || 'trial',
                     expiresAt: data.subscription?.expiresAt?.toDate ? data.subscription.expiresAt.toDate().toISOString() : data.subscription?.expiresAt,
-                    plan: data.subscription?.plan || 'free'
-                },
-                lastLogin: data.lastLogin // Se tiver tracking
+                    plan: data.subscription?.plan || 'trial'
+                }
             };
         });
 
@@ -49,7 +49,7 @@ export async function GET(req: Request) {
     }
 }
 
-// Adicionar Dias / Alterar Status
+// Ações Administrativas
 export async function POST(req: Request) {
     try {
         const authHeader = req.headers.get('Authorization');
@@ -66,38 +66,74 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { targetUserId, action, days } = body;
+        const { targetUserId, action, value } = body;
 
         const targetRef = firestore.collection('users').doc(targetUserId);
+        
+        // AÇÃO: DELETAR USUÁRIO
+        if (action === 'delete') {
+            try {
+                await auth.deleteUser(targetUserId);
+            } catch (e) {
+                console.log("Auth delete failed (maybe already deleted):", e);
+            }
+            await targetRef.delete();
+            // Nota: Em produção real, deletaria recursivamente subcoleções.
+            return NextResponse.json({ success: true });
+        }
+
         const targetSnap = await targetRef.get();
+        if (!targetSnap.exists) return NextResponse.json({ error: 'User not found' }, { status: 404 });
         const targetData = targetSnap.data();
 
-        if (!targetSnap.exists) return NextResponse.json({ error: 'User not found' }, { status: 404 });
-
-        if (action === 'add_days') {
-            let currentExpiresAt = new Date();
+        // AÇÃO: DEFINIR PLANO (Basic, Brother, Premium, etc)
+        if (action === 'set_plan') {
+            const planKey = value; 
+            const planDetails = Object.values(SUBSCRIPTION_PLANS).find(p => p.id === planKey);
             
-            // Se já tem data futura, soma a partir dela. Se não, soma a partir de hoje.
-            if (targetData?.subscription?.expiresAt) {
-                const expDate = targetData.subscription.expiresAt.toDate();
-                if (expDate > new Date()) {
-                    currentExpiresAt = expDate;
-                }
-            }
+            if (!planDetails) return NextResponse.json({ error: 'Plan invalid' }, { status: 400 });
 
-            const newExpiresAt = new Date(currentExpiresAt);
-            newExpiresAt.setDate(newExpiresAt.getDate() + parseInt(days));
+            const newExpiresAt = new Date();
+            newExpiresAt.setDate(newExpiresAt.getDate() + planDetails.days);
 
             await targetRef.update({
-                'subscription.status': 'active',
-                'subscription.plan': 'pro',
+                'subscription.status': planKey === 'lifetime' ? 'lifetime' : 'active',
+                'subscription.plan': planKey,
                 'subscription.expiresAt': Timestamp.fromDate(newExpiresAt)
             });
+        }
+
+        // AÇÃO: REMOVER DIAS
+        if (action === 'remove_days') {
+            const days = parseInt(value);
+            let currentExpiresAt = targetData?.subscription?.expiresAt?.toDate() || new Date();
+            currentExpiresAt.setDate(currentExpiresAt.getDate() - days);
+            
+            await targetRef.update({
+                'subscription.expiresAt': Timestamp.fromDate(currentExpiresAt)
+            });
+        }
+
+        // AÇÃO: BLOQUEAR / DESBLOQUEAR
+        if (action === 'toggle_block') {
+            const currentStatus = targetData?.isBlocked || false;
+            await targetRef.update({ isBlocked: !currentStatus });
+            try {
+                await auth.updateUser(targetUserId, { disabled: !currentStatus });
+            } catch (e) {
+                console.error("Auth block failed:", e);
+            }
+        }
+
+        // AÇÃO: ENVIAR MENSAGEM
+        if (action === 'send_message') {
+            await targetRef.update({ adminMessage: value });
         }
 
         return NextResponse.json({ success: true });
 
     } catch (error: any) {
+        console.error("API Admin Error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

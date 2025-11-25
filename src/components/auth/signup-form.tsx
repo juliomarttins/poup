@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState } from 'react';
@@ -13,11 +11,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile, type User } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
-import { cn } from '@/lib/utils';
+import { doc, setDoc, serverTimestamp, getDoc, Timestamp } from 'firebase/firestore';
+import { cn, generateUsername, generateFamilyCode } from '@/lib/utils';
 import Link from 'next/link';
-import { generateUsername, generateFamilyCode } from '@/lib/utils';
-
+import { SUBSCRIPTION_PLANS } from '@/lib/constants';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
@@ -38,7 +35,6 @@ export function SignupForm() {
   const firestore = useFirestore();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -67,14 +63,26 @@ export function SignupForm() {
                 avatarBackground: 'hsl(var(--primary))'
             }
 
+            // Lógica de Data de Expiração (Hoje + 8 dias)
+            const expirationDate = new Date();
+            expirationDate.setDate(expirationDate.getDate() + SUBSCRIPTION_PLANS.TRIAL.days);
+
             const userProfileData = {
                 uid: user.uid,
                 name: name || user.displayName,
                 email: user.email,
                 createdAt: serverTimestamp(),
                 profiles: [mainProfile],
-                familyId: user.uid, // O pai da família é ele mesmo
-                familyCode: generateFamilyCode() // Gera o código
+                familyId: user.uid,
+                familyCode: generateFamilyCode(),
+                // Configuração Padrão de Assinatura
+                subscription: {
+                    plan: SUBSCRIPTION_PLANS.TRIAL.id,
+                    status: 'trial',
+                    expiresAt: Timestamp.fromDate(expirationDate)
+                },
+                role: 'user',
+                isBlocked: false
             };
             await setDoc(userDocRef, userProfileData);
         }
@@ -96,42 +104,15 @@ export function SignupForm() {
     }
   };
 
-
   const onSubmit = async (data: FormValues) => {
-    if (!auth || !firestore) {
-        toast({
-            variant: "destructive",
-            title: "Erro de Configuração",
-            description: "A aplicação não conseguiu se conectar ao Firebase. Tente recarregar a página.",
-        });
-        return;
-    };
+    if (!auth || !firestore) return;
     setIsLoading(true);
-
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-      const user = userCredential.user;
-      
-      await setupNewUser(user, data.name);
-      
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Bem-vindo ao Poupp!"
-      });
-
+      await setupNewUser(userCredential.user, data.name);
+      toast({ title: "Conta criada!", description: "8 dias de teste ativados." });
     } catch (error: any) {
-      let description = "Ocorreu um erro inesperado ao criar sua conta.";
-      if (error.code === 'auth/email-already-in-use') {
-        description = "Este endereço de e-mail já está em uso por outra conta.";
-      } else if (error.code) {
-        description = error.message;
-      }
-      
-      toast({
-        variant: "destructive",
-        title: "Erro no cadastro",
-        description,
-      });
+      toast({ variant: "destructive", title: "Erro", description: error.message });
     } finally {
         setIsLoading(false);
     }
@@ -145,16 +126,11 @@ export function SignupForm() {
         const result = await signInWithPopup(auth, provider);
         await setupNewUser(result.user, result.user.displayName);
     } catch(error: any) {
-        toast({
-            variant: 'destructive',
-            title: 'Erro de Autenticação com Google',
-            description: error.message,
-        });
+        toast({ variant: 'destructive', title: 'Erro Google', description: error.message });
     } finally {
         setIsGoogleLoading(false);
     }
   };
-
 
   return (
     <div className="grid gap-4">
@@ -162,78 +138,17 @@ export function SignupForm() {
         {isGoogleLoading ? 'Aguardando...' : 'Cadastrar-se com Google'}
       </Button>
       <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            Ou continue com e-mail
-          </span>
-        </div>
+        <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+        <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Ou continue com e-mail</span></div>
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome</FormLabel>
-                <FormControl>
-                  <Input placeholder="Seu nome completo" {...field} disabled={isLoading || isGoogleLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>E-mail</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="m@example.com" {...field} disabled={isLoading || isGoogleLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Senha</FormLabel>
-                <FormControl>
-                  <Input type="password" {...field} disabled={isLoading || isGoogleLoading}/>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="confirmPassword"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Repita a Senha</FormLabel>
-                <FormControl>
-                  <Input type="password" {...field} disabled={isLoading || isGoogleLoading}/>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
-            {isLoading ? 'Criando conta...' : 'Criar uma conta'}
-          </Button>
-             <div className="mt-4 text-center text-sm">
-                Já tem uma conta?{' '}
-                <Link href="/" className={cn((isLoading || isGoogleLoading) && "pointer-events-none opacity-50", "underline")}>
-                    Entrar
-                </Link>
-            </div>
+          <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Seu nome" {...field} /></FormControl><FormMessage /></FormItem>)} />
+          <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>E-mail</FormLabel><FormControl><Input type="email" placeholder="m@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
+          <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>Senha</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+          <FormField control={form.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Repita a Senha</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+          <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>{isLoading ? 'Criando...' : 'Criar conta'}</Button>
+             <div className="mt-4 text-center text-sm">Já tem uma conta? <Link href="/login" className="underline">Entrar</Link></div>
         </form>
       </Form>
     </div>

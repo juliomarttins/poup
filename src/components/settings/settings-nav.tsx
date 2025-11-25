@@ -19,10 +19,8 @@ const additionalItems = [
 export function SettingsNav({ className, items, ...props }: SettingsNavProps) {
   const pathname = usePathname()
   
-  // Merge default items with new items
   const allItems = [...items, ...additionalItems];
 
-  // Remove duplicates based on href just in case
   const uniqueItems = allItems.filter((item, index, self) =>
     index === self.findIndex((t) => t.href === item.href)
   );
