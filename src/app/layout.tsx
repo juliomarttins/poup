@@ -7,23 +7,18 @@ import { Header } from "@/components/layout/header";
 import { ProfileProvider } from "@/contexts/profile-context";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LoadingProvider } from "@/contexts/loading-context";
-import { TitleRotator } from "@/components/ui/title-rotator"; // [NOVO]
+import { TitleRotator } from "@/components/ui/title-rotator";
 
-// [CORREÇÃO] Metadados Base (O TitleRotator vai sobrescrever o título no cliente)
+// [CORREÇÃO] Removido o objeto 'icons'. 
+// O Next.js agora usa automaticamente o src/app/icon.tsx e src/app/apple-icon.tsx
 export const metadata: Metadata = {
-  title: "Poupp", // Fallback para SEO
+  title: "Poupp",
   description: "Gestão financeira familiar com inteligência artificial.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Poupp",
-  },
-  icons: {
-    // [IMPORTANTE] O Next.js procura esses arquivos na pasta /public
-    // Certifique-se de ter favicon.ico e apple-icon.png lá.
-    icon: "/favicon.ico", 
-    apple: "/apple-icon.png", 
   },
 };
 
@@ -57,7 +52,6 @@ export default function RootLayout({
             <UserProvider>
               <ProfileProvider>
                 <LoadingProvider>
-                  {/* [NOVO] Componente que gira o título da aba */}
                   <TitleRotator />
                   
                   <div className="relative flex min-h-screen flex-col">
