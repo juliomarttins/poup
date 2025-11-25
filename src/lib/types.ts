@@ -7,17 +7,9 @@ export type Transaction = {
   amount: number;
   type: 'income' | 'expense';
   category: string;
-  userId: string; // ID of the user who created the transaction
-  profileId?: string; // ID of the profile that created the transaction
+  userId: string; 
+  profileId?: string; 
   createdAt?: Timestamp;
-};
-
-export type Debt = {
-  id: string;
-  name: string;
-  balance: number;
-  interestRate: number;
-  minimumPayment: number;
 };
 
 export type ManagedDebt = {
@@ -28,9 +20,9 @@ export type ManagedDebt = {
     totalInstallments: number;
     paidInstallments: number;
     installmentAmount: number;
-    dueDate: string; // Data da primeiro vencimento
+    dueDate: string;
     category: string;
-    userId: string; // ID of the user who created the debt
+    userId: string;
 }
 
 export type FinancialAnalysis = {
@@ -41,6 +33,7 @@ export type FinancialAnalysis = {
   advice: string;
 }
 
+// [ATUALIZADO] Adicionado role e subscription
 export type UserProfile = {
   uid: string;
   name: string | null;
@@ -50,6 +43,15 @@ export type UserProfile = {
   profiles?: Profile[];
   familyId?: string;
   familyCode?: string;
+  
+  // Controle de Acesso e Pagamento
+  role?: 'admin' | 'user'; 
+  subscription?: {
+      plan: 'free' | 'pro';
+      status: 'active' | 'expired' | 'trial';
+      expiresAt: string | Timestamp; // ISO String ou Timestamp
+  };
+
   aiSettings?: {
       persona?: string;
       updatedAt?: any;
@@ -64,12 +66,11 @@ export type Profile = {
   avatarBackground?: string | null;
 }
 
-// [NOVO] Tipo para o Histórico de Relatórios
 export type Report = {
     id: string;
     userId: string;
     type: 'geral' | 'painel' | 'dividas' | 'transacoes';
     title: string;
-    generatedAt: Timestamp | any; // Suporta tanto o Timestamp do Firebase quanto Date
-    filterDescription?: string; // Ex: "01/11/2024 - 30/11/2024"
+    generatedAt: Timestamp | any;
+    filterDescription?: string;
 }

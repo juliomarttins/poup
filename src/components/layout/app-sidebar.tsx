@@ -12,7 +12,8 @@ import {
   HelpCircle,
   LogOut,
   Bot,
-  FileText // [NOVO]
+  FileText,
+  ShieldAlert // [NOVO]
 } from 'lucide-react';
 
 import {
@@ -30,68 +31,48 @@ import {
 import { Logo } from '@/components/icons';
 import { useAuth } from '@/firebase/provider';
 import { signOut } from 'firebase/auth';
+import { useDoc } from '@/firebase/firestore/use-doc'; // [NOVO]
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase'; // [NOVO]
+import { doc } from 'firebase/firestore';
+import type { UserProfile } from '@/lib/types';
 
 const mainNavItems = [
-  {
-    title: 'Visão Geral',
-    url: '/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'Transações',
-    url: '/dashboard/transactions',
-    icon: ArrowRightLeft,
-  },
-  {
-    title: 'Dívidas',
-    url: '/dashboard/debts',
-    icon: CreditCard,
-  },
-  {
-    title: 'Situação',
-    url: '/dashboard/situation',
-    icon: BarChart3,
-  },
-  {
-    title: 'Relatórios', // [NOVO]
-    url: '/dashboard/reports',
-    icon: FileText,
-  },
-  {
-    title: 'Poupp IA',
-    url: '/dashboard/poupp-ia',
-    icon: Bot,
-  },
+  { title: 'Visão Geral', url: '/dashboard', icon: LayoutDashboard },
+  { title: 'Transações', url: '/dashboard/transactions', icon: ArrowRightLeft },
+  { title: 'Dívidas', url: '/dashboard/debts', icon: CreditCard },
+  { title: 'Situação', url: '/dashboard/situation', icon: BarChart3 },
+  { title: 'Relatórios', url: '/dashboard/reports', icon: FileText },
+  { title: 'Poupp IA', url: '/dashboard/poupp-ia', icon: Bot },
 ];
 
 const settingsNavItems = [
-  {
-    title: 'Configurações',
-    url: '/dashboard/settings',
-    icon: Settings,
-  },
-  {
-    title: 'Ajuda',
-    url: '/dashboard/help',
-    icon: HelpCircle,
-  },
+  { title: 'Configurações', url: '/dashboard/settings', icon: Settings },
+  { title: 'Ajuda', url: '/dashboard/help', icon: HelpCircle },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const auth = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();
+  
+  // [NOVO] Verificação de Admin
+  const { user } = useUser();
+  const firestore = useFirestore();
+  
+  const userProfileRef = useMemoFirebase(() => {
+      if (!firestore || !user?.uid) return null;
+      return doc(firestore, 'users', user.uid);
+  }, [firestore, user?.uid]);
+  
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+  const isAdmin = userProfile?.role === 'admin';
 
   const handleSignOut = async () => {
-    if (auth) {
-      await signOut(auth);
-    }
+    if (auth) await signOut(auth);
   };
 
   const handleLinkClick = () => {
-    if (isMobile) {
-        setOpenMobile(false);
-    }
+    if (isMobile) setOpenMobile(false);
   };
 
   return (
@@ -126,6 +107,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+
+          {/* [NOVO] Item de Admin Secreto */}
+          {isAdmin && (
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === '/dashboard/admin'} tooltip="Painel Admin">
+                    <Link href="/dashboard/admin" onClick={handleLinkClick} className="text-red-500 hover:text-red-600 hover:bg-red-50/50">
+                        <ShieldAlert className="size-4" />
+                        <span>Administração</span>
+                    </Link>
+                </SidebarMenuButton>
+             </SidebarMenuItem>
+          )}
         </SidebarMenu>
         
         <SidebarSeparator className="mx-2 my-2" />
