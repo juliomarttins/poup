@@ -16,6 +16,7 @@ import type { Transaction, ManagedDebt } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge'; // [CORREÇÃO] Import que faltava
 import { Sparkles, ArrowRight, TrendingUp, TrendingDown, DollarSign, CreditCard, Command, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { setTransaction } from '@/firebase/firestore/actions';
