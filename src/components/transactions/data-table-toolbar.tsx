@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Table } from "@tanstack/react-table"
-import { X, FileDown, PlusCircle, Check, User, Tag, Circle, Trash2, CheckCircle2 } from "lucide-react"
+import { X, FileDown, PlusCircle, CheckCircle2, User, Tag, Circle, Trash2, Filter } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,15 +11,22 @@ import type { Transaction, Profile } from "@/lib/types"
 import { generateTransactionsPDF } from "@/lib/generate-pdf"
 import { useUser, useFirestore } from "@/firebase"
 import { saveReportHistory } from "@/firebase/firestore/actions"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
 import { writeBatch, doc } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { useState } from "react"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
+// --- NOVO COMPONENTE DE FILTRO (100% FUNCIONAL) ---
 interface FacetedFilterProps<TData, TValue> {
   column?: any
   title: string
@@ -35,12 +42,11 @@ function DataTableFacetedFilter<TData, TValue>({
   title,
   options,
 }: FacetedFilterProps<TData, TValue>) {
-  const facets = column?.getFacetedUniqueValues()
   const selectedValues = new Set(column?.getFilterValue() as string[])
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 border-dashed">
           <PlusCircle className="mr-2 h-4 w-4" />
           {title}
@@ -68,74 +74,53 @@ function DataTableFacetedFilter<TData, TValue>({
             </>
           )}
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
-        <Command>
-          <CommandInput placeholder={title} />
-          <CommandList>
-            <CommandEmpty>Nenhum resultado.</CommandEmpty>
-            <CommandGroup>
-              {options.map((option) => {
-                const isSelected = selectedValues.has(option.value)
-                return (
-                  <CommandItem
-                    key={option.value}
-                    value={option.label} 
-                    onSelect={() => {
-                      if (isSelected) {
-                        selectedValues.delete(option.value)
-                      } else {
-                        selectedValues.add(option.value)
-                      }
-                      const filterValues = Array.from(selectedValues)
-                      column?.setFilterValue(
-                        filterValues.length ? filterValues : undefined
-                      )
-                    }}
-                    className="cursor-pointer" 
-                  >
-                    <div
-                      className={cn(
-                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                        isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : "opacity-50 [&_svg]:invisible"
-                      )}
-                    >
-                      <Check className={cn("h-4 w-4")} />
-                    </div>
-                    {option.icon && (
-                      <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                    )}
-                    <span>{option.label}</span>
-                    {facets?.get(option.value) && (
-                      <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
-                        {facets.get(option.value)}
-                      </span>
-                    )}
-                  </CommandItem>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-[200px]">
+        <DropdownMenuLabel>{title}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {options.map((option) => {
+          const isSelected = selectedValues.has(option.value)
+          return (
+            <DropdownMenuCheckboxItem
+              key={option.value}
+              checked={isSelected}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  selectedValues.add(option.value)
+                } else {
+                  selectedValues.delete(option.value)
+                }
+                const filterValues = Array.from(selectedValues)
+                column?.setFilterValue(
+                  filterValues.length ? filterValues : undefined
                 )
-              })}
-            </CommandGroup>
-            {selectedValues.size > 0 && (
-              <>
-                <CommandSeparator />
-                <CommandGroup>
-                  <CommandItem
-                    onSelect={() => column?.setFilterValue(undefined)}
-                    className="justify-center text-center cursor-pointer"
-                  >
-                    Limpar filtros
-                  </CommandItem>
-                </CommandGroup>
-              </>
-            )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+              }}
+            >
+              <div className="flex items-center gap-2">
+                 {option.icon && <option.icon className="h-4 w-4 text-muted-foreground" />}
+                 <span>{option.label}</span>
+              </div>
+            </DropdownMenuCheckboxItem>
+          )
+        })}
+        {selectedValues.size > 0 && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem
+              checked={false}
+              onSelect={() => column?.setFilterValue(undefined)}
+              className="justify-center text-center font-medium"
+            >
+              Limpar filtros
+            </DropdownMenuCheckboxItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
+
+// --- MAIN TOOLBAR ---
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -157,6 +142,7 @@ export function DataTableToolbar<TData>({
   const { toast } = useToast();
   const [isBulking, setIsBulking] = useState(false);
 
+  // Opções para Filtros
   const statusOptions = [
       { label: "Pago", value: "paid", icon: CheckCircle2 },
       { label: "Pendente", value: "pending", icon: Circle },
@@ -248,6 +234,7 @@ export function DataTableToolbar<TData>({
             className="h-8 w-[150px] lg:w-[250px]"
           />
           
+          {/* FILTROS COM DROPDOWN (ROBUSTO) */}
           {table.getColumn("status") && (
             <DataTableFacetedFilter column={table.getColumn("status")} title="Status" options={statusOptions} />
           )}

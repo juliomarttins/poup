@@ -18,22 +18,20 @@ export default function TransactionsPage() {
   
   const [limitCount, setLimitCount] = useState(20);
 
-  // 1. Query de Transações
-  // ORDEM: Data (Crescente) -> Hora de Criação (Crescente)
-  // Isso garante que no mesmo dia, o que foi lançado primeiro aparece primeiro.
+  // [CORREÇÃO CRÍTICA] Removido o segundo orderBy('createdAt') pois ele exige
+  // criação manual de índice no Firebase Console e estava derrubando o site.
+  // Voltamos para ordenação simples por Data (ASC) que é segura.
   const transactionsQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(
       collection(firestore, 'users', user.uid, 'transactions'), 
       orderBy('date', 'asc'), 
-      orderBy('createdAt', 'asc'), // [CORREÇÃO] Hierarquia por ordem de lançamento
       limit(limitCount)
     );
   }, [firestore, user?.uid, limitCount]);
   
   const { data: transactions, isLoading: isLoadingTransactions } = useCollection<Transaction>(transactionsQuery);
 
-  // 2. Query de Perfil
   const userProfileRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return doc(firestore, 'users', user.uid);
