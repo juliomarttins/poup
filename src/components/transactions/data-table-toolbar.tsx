@@ -1,7 +1,8 @@
 "use client"
 
+import * as React from "react"
 import { Table } from "@tanstack/react-table"
-import { X, FileDown, PlusCircle, CheckCircle2, User, Tag, Circle, Trash2 } from "lucide-react"
+import { X, FileDown, PlusCircle, Check, User, Tag, Circle, Trash2, CheckCircle2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,6 +20,7 @@ import { writeBatch, doc } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { useState } from "react"
 
+// --- COMPONENTE DE FILTRO FACETADO (CORRIGIDO) ---
 interface FacetedFilterProps<TData, TValue> {
   column?: any
   title: string
@@ -35,6 +37,7 @@ function DataTableFacetedFilter<TData, TValue>({
   options,
 }: FacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues()
+  // Garante que selectedValues seja um Set válido
   const selectedValues = new Set(column?.getFilterValue() as string[])
 
   return (
@@ -79,8 +82,7 @@ function DataTableFacetedFilter<TData, TValue>({
                 return (
                   <CommandItem
                     key={option.value}
-                    // [CORREÇÃO] Forçar o valor a ser string para o cmdk indexar corretamente
-                    value={option.label} 
+                    value={option.label} // Importante para busca do cmdk
                     onSelect={() => {
                       if (isSelected) {
                         selectedValues.delete(option.value)
@@ -93,13 +95,24 @@ function DataTableFacetedFilter<TData, TValue>({
                       )
                     }}
                   >
-                    <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
-                      <CheckCircle2 className="h-4 w-4" />
+                    <div
+                      className={cn(
+                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                        isSelected
+                          ? "bg-primary text-primary-foreground"
+                          : "opacity-50 [&_svg]:invisible"
+                      )}
+                    >
+                      <Check className={cn("h-4 w-4")} />
                     </div>
-                    {option.icon && <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
+                    {option.icon && (
+                      <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                    )}
                     <span>{option.label}</span>
                     {facets?.get(option.value) && (
-                      <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">{facets.get(option.value)}</span>
+                      <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
+                        {facets.get(option.value)}
+                      </span>
                     )}
                   </CommandItem>
                 )
@@ -124,6 +137,8 @@ function DataTableFacetedFilter<TData, TValue>({
     </Popover>
   )
 }
+
+// --- MAIN TOOLBAR ---
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -156,7 +171,7 @@ export function DataTableToolbar<TData>({
       { label: "Despesa", value: "expense", icon: Circle },
   ];
 
-  const categoryOptions = Array.from(new Set(allTransactions.map(t => t.category))).map(c => ({
+  const categoryOptions = Array.from(new Set(allTransactions.map(t => t.category))).sort().map(c => ({
       label: c,
       value: c,
       icon: Tag
@@ -237,7 +252,6 @@ export function DataTableToolbar<TData>({
             className="h-8 w-[150px] lg:w-[250px]"
           />
           
-          {/* FILTROS FACETADOS - ESTILO WINDOWS / PRO */}
           {table.getColumn("status") && (
             <DataTableFacetedFilter column={table.getColumn("status")} title="Status" options={statusOptions} />
           )}

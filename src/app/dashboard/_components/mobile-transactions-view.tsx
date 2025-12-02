@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { Transaction } from '@/lib/types';
+import type { Transaction, Profile } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, X, FileDown, Filter } from 'lucide-react';
 import { Input } from "@/components/ui/input";
@@ -13,9 +13,10 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import type { DateRange } from 'react-day-picker';
 import { TransactionCard } from '@/components/transactions/transaction-card';
 import { generateTransactionsPDF } from '@/lib/generate-pdf';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { saveReportHistory } from '@/firebase/firestore/actions';
-import { Badge } from '@/components/ui/badge';
+import { doc } from 'firebase/firestore';
+import type { UserProfile } from '@/lib/types';
 
 interface MobileTransactionsViewProps {
     transactions: Transaction[];
@@ -29,13 +30,22 @@ export function MobileTransactionsView({ transactions, onEdit, onDelete, onAdd }
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [profileFilter, setProfileFilter] = useState("all"); // [NOVO] Filtro de Perfil
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const categories = useMemo(() => Array.from(new Set(transactions.map(t => t.category))), [transactions]);
+  // Buscar perfis para o filtro mobile
+  const userProfileRef = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user?.uid]);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+  const profiles = userProfile?.profiles || [];
+
+  const categories = useMemo(() => Array.from(new Set(transactions.map(t => t.category))).sort(), [transactions]);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
@@ -43,6 +53,7 @@ export function MobileTransactionsView({ transactions, onEdit, onDelete, onAdd }
       const typeMatch = typeFilter === 'all' || t.type === typeFilter;
       const categoryMatch = categoryFilter === 'all' || t.category === categoryFilter;
       const statusMatch = statusFilter === 'all' || (t.status || 'paid') === statusFilter;
+      const profileMatch = profileFilter === 'all' || t.profileId === profileFilter; // [NOVO]
 
       const date = new Date(t.date);
       const dateMatch = (() => {
@@ -57,15 +68,16 @@ export function MobileTransactionsView({ transactions, onEdit, onDelete, onAdd }
         return true;
       })();
       
-      return descriptionMatch && typeMatch && categoryMatch && dateMatch && statusMatch;
+      return descriptionMatch && typeMatch && categoryMatch && dateMatch && statusMatch && profileMatch;
     });
-  }, [transactions, descriptionFilter, typeFilter, categoryFilter, statusFilter, dateRange]);
+  }, [transactions, descriptionFilter, typeFilter, categoryFilter, statusFilter, profileFilter, dateRange]);
 
   const resetMobileFilters = () => {
     setDescriptionFilter("");
     setTypeFilter("all");
     setCategoryFilter("all");
     setStatusFilter("all");
+    setProfileFilter("all");
     setDateRange(undefined);
     setIsFiltersOpen(false);
   }
@@ -81,6 +93,7 @@ export function MobileTransactionsView({ transactions, onEdit, onDelete, onAdd }
       typeFilter !== 'all', 
       categoryFilter !== 'all', 
       statusFilter !== 'all', 
+      profileFilter !== 'all',
       dateRange !== undefined
   ].filter(Boolean).length;
 
@@ -109,11 +122,11 @@ export function MobileTransactionsView({ transactions, onEdit, onDelete, onAdd }
             </SheetTrigger>
             <SheetContent side="bottom" className="rounded-t-xl h-[85vh]">
                 <SheetHeader className="text-left mb-4">
-                    <SheetTitle>Filtros</SheetTitle>
-                    <SheetDescription>Refine sua busca de transações.</SheetDescription>
+                    <SheetTitle>Filtros Avançados</SheetTitle>
+                    <SheetDescription>Refine a visualização das suas finanças.</SheetDescription>
                 </SheetHeader>
                 
-                <div className="flex flex-col gap-6 overflow-y-auto pb-20">
+                <div className="flex flex-col gap-6 overflow-y-auto pb-20 px-1">
                     {/* DATA */}
                     <div className="space-y-2">
                         <Label>Período</Label>
@@ -127,42 +140,39 @@ export function MobileTransactionsView({ transactions, onEdit, onDelete, onAdd }
                         />
                     </div>
 
-                    {/* TIPO */}
-                    <div className="space-y-2">
-                        <Label>Tipo</Label>
-                        <RadioGroup defaultValue="all" value={typeFilter} onValueChange={setTypeFilter} className="flex gap-4">
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="all" id="t-all" />
-                                <Label htmlFor="t-all">Todos</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="income" id="t-inc" />
-                                <Label htmlFor="t-inc">Receita</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="expense" id="t-exp" />
-                                <Label htmlFor="t-exp">Despesa</Label>
-                            </div>
-                        </RadioGroup>
-                    </div>
-
                     {/* STATUS */}
                     <div className="space-y-2">
-                        <Label>Status</Label>
-                        <RadioGroup defaultValue="all" value={statusFilter} onValueChange={setStatusFilter} className="flex gap-4">
-                            <div className="flex items-center space-x-2">
+                        <Label>Situação</Label>
+                        <RadioGroup defaultValue="all" value={statusFilter} onValueChange={setStatusFilter} className="flex gap-2">
+                            <div className="flex items-center space-x-2 border rounded-md p-2 flex-1 justify-center">
                                 <RadioGroupItem value="all" id="s-all" />
                                 <Label htmlFor="s-all">Todos</Label>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 border rounded-md p-2 flex-1 justify-center">
                                 <RadioGroupItem value="paid" id="s-pd" />
                                 <Label htmlFor="s-pd">Pago</Label>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 border rounded-md p-2 flex-1 justify-center">
                                 <RadioGroupItem value="pending" id="s-pen" />
                                 <Label htmlFor="s-pen">Pendente</Label>
                             </div>
                         </RadioGroup>
+                    </div>
+
+                    {/* PERFIL (QUEM GASTOU) - NOVO */}
+                    <div className="space-y-2">
+                        <Label>Quem gastou?</Label>
+                        <Select value={profileFilter} onValueChange={setProfileFilter}>
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Todos os perfis" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos os perfis</SelectItem>
+                                {profiles.map(profile => (
+                                    <SelectItem key={profile.id} value={profile.id}>{profile.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     {/* CATEGORIA */}
@@ -170,10 +180,10 @@ export function MobileTransactionsView({ transactions, onEdit, onDelete, onAdd }
                         <Label>Categoria</Label>
                         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                             <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Todas" />
+                                <SelectValue placeholder="Todas as categorias" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Todas as Categorias</SelectItem>
+                                <SelectItem value="all">Todas as categorias</SelectItem>
                                 {categories.map(category => (
                                     <SelectItem key={category} value={category}>{category}</SelectItem>
                                 ))}
@@ -181,10 +191,29 @@ export function MobileTransactionsView({ transactions, onEdit, onDelete, onAdd }
                         </Select>
                     </div>
 
+                    {/* TIPO */}
+                    <div className="space-y-2">
+                        <Label>Tipo de Movimentação</Label>
+                        <RadioGroup defaultValue="all" value={typeFilter} onValueChange={setTypeFilter} className="flex gap-2">
+                            <div className="flex items-center space-x-2 border rounded-md p-2 flex-1 justify-center">
+                                <RadioGroupItem value="all" id="t-all" />
+                                <Label htmlFor="t-all">Tudo</Label>
+                            </div>
+                            <div className="flex items-center space-x-2 border rounded-md p-2 flex-1 justify-center">
+                                <RadioGroupItem value="income" id="t-inc" />
+                                <Label htmlFor="t-inc">Renda</Label>
+                            </div>
+                            <div className="flex items-center space-x-2 border rounded-md p-2 flex-1 justify-center">
+                                <RadioGroupItem value="expense" id="t-exp" />
+                                <Label htmlFor="t-exp">Despesa</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+
                     {/* AÇÕES FILTRO */}
                     <div className="flex gap-3 pt-4">
                         <Button variant="outline" className="flex-1" onClick={resetMobileFilters}>Limpar</Button>
-                        <Button className="flex-1" onClick={() => setIsFiltersOpen(false)}>Ver Resultados</Button>
+                        <Button className="flex-1" onClick={() => setIsFiltersOpen(false)}>Ver {filteredTransactions.length} Resultados</Button>
                     </div>
                 </div>
             </SheetContent>
@@ -192,7 +221,7 @@ export function MobileTransactionsView({ transactions, onEdit, onDelete, onAdd }
 
         <Button size="sm" className="h-10 gap-1" onClick={onAdd}>
             <PlusCircle className="h-4 w-4" />
-            <span className="sr-only sm:not-sr-only">Adicionar</span>
+            <span className="sr-only sm:not-sr-only">Add</span>
         </Button>
       </div>
 
