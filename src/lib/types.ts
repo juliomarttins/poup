@@ -2,14 +2,15 @@ import type { Timestamp } from 'firebase/firestore';
 
 export type Transaction = {
   id: string;
-  date: string;
+  date: string; // Agora armazenará ISO String completa: YYYY-MM-DDTHH:mm
   description: string;
   amount: number;
   type: 'income' | 'expense';
   category: string;
   userId: string; 
   profileId?: string; 
-  status?: 'paid' | 'pending'; // [NOVO] Status do pagamento
+  status?: 'paid' | 'pending';
+  paymentMethod?: string; // [NOVO] Pix, Dinheiro, Cartão, etc.
   createdAt?: Timestamp;
 };
 

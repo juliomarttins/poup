@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal, Check, Clock } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal, Check, Clock, Wallet } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -31,6 +31,8 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { AvatarIcon } from '../icons/avatar-icon';
 import { Avatar } from '../ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface ActionsCellProps {
   transaction: Transaction;
@@ -122,12 +124,10 @@ const StatusCell = ({ transaction }: { transaction: Transaction }) => {
     );
 };
 
-// [CORREÇÃO] ProfileCell lê do meta da tabela, sem hooks assíncronos que causam flicker
 const ProfileCell = ({ profileId, tableMeta }: { profileId?: string, tableMeta: any }) => {
     const profiles = tableMeta?.profiles as Profile[] || [];
     const profile = profiles.find(p => p.id === profileId);
     
-    // Fallback seguro
     const display = profile || { 
         name: 'Conta', 
         photoURL: null, 
@@ -171,6 +171,17 @@ const SortableHeader = ({ column, title }: { column: any, title: string }) => {
     )
 }
 
+// Mapa simples para labels de pagamento
+const paymentLabels: Record<string, string> = {
+    pix: 'Pix',
+    card: 'Cartão',
+    debit: 'Débito',
+    cash: 'Dinheiro',
+    boleto: 'Boleto',
+    transfer: 'Transf.',
+    other: 'Outro'
+};
+
 type GetColumnsParams = {
   onEdit: (transaction: Transaction) => void;
   onDelete: (transactionId: string) => void;
@@ -200,18 +211,32 @@ export const columns = ({ onEdit, onDelete }: GetColumnsParams): ColumnDef<Trans
   },
   {
     accessorKey: "date",
-    header: ({ column }) => <SortableHeader column={column} title="Data" />,
+    header: ({ column }) => <SortableHeader column={column} title="Data/Hora" />,
     cell: ({ row }) => {
       const dateString = row.getValue("date") as string;
-      const [year, month, day] = dateString.split('-').map(Number);
-      const date = new Date(Date.UTC(year, month - 1, day));
-      return <div className="font-medium text-muted-foreground">{date.toLocaleDateString("pt-BR", { timeZone: 'UTC' })}</div>
+      try {
+          // [CORREÇÃO] Parse robusto: Se for ISO, formata com hora. Se for antigo (só data), ajusta.
+          // O replace garante que a barra seja interpretada corretamente se vier formato legado.
+          const date = dateString.includes('T') ? parseISO(dateString) : new Date(dateString);
+          
+          return (
+            <div className="flex flex-col text-xs">
+                <span className="font-medium text-foreground">
+                    {format(date, "dd/MM/yy", { locale: ptBR })}
+                </span>
+                <span className="text-muted-foreground">
+                    {format(date, "HH:mm", { locale: ptBR })}
+                </span>
+            </div>
+          );
+      } catch (e) {
+          return <span className="text-xs text-muted-foreground">{dateString}</span>;
+      }
     }
   },
   {
     accessorKey: "profileId",
     header: ({ column }) => <SortableHeader column={column} title="Perfil" />,
-    // [CORREÇÃO] Passando o meta da tabela para a célula
     cell: ({ row, table }) => <ProfileCell profileId={row.getValue("profileId")} tableMeta={table.options.meta} />,
     filterFn: (row, id, value) => {
         return value.includes(row.getValue(id))
@@ -220,12 +245,22 @@ export const columns = ({ onEdit, onDelete }: GetColumnsParams): ColumnDef<Trans
   {
     accessorKey: "description",
     header: ({ column }) => <SortableHeader column={column} title="Descrição" />,
-    cell: ({ row }) => <span className="font-medium">{row.getValue("description")}</span>,
+    cell: ({ row }) => (
+        <div className="flex flex-col">
+            <span className="font-medium">{row.getValue("description")}</span>
+            {/* [NOVO] Badge de Método de Pagamento */}
+            {row.original.paymentMethod && (
+                <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Wallet className="h-3 w-3" /> {paymentLabels[row.original.paymentMethod] || row.original.paymentMethod}
+                </span>
+            )}
+        </div>
+    ),
   },
   {
     accessorKey: "category",
     header: ({ column }) => <SortableHeader column={column} title="Categoria" />,
-    cell: ({ row }) => <Badge variant="outline" className="font-normal">{row.getValue("category")}</Badge>,
+    cell: ({ row }) => <Badge variant="outline" className="font-normal text-[10px] sm:text-xs">{row.getValue("category")}</Badge>,
     filterFn: (row, id, value) => value.includes(row.getValue(id))
   },
   {

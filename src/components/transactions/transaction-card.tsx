@@ -1,11 +1,10 @@
-
 "use client";
 
 import { useState } from "react";
 import type { Transaction, UserProfile } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Wallet } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +26,8 @@ import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from 'firebase/firestore';
 import { Avatar } from '../ui/avatar';
 import { AvatarIcon } from '../icons/avatar-icon';
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface TransactionCardProps {
   transaction: Transaction;
@@ -41,11 +42,25 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+// [ATUALIZADO] Formato enxuto
 const formatDate = (dateString: string) => {
-    const [year, month, day] = dateString.split('-').map(Number);
-    const date = new Date(Date.UTC(year, month - 1, day));
-    return date.toLocaleDateString("pt-BR", { timeZone: 'UTC' });
+    try {
+        const date = dateString.includes('T') ? parseISO(dateString) : new Date(dateString);
+        return format(date, "dd/MM/yy • HH:mm", { locale: ptBR });
+    } catch {
+        return dateString;
+    }
 }
+
+const paymentLabels: Record<string, string> = {
+    pix: 'Pix',
+    card: 'Cartão',
+    debit: 'Débito',
+    cash: 'Dinheiro',
+    boleto: 'Boleto',
+    transfer: 'Transf.',
+    other: 'Outro'
+};
 
 export function TransactionCard({ transaction, onEdit, onDelete }: TransactionCardProps) {
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
@@ -81,19 +96,25 @@ export function TransactionCard({ transaction, onEdit, onDelete }: TransactionCa
             <div className="flex-1 grid gap-1">
                 <p className="font-medium leading-tight">{transaction.description}</p>
                 <p className="text-sm text-muted-foreground">{displayProfile.name}</p>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
-                    <Badge variant="outline">{transaction.category}</Badge>
-                    <span>-</span>
-                    <p>{formatDate(transaction.date)}</p>
+                
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground pt-1">
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">{transaction.category}</Badge>
+                    <span>{formatDate(transaction.date)}</span>
                 </div>
+                
+                {transaction.paymentMethod && (
+                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <Wallet className="h-3 w-3" /> {paymentLabels[transaction.paymentMethod] || transaction.paymentMethod}
+                    </div>
+                )}
             </div>
-            <div className="flex flex-col items-end justify-between h-full">
+            <div className="flex flex-col items-end justify-between h-full gap-2">
                 <div className={`font-bold text-lg ${transaction.type === 'income' ? 'text-positive' : 'text-negative'}`}>
                     {formatCurrency(transaction.amount)}
                 </div>
                 <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 -mb-2 -mr-2">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
                     <MoreVertical className="h-4 w-4" />
                     </Button>
                 </DropdownMenuTrigger>
