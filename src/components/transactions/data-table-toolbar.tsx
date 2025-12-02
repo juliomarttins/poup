@@ -1,7 +1,7 @@
 "use client"
 
 import { Table } from "@tanstack/react-table"
-import { X, FileDown, PlusCircle, Filter, CheckCircle2, User, Tag, Circle, Trash2 } from "lucide-react"
+import { X, FileDown, PlusCircle, CheckCircle2, User, Tag, Circle, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +19,6 @@ import { writeBatch, doc } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { useState } from "react"
 
-// --- COMPONENTE DE FILTRO FACETADO (INLINE) ---
 interface FacetedFilterProps<TData, TValue> {
   column?: any
   title: string
@@ -80,6 +79,8 @@ function DataTableFacetedFilter<TData, TValue>({
                 return (
                   <CommandItem
                     key={option.value}
+                    // [CORREÇÃO] Forçar o valor a ser string para o cmdk indexar corretamente
+                    value={option.label} 
                     onSelect={() => {
                       if (isSelected) {
                         selectedValues.delete(option.value)
@@ -124,13 +125,11 @@ function DataTableFacetedFilter<TData, TValue>({
   )
 }
 
-// --- MAIN TOOLBAR ---
-
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
   onAdd: () => void;
   allTransactions: Transaction[];
-  profiles: Profile[]; // [NOVO]
+  profiles: Profile[];
 }
 
 export function DataTableToolbar<TData>({

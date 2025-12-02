@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal, Check, Clock, AlertCircle } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal, Check, Clock } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -25,12 +25,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { Transaction, UserProfile } from "@/lib/types"
-import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import type { Transaction, Profile } from "@/lib/types"
+import { useUser, useFirestore } from "@/firebase";
 import { doc, updateDoc } from 'firebase/firestore';
 import { AvatarIcon } from '../icons/avatar-icon';
 import { Avatar } from '../ui/avatar';
-import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 interface ActionsCellProps {
@@ -123,31 +122,36 @@ const StatusCell = ({ transaction }: { transaction: Transaction }) => {
     );
 };
 
-const ProfileCell = ({ profileId }: { profileId?: string }) => {
-    const { user } = useUser();
-    const firestore = useFirestore();
-    const userProfileRef = useMemoFirebase(() => {
-        if (!firestore || !user?.uid) return null;
-        return doc(firestore, 'users', user.uid);
-    }, [firestore, user?.uid]);
-    const { data: userProfile, isLoading } = useDoc<UserProfile>(userProfileRef);
-
-    if (isLoading) return <Skeleton className="h-6 w-20" />;
-
-    const profile = userProfile?.profiles?.find(p => p.id === profileId);
-    const display = profile || userProfile?.profiles?.[0] || { name: 'Conta' };
+// [CORREÇÃO] ProfileCell lê do meta da tabela, sem hooks assíncronos que causam flicker
+const ProfileCell = ({ profileId, tableMeta }: { profileId?: string, tableMeta: any }) => {
+    const profiles = tableMeta?.profiles as Profile[] || [];
+    const profile = profiles.find(p => p.id === profileId);
+    
+    // Fallback seguro
+    const display = profile || { 
+        name: 'Conta', 
+        photoURL: null, 
+        avatarColor: 'hsl(var(--foreground))', 
+        avatarBackground: 'hsl(var(--muted))' 
+    };
     
     return (
         <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6" style={{ background: display.avatarBackground || 'hsl(var(--muted))' }}>
-                <AvatarIcon iconName={display.photoURL} className="h-4 w-4" style={{ color: display.avatarColor }} />
+            <Avatar 
+                className="h-6 w-6 flex items-center justify-center" 
+                style={{ background: display.avatarBackground || 'hsl(var(--muted))' }}
+            >
+                <AvatarIcon 
+                    iconName={display.photoURL} 
+                    className="h-3.5 w-3.5" 
+                    style={{ color: display.avatarColor || 'hsl(var(--foreground))' }} 
+                />
             </Avatar>
-            <span className="truncate max-w-[100px]">{display.name}</span>
+            <span className="truncate max-w-[100px] text-sm">{display.name}</span>
         </div>
     );
 };
 
-// Componente auxiliar para Headers Ordenáveis
 const SortableHeader = ({ column, title }: { column: any, title: string }) => {
     return (
         <Button
@@ -207,8 +211,8 @@ export const columns = ({ onEdit, onDelete }: GetColumnsParams): ColumnDef<Trans
   {
     accessorKey: "profileId",
     header: ({ column }) => <SortableHeader column={column} title="Perfil" />,
-    cell: ({ row }) => <ProfileCell profileId={row.getValue("profileId")} />,
-    // Permitir filtrar pelo ID do perfil
+    // [CORREÇÃO] Passando o meta da tabela para a célula
+    cell: ({ row, table }) => <ProfileCell profileId={row.getValue("profileId")} tableMeta={table.options.meta} />,
     filterFn: (row, id, value) => {
         return value.includes(row.getValue(id))
     }

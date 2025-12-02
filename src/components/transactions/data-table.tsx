@@ -33,7 +33,7 @@ import type { Transaction, Profile } from "@/lib/types"
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  profiles: Profile[]; // [NOVO]
+  profiles: Profile[];
   onAdd: () => void;
   isLoading: boolean;
 }
@@ -72,7 +72,11 @@ export function DataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
     },
-    enableRowSelection: true, // Habilita seleção
+    // [CORREÇÃO] Passando perfis via meta para as colunas acessarem
+    meta: {
+        profiles
+    },
+    enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -81,8 +85,8 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(), // Necessário para os filtros facetados
-    getFacetedUniqueValues: getFacetedUniqueValues(), // Necessário para contagem
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
     filterFns: {
         dateBetween: dateBetweenFilterFn,
     },
@@ -90,7 +94,6 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      {/* Passamos Profiles para a toolbar */}
       <DataTableToolbar 
         table={table} 
         onAdd={onAdd} 
