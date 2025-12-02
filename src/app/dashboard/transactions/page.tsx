@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useFirestore, useUser } from '@/firebase';
 import { useMemoFirebase } from '@/firebase/firestore/use-memo-firebase';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { useDoc } from '@/firebase/firestore/use-doc'; // [NOVO]
+import { useDoc } from '@/firebase/firestore/use-doc';
 import type { Transaction, UserProfile } from '@/lib/types';
 
 
@@ -18,19 +18,22 @@ export default function TransactionsPage() {
   
   const [limitCount, setLimitCount] = useState(20);
 
-  // 1. Query de Transações (Agora ASCendente: Antigas -> Novas)
+  // 1. Query de Transações
+  // ORDEM: Data (Crescente) -> Hora de Criação (Crescente)
+  // Isso garante que no mesmo dia, o que foi lançado primeiro aparece primeiro.
   const transactionsQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(
       collection(firestore, 'users', user.uid, 'transactions'), 
-      orderBy('date', 'asc'), // [ALTERADO] 'desc' para 'asc'
+      orderBy('date', 'asc'), 
+      orderBy('createdAt', 'asc'), // [CORREÇÃO] Hierarquia por ordem de lançamento
       limit(limitCount)
     );
   }, [firestore, user?.uid, limitCount]);
   
   const { data: transactions, isLoading: isLoadingTransactions } = useCollection<Transaction>(transactionsQuery);
 
-  // 2. Query de Perfil (Para passar nomes aos filtros)
+  // 2. Query de Perfil
   const userProfileRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return doc(firestore, 'users', user.uid);
@@ -77,7 +80,7 @@ export default function TransactionsPage() {
   return (
     <TransactionsClientPage 
       initialTransactions={transactions} 
-      profiles={userProfile?.profiles || []} // [NOVO] Passando perfis
+      profiles={userProfile?.profiles || []} 
       onLoadMore={handleLoadMore}
       hasMore={transactions.length === limitCount}
     />

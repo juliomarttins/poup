@@ -20,7 +20,6 @@ import { writeBatch, doc } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { useState } from "react"
 
-// --- COMPONENTE DE FILTRO FACETADO (CORRIGIDO) ---
 interface FacetedFilterProps<TData, TValue> {
   column?: any
   title: string
@@ -37,7 +36,6 @@ function DataTableFacetedFilter<TData, TValue>({
   options,
 }: FacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues()
-  // Garante que selectedValues seja um Set válido
   const selectedValues = new Set(column?.getFilterValue() as string[])
 
   return (
@@ -82,7 +80,7 @@ function DataTableFacetedFilter<TData, TValue>({
                 return (
                   <CommandItem
                     key={option.value}
-                    value={option.label} // Importante para busca do cmdk
+                    value={option.label} 
                     onSelect={() => {
                       if (isSelected) {
                         selectedValues.delete(option.value)
@@ -94,6 +92,7 @@ function DataTableFacetedFilter<TData, TValue>({
                         filterValues.length ? filterValues : undefined
                       )
                     }}
+                    className="cursor-pointer" 
                   >
                     <div
                       className={cn(
@@ -124,7 +123,7 @@ function DataTableFacetedFilter<TData, TValue>({
                 <CommandGroup>
                   <CommandItem
                     onSelect={() => column?.setFilterValue(undefined)}
-                    className="justify-center text-center"
+                    className="justify-center text-center cursor-pointer"
                   >
                     Limpar filtros
                   </CommandItem>
@@ -137,8 +136,6 @@ function DataTableFacetedFilter<TData, TValue>({
     </Popover>
   )
 }
-
-// --- MAIN TOOLBAR ---
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -160,7 +157,6 @@ export function DataTableToolbar<TData>({
   const { toast } = useToast();
   const [isBulking, setIsBulking] = useState(false);
 
-  // Opções para Filtros
   const statusOptions = [
       { label: "Pago", value: "paid", icon: CheckCircle2 },
       { label: "Pendente", value: "pending", icon: Circle },
