@@ -1,20 +1,29 @@
-// ARQUIVO NOVO: src/app/dashboard/changelog/page.tsx
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CheckCircle2, Rocket, Sparkles, Bug, Cog } from "lucide-react";
+import { CheckCircle2, Rocket, Sparkles, Bug, Cog, Zap } from "lucide-react";
 
 export default function ChangelogPage() {
   const changes = [
+    {
+      version: "1.4.0",
+      date: "01/12/2025",
+      title: "Gestão Avançada e Ações em Massa",
+      items: [
+        { type: 'feat', text: "Nova ordenação: Transações antigas aparecem primeiro, mas você pode clicar nos cabeçalhos para mudar a ordem (igual Windows)." },
+        { type: 'feat', text: "Filtros Profissionais: Filtre por Status, Perfil (Quem gastou?), Categoria e Tipo com contadores dinâmicos." },
+        { type: 'feat', text: "Ações em Massa: Selecione várias transações e clique em 'Pagar' ou 'Excluir' na barra flutuante." },
+        { type: 'imp', text: "Status Visual: Botão interativo direto na tabela para mudar entre Pago e Pendente." }
+      ]
+    },
     {
       version: "1.3.0",
       date: "01/12/2025",
       title: "Recorrência e Controle de Status",
       items: [
         { type: 'feat', text: "Adicionada opção de 'Repetir Lançamento' ao criar transações. Agora você pode lançar contas fixas para o ano todo." },
-        { type: 'feat', text: "Novo controle de Status (Pago/Pendente) na lista de transações com botão rápido." },
         { type: 'fix', text: "Correção na usabilidade do campo de valor: agora seleciona o texto automaticamente ao clicar." },
         { type: 'imp', text: "Melhoria na detecção automática de categorias pela IA." }
       ]
@@ -34,7 +43,7 @@ export default function ChangelogPage() {
       switch(type) {
           case 'feat': return <Rocket className="w-4 h-4 text-green-500" />;
           case 'fix': return <Bug className="w-4 h-4 text-red-500" />;
-          case 'imp': return <Cog className="w-4 h-4 text-blue-500" />;
+          case 'imp': return <Zap className="w-4 h-4 text-yellow-500" />;
           default: return <CheckCircle2 className="w-4 h-4 text-muted-foreground" />;
       }
   }

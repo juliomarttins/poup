@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { DataTable } from '@/components/transactions/data-table';
 import { columns } from '@/components/transactions/columns';
-import type { Transaction } from '@/lib/types';
+import type { Transaction, Profile } from '@/lib/types';
 import {
   Dialog,
   DialogContent,
@@ -22,11 +22,12 @@ import { ChevronDown } from 'lucide-react';
 
 interface TransactionsClientPageProps {
   initialTransactions: Transaction[];
+  profiles: Profile[]; // [NOVO]
   onLoadMore: () => void;
   hasMore: boolean;
 }
 
-export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMore }: TransactionsClientPageProps) {
+export function TransactionsClientPage({ initialTransactions, profiles, onLoadMore, hasMore }: TransactionsClientPageProps) {
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -63,6 +64,7 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
   return (
     <div className="w-full flex flex-col gap-4">
       
+      {/* Mobile View Simplificada (Mantida para telas pequenas) */}
       <div className="block md:hidden">
         <MobileTransactionsView 
           transactions={initialTransactions}
@@ -72,10 +74,12 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
         />
       </div>
 
+      {/* Desktop Table "Windows Style" */}
       <div className="hidden md:block">
         <DataTable 
           columns={columns({ onEdit: handleEdit, onDelete: handleDelete })} 
           data={initialTransactions}
+          profiles={profiles} // [NOVO]
           onAdd={() => setIsAddDialogOpen(true)}
           isLoading={false} 
         />
@@ -84,7 +88,7 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
       {hasMore && (
         <div className="flex justify-center pt-4 pb-8">
           <Button variant="outline" onClick={onLoadMore} className="gap-2">
-            Carregar Mais Antigas
+            Carregar Mais
             <ChevronDown className="h-4 w-4" />
           </Button>
         </div>
@@ -111,7 +115,6 @@ export function TransactionsClientPage({ initialTransactions, onLoadMore, hasMor
 
        {/* MODAL DE ADICIONAR */}
        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-         {/* AQUI: max-w-2xl para ficar mais largo e SEM max-h para não ter scroll */}
          <DialogContent className="w-[95vw] max-w-2xl overflow-visible rounded-lg">
            <DialogHeader>
              <DialogTitle>Adicionar Transação</DialogTitle>

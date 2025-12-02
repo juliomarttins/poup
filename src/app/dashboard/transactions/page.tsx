@@ -1,40 +1,48 @@
 'use client'
 
-import { useState } from 'react'; // [NOVO] Importar useState
-import { collection, query, orderBy, limit } from 'firebase/firestore'; // [NOVO] Importar limit
+import { useState } from 'react';
+import { collection, query, orderBy, limit, doc } from 'firebase/firestore';
 import { TransactionsClientPage } from '../_components/transactions-client-page';
 import { TransactionsEmptyState } from '@/components/transactions/transactions-empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFirestore, useUser } from '@/firebase';
 import { useMemoFirebase } from '@/firebase/firestore/use-memo-firebase';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import type { Transaction } from '@/lib/types';
+import { useDoc } from '@/firebase/firestore/use-doc'; // [NOVO]
+import type { Transaction, UserProfile } from '@/lib/types';
 
 
 export default function TransactionsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   
-  // [NOVO] Estado para controlar quantos itens exibimos. Começa com 20.
   const [limitCount, setLimitCount] = useState(20);
 
+  // 1. Query de Transações (Agora ASCendente: Antigas -> Novas)
   const transactionsQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(
       collection(firestore, 'users', user.uid, 'transactions'), 
-      orderBy('date', 'desc'),
-      limit(limitCount) // [NOVO] Aplica o limite na query
+      orderBy('date', 'asc'), // [ALTERADO] 'desc' para 'asc'
+      limit(limitCount)
     );
-  }, [firestore, user?.uid, limitCount]); // [NOVO] Recarrega se o limite mudar
+  }, [firestore, user?.uid, limitCount]);
   
   const { data: transactions, isLoading: isLoadingTransactions } = useCollection<Transaction>(transactionsQuery);
 
-  // [NOVO] Função para carregar mais itens
+  // 2. Query de Perfil (Para passar nomes aos filtros)
+  const userProfileRef = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user?.uid]);
+
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
   const handleLoadMore = () => {
     setLimitCount((prev) => prev + 20);
   };
 
-  if (isLoadingTransactions && limitCount === 20) { // Carregamento inicial apenas
+  if (isLoadingTransactions && limitCount === 20) {
     return (
         <div className="space-y-4">
             <div className="flex flex-col gap-4">
@@ -69,8 +77,9 @@ export default function TransactionsPage() {
   return (
     <TransactionsClientPage 
       initialTransactions={transactions} 
-      onLoadMore={handleLoadMore} // [NOVO] Passando a função
-      hasMore={transactions.length === limitCount} // [NOVO] Se veio menos que o limite, acabou a lista
+      profiles={userProfile?.profiles || []} // [NOVO] Passando perfis
+      onLoadMore={handleLoadMore}
+      hasMore={transactions.length === limitCount}
     />
   );
 }

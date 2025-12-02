@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react";
-import { ColumnDef, FilterFn } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal, Check, Clock } from "lucide-react"
+import { ColumnDef } from "@tanstack/react-table"
+import { ArrowUpDown, MoreHorizontal, Check, Clock, AlertCircle } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -25,14 +25,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { Transaction, UserProfile, Profile } from "@/lib/types"
+import type { Transaction, UserProfile } from "@/lib/types"
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc, updateDoc } from 'firebase/firestore'; // [NOVO] Import updateDoc
+import { doc, updateDoc } from 'firebase/firestore';
 import { AvatarIcon } from '../icons/avatar-icon';
 import { Avatar } from '../ui/avatar';
 import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
-
 
 interface ActionsCellProps {
   transaction: Transaction;
@@ -55,19 +54,14 @@ const ActionsCell = ({ transaction, onEdit, onDelete }: ActionsCellProps) => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Ações</DropdownMenuLabel>
           <DropdownMenuItem onClick={() => onEdit(transaction)}>
-            Editar transação
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => navigator.clipboard.writeText(transaction.id)}
-          >
-            Copiar ID da transação
+            Editar
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             className="text-destructive"
             onClick={() => setShowDeleteAlert(true)}
           >
-            Excluir transação
+            Excluir
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -76,7 +70,7 @@ const ActionsCell = ({ transaction, onEdit, onDelete }: ActionsCellProps) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              Essa ação não pode ser desfeita. Isso excluirá permanentemente a transação.
+              Essa ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -89,7 +83,6 @@ const ActionsCell = ({ transaction, onEdit, onDelete }: ActionsCellProps) => {
   );
 };
 
-// [NOVO] Célula de Status Interativa
 const StatusCell = ({ transaction }: { transaction: Transaction }) => {
     const firestore = useFirestore();
     const { user } = useUser();
@@ -99,11 +92,10 @@ const StatusCell = ({ transaction }: { transaction: Transaction }) => {
         if (!user || !firestore) return;
         const newStatus = isPaid ? 'pending' : 'paid';
         const docRef = doc(firestore, 'users', user.uid, 'transactions', transaction.id);
-        
         try {
             await updateDoc(docRef, { status: newStatus });
         } catch (e) {
-            console.error("Erro ao atualizar status", e);
+            console.error("Erro status", e);
         }
     };
 
@@ -111,89 +103,69 @@ const StatusCell = ({ transaction }: { transaction: Transaction }) => {
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
+                    <div 
                         onClick={(e) => { e.stopPropagation(); toggleStatus(); }}
-                        className={`h-7 px-2 gap-1.5 transition-all ${
+                        className={`cursor-pointer inline-flex items-center justify-center px-2 py-1 rounded-md text-xs font-medium border transition-all ${
                             isPaid 
-                            ? 'text-green-600 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30' 
-                            : 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30'
+                            ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400 dark:border-green-900' 
+                            : 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-900'
                         }`}
                     >
-                        {isPaid ? <Check className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
-                        <span className="text-xs font-medium">{isPaid ? 'Pago' : 'Pendente'}</span>
-                    </Button>
+                        {isPaid ? <Check className="w-3 h-3 mr-1" /> : <Clock className="w-3 h-3 mr-1" />}
+                        {isPaid ? 'Pago' : 'Pendente'}
+                    </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>{isPaid ? 'Marcar como Pendente' : 'Marcar como Pago'}</p>
+                    <p>Clique para alterar status</p>
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>
     );
 };
 
-
 const ProfileCell = ({ profileId }: { profileId?: string }) => {
     const { user } = useUser();
     const firestore = useFirestore();
-
     const userProfileRef = useMemoFirebase(() => {
         if (!firestore || !user?.uid) return null;
         return doc(firestore, 'users', user.uid);
     }, [firestore, user?.uid]);
-
     const { data: userProfile, isLoading } = useDoc<UserProfile>(userProfileRef);
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center space-x-2">
-                <Skeleton className="h-6 w-6 rounded-full" />
-                <Skeleton className="h-4 w-20" />
-            </div>
-        );
-    }
+    if (isLoading) return <Skeleton className="h-6 w-20" />;
 
     const profile = userProfile?.profiles?.find(p => p.id === profileId);
-    
-    if (!profile) {
-        const mainProfile = userProfile?.profiles?.[0] || { name: 'Conta' };
-        return (
-            <div className="flex items-center gap-2">
-                 <Avatar 
-                    className="h-6 w-6 flex items-center justify-center rounded-full"
-                    style={{ background: mainProfile.avatarBackground || 'hsl(var(--muted))' }}
-                >
-                    <AvatarIcon
-                        iconName={mainProfile.photoURL}
-                        fallbackName={mainProfile.name}
-                        className="h-4 w-4"
-                        style={{ color: mainProfile.avatarColor || 'hsl(var(--foreground))' }}
-                    />
-                </Avatar>
-                <span className="truncate">{mainProfile.name}</span>
-            </div>
-        );
-    }
+    const display = profile || userProfile?.profiles?.[0] || { name: 'Conta' };
     
     return (
         <div className="flex items-center gap-2">
-            <Avatar 
-                className="h-6 w-6 flex items-center justify-center rounded-full"
-                style={{ background: profile.avatarBackground || 'hsl(var(--muted))' }}
-            >
-                <AvatarIcon
-                    iconName={profile.photoURL}
-                    fallbackName={profile.name}
-                    className="h-4 w-4"
-                    style={{ color: profile.avatarColor || 'hsl(var(--foreground))' }}
-                />
+            <Avatar className="h-6 w-6" style={{ background: display.avatarBackground || 'hsl(var(--muted))' }}>
+                <AvatarIcon iconName={display.photoURL} className="h-4 w-4" style={{ color: display.avatarColor }} />
             </Avatar>
-            <span className="truncate">{profile.name}</span>
+            <span className="truncate max-w-[100px]">{display.name}</span>
         </div>
     );
 };
 
+// Componente auxiliar para Headers Ordenáveis
+const SortableHeader = ({ column, title }: { column: any, title: string }) => {
+    return (
+        <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="-ml-4 h-8 data-[state=open]:bg-accent"
+        >
+            <span>{title}</span>
+            {column.getIsSorted() === "desc" ? (
+                <ArrowUpDown className="ml-2 h-4 w-4 rotate-180 transition-transform" />
+            ) : column.getIsSorted() === "asc" ? (
+                <ArrowUpDown className="ml-2 h-4 w-4 transition-transform" />
+            ) : (
+                <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />
+            )}
+        </Button>
+    )
+}
 
 type GetColumnsParams = {
   onEdit: (transaction: Transaction) => void;
@@ -205,12 +177,10 @@ export const columns = ({ onEdit, onDelete }: GetColumnsParams): ColumnDef<Trans
     id: "select",
     header: ({ table }) => (
       <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
+        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Selecionar tudo"
+        className="translate-y-[2px]"
       />
     ),
     cell: ({ row }) => (
@@ -218,6 +188,7 @@ export const columns = ({ onEdit, onDelete }: GetColumnsParams): ColumnDef<Trans
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
         aria-label="Selecionar linha"
+        className="translate-y-[2px]"
       />
     ),
     enableSorting: false,
@@ -225,84 +196,60 @@ export const columns = ({ onEdit, onDelete }: GetColumnsParams): ColumnDef<Trans
   },
   {
     accessorKey: "date",
-    filterFn: 'dateBetween',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Data
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    header: ({ column }) => <SortableHeader column={column} title="Data" />,
     cell: ({ row }) => {
       const dateString = row.getValue("date") as string;
       const [year, month, day] = dateString.split('-').map(Number);
       const date = new Date(Date.UTC(year, month - 1, day));
-      const formatted = date.toLocaleDateString("pt-BR", { timeZone: 'UTC' });
-      return <div className="pl-4">{formatted}</div>
+      return <div className="font-medium text-muted-foreground">{date.toLocaleDateString("pt-BR", { timeZone: 'UTC' })}</div>
     }
   },
   {
     accessorKey: "profileId",
-    header: "Perfil",
-    cell: ({ row }) => {
-      return <ProfileCell profileId={row.getValue("profileId")} />;
+    header: ({ column }) => <SortableHeader column={column} title="Perfil" />,
+    cell: ({ row }) => <ProfileCell profileId={row.getValue("profileId")} />,
+    // Permitir filtrar pelo ID do perfil
+    filterFn: (row, id, value) => {
+        return value.includes(row.getValue(id))
     }
   },
   {
     accessorKey: "description",
-    header: "Descrição",
+    header: ({ column }) => <SortableHeader column={column} title="Descrição" />,
+    cell: ({ row }) => <span className="font-medium">{row.getValue("description")}</span>,
   },
   {
     accessorKey: "category",
-    header: "Categoria",
-    cell: ({ row }) => {
-      return <Badge variant="outline">{row.getValue("category")}</Badge>
-    },
-    filterFn: (row, id, value) => {
-        return value.includes(row.getValue(id))
-    }
+    header: ({ column }) => <SortableHeader column={column} title="Categoria" />,
+    cell: ({ row }) => <Badge variant="outline" className="font-normal">{row.getValue("category")}</Badge>,
+    filterFn: (row, id, value) => value.includes(row.getValue(id))
   },
   {
     accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-        return <StatusCell transaction={row.original} />;
-    }
+    header: ({ column }) => <SortableHeader column={column} title="Status" />,
+    cell: ({ row }) => <StatusCell transaction={row.original} />,
+    filterFn: (row, id, value) => value.includes(row.original.status || 'paid')
   },
   {
     accessorKey: "type",
-    header: "Tipo",
+    header: ({ column }) => <SortableHeader column={column} title="Tipo" />,
     cell: ({ row }) => {
       const type = row.getValue("type") as string;
-      const translatedType = type === 'income' ? 'renda' : 'despesa';
-      return <Badge variant={type === "income" ? "secondary" : "destructive"}>{translatedType}</Badge>
+      return <Badge variant={type === "income" ? "secondary" : "destructive"} className="uppercase text-[10px]">{type === 'income' ? 'Renda' : 'Despesa'}</Badge>
     },
-    filterFn: (row, id, value) => {
-        return value.includes(row.getValue(id))
-    }
+    filterFn: (row, id, value) => value.includes(row.getValue(id))
   },
   {
     accessorKey: "amount",
-    header: () => <div className="text-right">Valor</div>,
+    header: ({ column }) => <div className="text-right"><SortableHeader column={column} title="Valor" /></div>,
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue("amount"))
-      const formatted = new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(amount)
-
-      return <div className={`text-right font-medium ${row.original.type === 'income' ? 'text-positive' : 'text-negative'}`}>{formatted}</div>
+      const formatted = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(amount)
+      return <div className={`text-right font-bold ${row.original.type === 'income' ? 'text-positive' : 'text-negative'}`}>{formatted}</div>
     },
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      const transaction = row.original;
-      return <ActionsCell transaction={transaction} onEdit={onEdit} onDelete={onDelete} />;
-    },
+    cell: ({ row }) => <ActionsCell transaction={row.original} onEdit={onEdit} onDelete={onDelete} />,
   },
 ]

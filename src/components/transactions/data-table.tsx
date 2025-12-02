@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -12,6 +11,8 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   useReactTable,
   FilterFn,
 } from "@tanstack/react-table"
@@ -27,11 +28,12 @@ import {
 } from "@/components/ui/table"
 import { DataTableToolbar } from "./data-table-toolbar"
 import { Button } from "@/components/ui/button"
-import type { Transaction } from "@/lib/types"
+import type { Transaction, Profile } from "@/lib/types"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  profiles: Profile[]; // [NOVO]
   onAdd: () => void;
   isLoading: boolean;
 }
@@ -39,12 +41,9 @@ interface DataTableProps<TData, TValue> {
 const dateBetweenFilterFn: FilterFn<any> = (row, columnId, value) => {
     const date = new Date(row.getValue(columnId));
     const { from, to } = value as DateRange;
-    if (from && !to) {
-        return date >= from;
-    } else if (!from && to) {
-        return date <= to;
-    } else if (from && to) {
-        // Adjust 'to' date to include the whole day
+    if (from && !to) return date >= from;
+    if (!from && to) return date <= to;
+    if (from && to) {
         const toEndOfDay = new Date(to);
         toEndOfDay.setHours(23, 59, 59, 999);
         return date >= from && date <= toEndOfDay;
@@ -55,6 +54,7 @@ const dateBetweenFilterFn: FilterFn<any> = (row, columnId, value) => {
 export function DataTable<TData, TValue>({
   columns,
   data,
+  profiles,
   onAdd,
   isLoading,
 }: DataTableProps<TData, TValue>) {
@@ -63,41 +63,49 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
 
-
   const table = useReactTable({
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    filterFns: {
-        dateBetween: dateBetweenFilterFn,
-    },
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
     },
-    meta: {},
+    enableRowSelection: true, // Habilita seleção
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(), // Necessário para os filtros facetados
+    getFacetedUniqueValues: getFacetedUniqueValues(), // Necessário para contagem
+    filterFns: {
+        dateBetween: dateBetweenFilterFn,
+    },
   })
 
   return (
     <div className="space-y-4">
-      <DataTableToolbar table={table} onAdd={onAdd} allTransactions={data as Transaction[]} />
-      <div className="rounded-md border bg-card w-full overflow-auto">
+      {/* Passamos Profiles para a toolbar */}
+      <DataTableToolbar 
+        table={table} 
+        onAdd={onAdd} 
+        allTransactions={data as Transaction[]} 
+        profiles={profiles} 
+      />
+      
+      <div className="rounded-md border bg-card w-full overflow-hidden shadow-sm">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted/50">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="hover:bg-transparent border-b-primary/10">
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} colSpan={header.colSpan}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -122,6 +130,7 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className="hover:bg-muted/30 transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -141,11 +150,11 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
        <div className="flex items-center justify-between space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
+        <div className="flex-1 text-sm text-muted-foreground pl-2">
           {table.getFilteredSelectedRowModel().rows.length} de{" "}
           {table.getFilteredRowModel().rows.length} linha(s) selecionada(s).
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 pr-2">
           <Button
             variant="outline"
             size="sm"
