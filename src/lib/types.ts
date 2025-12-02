@@ -9,6 +9,7 @@ export type Transaction = {
   category: string;
   userId: string; 
   profileId?: string; 
+  status?: 'paid' | 'pending'; // [NOVO] Status do pagamento
   createdAt?: Timestamp;
 };
 
@@ -33,7 +34,6 @@ export type FinancialAnalysis = {
   advice: string;
 }
 
-// [ATUALIZADO]
 export type UserProfile = {
   uid: string;
   name: string | null;
@@ -46,11 +46,11 @@ export type UserProfile = {
   
   // Controle de Acesso
   role?: 'admin' | 'user'; 
-  isBlocked?: boolean; // Bloqueio total
-  adminMessage?: string; // Mensagem de aviso
+  isBlocked?: boolean;
+  adminMessage?: string;
 
   subscription?: {
-      plan: string; // ID do plano
+      plan: string;
       status: 'active' | 'expired' | 'trial' | 'lifetime';
       expiresAt: string | Timestamp; 
   };

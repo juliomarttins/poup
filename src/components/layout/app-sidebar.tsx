@@ -13,7 +13,8 @@ import {
   LogOut,
   Bot,
   FileText,
-  ShieldAlert
+  ShieldAlert,
+  Sparkles
 } from 'lucide-react';
 
 import {
@@ -45,8 +46,10 @@ const mainNavItems = [
   { title: 'Poupp IA', url: '/dashboard/poupp-ia', icon: Bot },
 ];
 
+// [ATUALIZADO] Adicionado Novidades
 const settingsNavItems = [
   { title: 'Configurações', url: '/dashboard/settings', icon: Settings },
+  { title: 'Novidades', url: '/dashboard/changelog', icon: Sparkles },
   { title: 'Ajuda', url: '/dashboard/help', icon: HelpCircle },
 ];
 

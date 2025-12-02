@@ -1,9 +1,8 @@
-
 "use client"
 
 import { useState } from "react";
 import { ColumnDef, FilterFn } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal, Check, Clock } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,10 +27,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Transaction, UserProfile, Profile } from "@/lib/types"
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore'; // [NOVO] Import updateDoc
 import { AvatarIcon } from '../icons/avatar-icon';
 import { Avatar } from '../ui/avatar';
 import { Skeleton } from "../ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 
 interface ActionsCellProps {
@@ -89,6 +89,50 @@ const ActionsCell = ({ transaction, onEdit, onDelete }: ActionsCellProps) => {
   );
 };
 
+// [NOVO] Célula de Status Interativa
+const StatusCell = ({ transaction }: { transaction: Transaction }) => {
+    const firestore = useFirestore();
+    const { user } = useUser();
+    const isPaid = transaction.status === 'paid';
+
+    const toggleStatus = async () => {
+        if (!user || !firestore) return;
+        const newStatus = isPaid ? 'pending' : 'paid';
+        const docRef = doc(firestore, 'users', user.uid, 'transactions', transaction.id);
+        
+        try {
+            await updateDoc(docRef, { status: newStatus });
+        } catch (e) {
+            console.error("Erro ao atualizar status", e);
+        }
+    };
+
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={(e) => { e.stopPropagation(); toggleStatus(); }}
+                        className={`h-7 px-2 gap-1.5 transition-all ${
+                            isPaid 
+                            ? 'text-green-600 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30' 
+                            : 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30'
+                        }`}
+                    >
+                        {isPaid ? <Check className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                        <span className="text-xs font-medium">{isPaid ? 'Pago' : 'Pendente'}</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>{isPaid ? 'Marcar como Pendente' : 'Marcar como Pago'}</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+};
+
 
 const ProfileCell = ({ profileId }: { profileId?: string }) => {
     const { user } = useUser();
@@ -112,7 +156,6 @@ const ProfileCell = ({ profileId }: { profileId?: string }) => {
 
     const profile = userProfile?.profiles?.find(p => p.id === profileId);
     
-    // Fallback for old transactions without a profileId
     if (!profile) {
         const mainProfile = userProfile?.profiles?.[0] || { name: 'Conta' };
         return (
@@ -221,6 +264,13 @@ export const columns = ({ onEdit, onDelete }: GetColumnsParams): ColumnDef<Trans
     },
     filterFn: (row, id, value) => {
         return value.includes(row.getValue(id))
+    }
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+        return <StatusCell transaction={row.original} />;
     }
   },
   {

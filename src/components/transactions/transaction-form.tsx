@@ -11,6 +11,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,17 +25,18 @@ import type { Transaction } from "@/lib/types";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon, Camera, UploadCloud, Sparkles, ScanLine, Plus, Loader2, FileText } from "lucide-react";
+import { format, addMonths } from "date-fns";
+import { Calendar as CalendarIcon, Camera, UploadCloud, Sparkles, Plus, Loader2, FileText, Repeat, CheckCircle2, Circle } from "lucide-react";
 import { ptBR } from 'date-fns/locale';
 import { useFirestore, useUser } from "@/firebase";
-import { doc, collection } from "firebase/firestore";
+import { doc, collection, writeBatch } from "firebase/firestore";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useProfile } from "@/contexts/profile-context";
 import { DEFAULT_CATEGORIES } from "@/lib/constants";
 import { useRef, useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 
 const formSchema = z.object({
   type: z.enum(['income', 'expense']),
@@ -43,6 +45,10 @@ const formSchema = z.object({
   date: z.date(),
   category: z.string().min(1, "Selecione uma categoria"),
   customCategory: z.string().optional(),
+  status: z.enum(['paid', 'pending']),
+  // Campos de Recorrência
+  isRecurring: z.boolean().default(false),
+  repeatCount: z.coerce.number().min(2).max(60).optional(), // 2 a 60 meses
 }).refine(data => {
     if (data.category === 'custom' && (!data.customCategory || data.customCategory.length < 2)) {
         return false;
@@ -73,6 +79,7 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
   const [isScanning, setIsScanning] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [scanStatus, setScanStatus] = useState("IA Pronta");
+  const [isSaving, setIsSaving] = useState(false);
 
   const isDefaultCategory = initialData 
     ? (DEFAULT_CATEGORIES.income.includes(initialData.category) || DEFAULT_CATEGORIES.expense.includes(initialData.category))
@@ -83,15 +90,19 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
     defaultValues: {
       type: initialData?.type || 'expense',
       description: initialData?.description || "",
-      amount: initialData ? Math.abs(initialData.amount) : 0,
+      amount: initialData ? Math.abs(initialData.amount) : 0, // Inicia com 0 se for nova
       category: initialData ? (isDefaultCategory ? initialData.category : 'custom') : "",
       customCategory: initialData && !isDefaultCategory ? initialData.category : "",
       date: initialData ? new Date(initialData.date) : new Date(),
+      status: initialData?.status || 'paid', // Padrão 'Pago'
+      isRecurring: false,
+      repeatCount: 2,
     },
   });
 
   const transactionType = form.watch('type');
   const selectedCategory = form.watch('category');
+  const isRecurring = form.watch('isRecurring');
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 
   // Simulação de progresso mais suave
@@ -102,7 +113,6 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
         interval = setInterval(() => {
             setUploadProgress((prev) => {
                 if (prev >= 90) return 90; 
-                // Desacelera conforme chega perto dos 90
                 const increment = Math.max(1, (90 - prev) / 10); 
                 return prev + increment;
             });
@@ -130,7 +140,6 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
     formData.append('file', file);
 
     try {
-        // Feedback visual de troca de estado
         setTimeout(() => setScanStatus("Extraindo dados..."), 1500);
         setTimeout(() => setScanStatus("Categorizando..."), 3000);
 
@@ -144,7 +153,6 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Erro na leitura.");
 
-        // Auto-fill com animação suave (o React cuida disso)
         if (data.name) form.setValue("description", data.name, { shouldValidate: true });
         if (data.totalAmount) form.setValue("amount", Number(data.totalAmount), { shouldValidate: true });
         
@@ -154,7 +162,6 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                 form.setValue("category", data.category);
                 form.setValue("customCategory", ""); 
             } else {
-                // Mapeamento simples
                 const map: Record<string, string> = { 'Internet': 'Contas', 'Energia': 'Contas', 'Água': 'Contas', 'Luz': 'Contas' };
                 const mappedCat = map[data.category] || 'custom';
                 form.setValue("category", mappedCat);
@@ -165,8 +172,11 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
         if (data.dueDate) {
             const [y, m, d] = data.dueDate.split('-').map(Number);
             const dateObj = new Date(y, m - 1, d);
-            dateObj.setHours(12, 0, 0, 0); // Evita problemas de fuso
-            if (!isNaN(dateObj.getTime())) form.setValue("date", dateObj);
+            dateObj.setHours(12, 0, 0, 0);
+            if (!isNaN(dateObj.getTime())) {
+                form.setValue("date", dateObj);
+                form.setValue("status", "pending"); // Se tem vencimento, provavelmente não foi pago
+            }
         }
 
         setUploadProgress(100);
@@ -180,7 +190,6 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
         console.error(error);
         toast({ variant: "destructive", title: "Falha na leitura", description: "Tente uma foto mais nítida." });
     } finally {
-        // Delay para o usuário ver o 100%
         setTimeout(() => {
             setIsScanning(false);
             setScanStatus("IA Pronta");
@@ -191,13 +200,50 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
     }
   };
 
-  function onSubmit(data: FormValues) {
+  async function onSubmit(data: FormValues) {
     if (!firestore || !user || !activeProfile) return;
+    setIsSaving(true);
     
     const amount = data.type === 'expense' ? -Math.abs(data.amount) : Math.abs(data.amount);
     const finalCategory = data.category === 'custom' ? data.customCategory! : data.category;
-    const id = initialData?.id || doc(collection(firestore, '_')).id;
+    
+    // RECORRÊNCIA
+    if (data.isRecurring && data.repeatCount && data.repeatCount > 1) {
+        const batch = writeBatch(firestore);
+        const transactionsCol = collection(firestore, 'users', user.uid, 'transactions');
 
+        for (let i = 0; i < data.repeatCount; i++) {
+            const newDocRef = doc(transactionsCol);
+            const nextDate = addMonths(data.date, i);
+            
+            const transactionData: Transaction = {
+                id: newDocRef.id,
+                description: i === 0 ? capitalize(data.description) : `${capitalize(data.description)} (${i+1}/${data.repeatCount})`,
+                amount,
+                type: data.type,
+                date: format(nextDate, "yyyy-MM-dd"),
+                category: capitalize(finalCategory),
+                userId: user.uid,
+                profileId: activeProfile.id,
+                status: i === 0 ? data.status : 'pending', // A primeira assume o status escolhido, as futuras são pendentes
+            };
+            batch.set(newDocRef, transactionData);
+        }
+
+        try {
+            await batch.commit();
+            onSave({ ...data, id: 'batch', date: '', description: '', amount: 0, type: 'expense', category: '', userId: '', status: 'paid' }); // Fake object just to trigger close
+        } catch (e) {
+            console.error(e);
+            toast({ variant: "destructive", title: "Erro", description: "Falha ao criar recorrência." });
+        } finally {
+            setIsSaving(false);
+        }
+        return;
+    }
+
+    // TRANSAÇÃO ÚNICA
+    const id = initialData?.id || doc(collection(firestore, '_')).id;
     const transactionData: Transaction = {
         id,
         description: capitalize(data.description),
@@ -207,15 +253,18 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
         category: capitalize(finalCategory),
         userId: user.uid,
         profileId: initialData?.profileId || activeProfile.id,
+        status: data.status,
     };
+    
     onSave(transactionData);
+    setIsSaving(false);
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
         
-        {/* SCANNER PREMIUM STYLE */}
+        {/* SCANNER */}
         <div className={cn(
             "relative overflow-hidden rounded-xl border transition-all duration-300",
             isScanning ? "border-primary/50 bg-primary/5 shadow-inner" : "border-border bg-muted/20"
@@ -236,10 +285,10 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                         </div>
                         <div className="flex flex-col">
                             <span className="text-sm font-semibold leading-none mb-1">
-                                {isScanning ? scanStatus : "Preenchimento Inteligente"}
+                                {isScanning ? scanStatus : "Leitura Inteligente"}
                             </span>
                             <span className="text-[11px] text-muted-foreground">
-                                {isScanning ? "Nossa IA está lendo seu comprovante..." : "Carregue uma foto ou PDF para preencher"}
+                                {isScanning ? "Processando..." : "Foto do comprovante"}
                             </span>
                         </div>
                     </div>
@@ -254,14 +303,14 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                             <Camera className="w-3.5 h-3.5" /> Tirar Foto
                         </Button>
                         <Button type="button" variant="outline" className="h-9 text-xs gap-2 border-dashed col-span-2 md:col-span-1" onClick={() => fileInputRef.current?.click()}>
-                            <UploadCloud className="w-3.5 h-3.5" /> Carregar Arquivo
+                            <UploadCloud className="w-3.5 h-3.5" /> Carregar
                         </Button>
                     </div>
                 )}
              </div>
         </div>
 
-        {/* TIPO - Segmented Control Style */}
+        {/* TIPO */}
         <FormField
           control={form.control}
           name="type"
@@ -312,6 +361,8 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                                     step="0.01" 
                                     placeholder="0,00" 
                                     {...field} 
+                                    // [CORREÇÃO 1] Seleciona tudo ao clicar
+                                    onFocus={(e) => e.target.select()}
                                     className="pl-10 h-14 text-2xl font-bold bg-transparent border-muted focus:border-primary transition-colors" 
                                 />
                             </FormControl>
@@ -405,11 +456,100 @@ export function TransactionForm({ initialData, onSave, onCancel }: TransactionFo
                     )}
                 />
             )}
+
+            {/* STATUS DO PAGAMENTO */}
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem className="space-y-3 rounded-lg border p-3">
+                  <div className="flex items-center justify-between">
+                    <FormLabel className="text-base font-medium">
+                        Situação
+                    </FormLabel>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            type="button"
+                            variant={field.value === 'paid' ? 'default' : 'outline'}
+                            size="sm"
+                            className={cn("h-7 text-xs gap-1", field.value === 'paid' && "bg-green-600 hover:bg-green-700 text-white")}
+                            onClick={() => field.onChange('paid')}
+                        >
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Pago
+                        </Button>
+                        <Button
+                            type="button"
+                            variant={field.value === 'pending' ? 'default' : 'outline'}
+                            size="sm"
+                            className={cn("h-7 text-xs gap-1", field.value === 'pending' && "bg-yellow-600 hover:bg-yellow-700 text-white")}
+                            onClick={() => field.onChange('pending')}
+                        >
+                            <Circle className="w-3.5 h-3.5" /> Pendente
+                        </Button>
+                    </div>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {/* RECORRÊNCIA (Apenas ao criar) */}
+            {!initialData && (
+                <div className="rounded-lg border p-3 space-y-3 bg-muted/20">
+                    <FormField
+                        control={form.control}
+                        name="isRecurring"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg">
+                                <div className="space-y-0.5">
+                                    <FormLabel className="text-sm font-medium flex items-center gap-2">
+                                        <Repeat className="w-4 h-4 text-primary" /> Repetir Lançamento
+                                    </FormLabel>
+                                </div>
+                                <FormControl>
+                                    <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+                    
+                    {isRecurring && (
+                        <FormField
+                            control={form.control}
+                            name="repeatCount"
+                            render={({ field }) => (
+                                <FormItem className="animate-in slide-in-from-top-1 fade-in">
+                                    <div className="flex items-center gap-2">
+                                        <FormLabel className="text-xs whitespace-nowrap">Por quantos meses?</FormLabel>
+                                        <FormControl>
+                                            <Input 
+                                                type="number" 
+                                                {...field} 
+                                                className="h-8 w-20 text-center" 
+                                                min={2} 
+                                                max={60} 
+                                            />
+                                        </FormControl>
+                                        <span className="text-xs text-muted-foreground">meses</span>
+                                    </div>
+                                    <FormDescription className="text-[10px]">
+                                        Serão criados {field.value} lançamentos independentes.
+                                    </FormDescription>
+                                </FormItem>
+                            )}
+                        />
+                    )}
+                </div>
+            )}
         </div>
         
         <div className="flex gap-3 pt-4 mt-auto">
             <Button type="button" variant="ghost" onClick={onCancel} className="flex-1 h-11">Cancelar</Button>
-            <Button type="submit" className="flex-1 h-11 font-bold shadow-md text-base">{initialData ? "Salvar Alterações" : "Adicionar"}</Button>
+            <Button type="submit" className="flex-1 h-11 font-bold shadow-md text-base" disabled={isSaving}>
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : (initialData ? "Salvar" : "Adicionar")}
+            </Button>
         </div>
       </form>
     </Form>
